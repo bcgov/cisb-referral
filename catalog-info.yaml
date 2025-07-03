@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cisb-referral
+  title: CISB Referral
+  description: CISB Referral Application
+  annotations:
+    github.com/project-slug: bcgov/cisb-referral
+    backstage.io/techdocs-ref: dir:.
+    bcgovpubcode.gov.bc.ca/ministry: SDPR
+    bcgovpubcode.gov.bc.ca/product_description: CISB Referral Application
+    bcgovpubcode.gov.bc.ca/product_owner: Adam Hodgins
+    bcgovpubcode.gov.bc.ca/hosting_platform: OpenShift private cloud
+    backstage.io/source-template: template:default/quickstart-openshift
+spec:
+  type: website
+  lifecycle: production
+  owner: group:default/analytics-and-business-intelligence-devs
