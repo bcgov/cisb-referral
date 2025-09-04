@@ -4,7 +4,22 @@
   "description": "CISB Referral Application",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:admin": "(cd admin-app && npm install && npm run dev)",
+    "dev:referral": "(cd referral-app && npm install && npm run dev)",
+    "dev:backend": "(cd backend && npm install && npm run start:dev)",
+    "dev:database": "(cd database && npm install && npm run db:up)",
+    "dev": "npx concurrently -k -p \"[{name}]\" -n \"admin,referral,backend,database\" \"npm:dev:admin\" \"npm:dev:referral\" \"npm:dev:backend\" \"npm:dev:database\"",
+    "bootstrap": "npm run dev:database && echo \"Database started. Run individual services with npm run dev:backend etc.\"",
+    "build:admin": "(cd admin-app && npm install && npm run build)",
+    "build:referral": "(cd referral-app && npm install && npm run build)",
+    "build:backend": "(cd backend && npm install && npm run build)",
+    "build:database": "(cd database && npm install && npm run migrate)",
+    "build": "npx concurrently -k -p \"[{name}]\" -n \"admin,referral,backend,database\" \"npm:build:admin\" \"npm:build:referral\" \"npm:build:backend\" \"npm:build:database\"",
+    "install:all": "for d in admin-app referral-app backend database; do (cd $d && npm install); done"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
   },
   "repository": {
     "type": "git",
