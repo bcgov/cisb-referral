@@ -19,7 +19,7 @@
     "install:all": "for d in admin-app referral-app backend database; do (cd $d && npm install); done"
   },
   "devDependencies": {
-    "concurrently": "^8.0.0"
+    "concurrently": "^9.2.1"
   },
   "repository": {
     "type": "git",
