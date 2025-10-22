@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bcgov/design-tokens": "^3.2.0",
     "@vee-validate/zod": "^4.15.1",
     "@vueform/multiselect": "^2.6.11",
     "vee-validate": "^4.15.1",

@@ -12,7 +12,6 @@ import {
   MinistryName,
   AgencyType,
   RegionType,
-  YesNoUnknown,
   ReleaseFromType,
   SupportType,
 } from "../schemas/referralSchema";
@@ -494,15 +493,3 @@ const onSubmit = handleSubmit((formValues: ReferralFormData) => {
     </form>
   </div>
 </template>
-
-<style scoped>
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-.radio-group {
-  display: flex;
-  gap: 1rem;
-}
-</style>
