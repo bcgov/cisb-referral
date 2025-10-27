@@ -45,11 +45,6 @@ enum SupportType {
   OTHERS
 }
 
-enum ReferralFlag {
-  HOUSING_RISK
-  CRITICAL_TRANSITION
-}
-
 enum UserRole {
   MANAGER
   ASSISTANT_MANAGER
@@ -59,36 +54,48 @@ enum UserRole {
 }
 
 enum ReferralStatus {
-  NEW
-  IN_REVIEW
-  IN_PROGRESS
-  ON_HOLD
-  COMPLETED
+  OPEN
+  ASSIGNED
+  CONTACT_MADE
   CLOSED
-  CANCELLED
 }
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
+enum ReferralOutcome {
+  BCEA_APPLICATION_SUBMITTED
+  BCEA_APPLICATION_COMPLETED_FILE_OPENED
+  SUPPLEMENTS_ISSUED
+  CASE_MANAGED
+  SERVICES_PROVIDED
+  NOT_LOCATED
+  LOCATED_REFUSED_SERVICE
+  NON_APPROPRIATE_REFERRAL_RETURNED
+  REFERRED_TO_VS_CS
+  REFERRED_TO_COMMUNITY_PARTNER
 }
 
 // Lookup Tables
 model Region {
-  id              String    @id @default(uuid())
-  name            String    @unique
-  code            String?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  createdBy       String?
+  id                          String    @id @default(uuid())
+  name                        String    @unique
+  managerUserId               String?
+  manager                     User?     @relation("RegionManager", fields: [managerUserId], references: [id])
+  managerEmail                String?
+  supervisorUserId            String?
+  supervisor                  User?     @relation("RegionSupervisor", fields: [supervisorUserId], references: [id])
+  supervisorEmail             String?
+  assistantSupervisorUserId   String?
+  assistantSupervisor         User?     @relation("RegionAssistantSupervisor", fields: [assistantSupervisorUserId], references: [id])
+  assistantSupervisorEmail    String?
+  teamMemberUserId            String?
+  teamMember                  User?     @relation("RegionTeamMember", fields: [teamMemberUserId], references: [id])
+  teamMemberEmail             String?
+  sharedMailboxEmail          String?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  createdBy                   String?
   
-  referrals       Referral[]
-  users           User[]
+  referrals                   Referral[]
   
-  @@index([isActive])
   @@map("regions")
 }
 
@@ -124,28 +131,51 @@ model AgencyType {
 // User Management
 model User {
   id              String      @id @default(uuid())
+  fullName        String
   email           String      @unique
-  name            String
+  address         String?
+  contact         String?
   role            UserRole
   isActive        Boolean     @default(true)
+  deletedAt       DateTime?   // Soft delete timestamp
   keycloakId      String?     @unique
-  regionId        String?
-  region          Region?     @relation(fields: [regionId], references: [id])
-  phone           String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   lastLoginAt     DateTime?
   
-  assignedReferrals     Referral[]   @relation("AssignedReferrals")
-  createdReferrals      Referral[]   @relation("CreatedReferrals")
-  notes                 ReferralNote[]
-  statusHistoryEntries  ReferralStatusHistory[]
+  assignedReferrals         Referral[]   @relation("AssignedReferrals")
+  statusHistoryEntries      ReferralStatusHistory[]
+  
+  managedRegions            Region[]     @relation("RegionManager")
+  supervisedRegions         Region[]     @relation("RegionSupervisor")
+  assistantSupervisedRegions Region[]    @relation("RegionAssistantSupervisor")
+  teamMemberRegions         Region[]     @relation("RegionTeamMember")
   
   @@index([email])
   @@index([role])
-  @@index([regionId])
   @@index([isActive])
+  @@index([deletedAt])
   @@map("users")
+}
+
+model Contact {
+  id              String      @id @default(uuid())
+  userName        String      @unique
+  fullName        String
+  companyName     String?
+  email           String      @unique
+  isActive        Boolean     @default(true)
+  keycloakId      String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  lastLoginAt     DateTime?
+  
+  createdReferrals  Referral[]  @relation("CreatedReferrals")
+  
+  @@index([email])
+  @@index([userName])
+  @@index([isActive])
+  @@map("contacts")
 }
 
 // Main Referral Table
@@ -168,72 +198,57 @@ model Referral {
   
   individualFirstName   String
   individualMiddleName  String?
-  individualLastName    String?
+  individualLastName    String
   individualPreferredName String?
   gainFile              String?
+  individualDateOfBirth DateTime?   @db.Date
   individualPhone       String?
-  individualDateOfBirth DateTime?
   
   regionId              String
   region                Region       @relation(fields: [regionId], references: [id])
   specificCityTown      String
-  secondaryContact      String?
   bestWayToReach        String?
+  secondaryContact      String?
   
   currentlyHomeless     YesNoUnknown
+  losingHousing         YesNoUnknown?
   pendingRelease        ReleaseFromType?
+  releaseDate           DateTime?   @db.Date
+  flag                  Boolean     @default(false)
   
   currentlyConnectedSupports      SupportType[]
   currentlyConnectedSupportsOther String?
   neededSupports                  SupportType[]
   neededSupportsOther             String?
-  referralSummary                 String?
+  referralSummary                 String?       @db.Text
   
-  status                ReferralStatus  @default(NEW)
-  priority              Priority?
+  referralOutcome       ReferralOutcome?
+  communityPartnerName  String?
+  referralStatus        ReferralStatus  @default(OPEN)
   assignedToId          String?
   assignedTo            User?           @relation("AssignedReferrals", fields: [assignedToId], references: [id])
-  followUpDate          DateTime?
-  dueDate               DateTime?
-  completedDate         DateTime?
-  flags                 ReferralFlag[]
+  followUpDate          DateTime?   @db.Date
+  dueDate               DateTime?   @db.Date
+  completedDate         DateTime?   @db.Date
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  modifiedBy            String?
   createdBy             String?
-  createdByUser         User?     @relation("CreatedReferrals", fields: [createdBy], references: [id])
+  createdByContact      Contact?  @relation("CreatedReferrals", fields: [createdBy], references: [id])
   
-  notes                 ReferralNote[]
   statusHistory         ReferralStatusHistory[]
-  attachments           ReferralAttachment[]
   
   @@index([referredBy])
   @@index([regionId])
   @@index([ministryId])
   @@index([agencyTypeId])
   @@index([currentlyHomeless])
-  @@index([status])
-  @@index([priority])
+  @@index([referralStatus])
   @@index([assignedToId])
   @@index([createdAt])
-  @@index([flags])
+  @@index([flag])
   @@map("referrals")
-}
-
-model ReferralNote {
-  id          String    @id @default(uuid())
-  referralId  String
-  referral    Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  content     String    @db.Text
-  isInternal  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  createdBy   String
-  author      User      @relation(fields: [createdBy], references: [id])
-  
-  @@index([referralId])
-  @@index([createdAt])
-  @@map("referral_notes")
 }
 
 model ReferralStatusHistory {
@@ -250,20 +265,4 @@ model ReferralStatusHistory {
   @@index([referralId])
   @@index([createdAt])
   @@map("referral_status_history")
-}
-
-model ReferralAttachment {
-  id              String    @id @default(uuid())
-  referralId      String
-  referral        Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  fileName        String
-  fileSize        Int
-  mimeType        String
-  fileUrl         String
-  description     String?
-  uploadedAt      DateTime  @default(now())
-  uploadedBy      String
-  
-  @@index([referralId])
-  @@map("referral_attachments")
 }
