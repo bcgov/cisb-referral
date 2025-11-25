@@ -259,8 +259,8 @@ model ReferralStatusHistory {
   toStatus      ReferralStatus
   comment       String?         @db.Text
   createdAt     DateTime        @default(now())
-  createdBy     String
-  author        User            @relation(fields: [createdBy], references: [id])
+  createdBy     String?
+  author        User?           @relation(fields: [createdBy], references: [id])
   
   @@index([referralId])
   @@index([createdAt])
