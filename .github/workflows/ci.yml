@@ -32,7 +32,6 @@ jobs:
             admin-app/package-lock.json
             referral-app/package-lock.json
             backend/package-lock.json
-            database/package-lock.json
 
       - name: Install deps (admin-app)
         working-directory: admin-app
@@ -46,9 +45,9 @@ jobs:
         working-directory: backend
         run: npm ci --prefer-offline --no-audit
 
-      - name: Install deps (database)
-        working-directory: database
-        run: npm ci --prefer-offline --no-audit
+      - name: Generate Prisma Client (backend)
+        working-directory: backend
+        run: npm run prisma:generate
 
       - name: Run tests w/ coverage (admin-app)
         working-directory: admin-app
