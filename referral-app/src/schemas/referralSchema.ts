@@ -53,7 +53,6 @@ export const RegionType = z.enum([
 export const YesNoUnknown = z.enum(["Yes", "No", "Unknown"]);
 
 export const ReleaseFromType = z.enum([
-  "No",
   "Hospital/Medical Facility",
   "Corrections",
   "Youth Transition from MCFD",
@@ -115,7 +114,9 @@ const baseSchema = z.object({
 
   // Section 3: Housing Status & Critical Transitions
   currentlyHomeless: YesNoUnknown,
-  pendingRelease: ReleaseFromType,
+  atRiskOfLosingHousing: YesNoUnknown.optional(),
+  pendingRelease: ReleaseFromType.optional(),
+  releaseDischargeDate: z.string().optional(),
 
   // Section 4: Support Services
   currentlyConnectedSupports: z.array(SupportType).default([]),
@@ -164,6 +165,18 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
     }
   }
 
+  // Conditional requiredness: atRiskOfLosingHousing required when homeless is "No" or "Unknown"
+  if (
+    (data.currentlyHomeless === "No" || data.currentlyHomeless === "Unknown") &&
+    !data.atRiskOfLosingHousing
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Please indicate if they are at risk of losing housing",
+      path: ["atRiskOfLosingHousing"],
+    });
+  }
+
   // Support "Others" validations
   if (
     data.currentlyConnectedSupports.includes("Others") &&
@@ -187,10 +200,36 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
 
 /**
  * Determines if the referral should be flagged as urgent
- * Based on homelessness status or pending release from facility
+ * Business Rules:
+ * 1. Experiencing Homelessness is Yes
+ * 2. At Risk of Losing Housing is Yes
+ * 3. Pending Release has a value AND Release/Discharge Date is within 3-4 days
  */
 export function isUrgentReferral(data: ReferralFormData): boolean {
-  return data.currentlyHomeless === "Yes" || data.pendingRelease !== "No";
+  // Rule 1: Currently experiencing homelessness
+  if (data.currentlyHomeless === "Yes") {
+    return true;
+  }
+
+  // Rule 2: At risk of losing housing
+  if (data.atRiskOfLosingHousing === "Yes") {
+    return true;
+  }
+
+  // Rule 3: Pending release with discharge date within 3-4 days
+  if (data.pendingRelease && data.releaseDischargeDate) {
+    const releaseDate = new Date(data.releaseDischargeDate);
+    const today = new Date();
+    const diffTime = releaseDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Within 3-4 days (0-4 days from now)
+    if (diffDays >= 0 && diffDays <= 4) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export type ReferralFormData = z.infer<typeof referralSchema>;

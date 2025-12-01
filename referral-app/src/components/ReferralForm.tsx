@@ -16,7 +16,6 @@ import {
 const defaultValues: Partial<z.infer<typeof referralSchema>> = {
   currentlyConnectedSupports: [],
   neededSupports: [],
-  pendingRelease: "No",
 };
 
 export function ReferralForm() {

@@ -6,7 +6,6 @@ import {
   ReleaseFromType,
 } from "../../schemas/referralSchema";
 import {
-  FormField,
   SelectField,
   TextInput,
   TextAreaField,
@@ -18,77 +17,59 @@ interface IndividualInfoSectionProps {
 }
 
 export function IndividualInfoSection({ form }: IndividualInfoSectionProps) {
-  const { control } = form;
+  const { control, watch } = form;
+
+  const currentlyHomeless = watch("currentlyHomeless");
+  const pendingRelease = watch("pendingRelease");
+
+  // Only show atRiskOfLosingHousing when currentlyHomeless is explicitly "No" or "Unknown"
+  const showAtRiskField =
+    currentlyHomeless === "No" || currentlyHomeless === "Unknown";
+  const showReleaseDateField = !!pendingRelease;
 
   return (
     <section>
       <h2>Individual&apos;s Info</h2>
 
-      <FormField>
+      <div className="form-grid">
         <TextInput
           name="individualFirstName"
           control={control}
           label="First Name"
           isRequired
         />
-      </FormField>
 
-      <FormField>
         <TextInput
           name="individualMiddleName"
           control={control}
-          label="Middle Name"
-          description="Optional"
+          label="Middle Name (Optional)"
         />
-      </FormField>
 
-      <FormField>
         <TextInput
           name="individualLastName"
           control={control}
-          label="Last Name"
-          description="Optional"
+          label="Last Name (Optional)"
         />
-      </FormField>
 
-      <FormField>
         <TextInput
           name="individualPreferredName"
           control={control}
-          label="Preferred Name"
-          description="Optional"
+          label="Preferred Name (Optional)"
         />
-      </FormField>
 
-      <FormField>
-        <TextInput
-          name="gainFile"
-          control={control}
-          label="GAIN File (SA)"
-          description="Optional"
-        />
-      </FormField>
-
-      <FormField>
         <TextInput
           name="individualPhone"
           control={control}
-          label="Phone Number"
+          label="Phone Number (Optional)"
           type="tel"
-          description="Optional"
         />
-      </FormField>
 
-      <FormField>
         <TextInput
           name="individualDateOfBirth"
           control={control}
-          label="Date of Birth"
-          description="Optional (YYYY-MM-DD)"
+          label="Date of Birth (Optional)"
         />
-      </FormField>
 
-      <FormField>
         <SelectField
           name="currentRegion"
           control={control}
@@ -96,55 +77,72 @@ export function IndividualInfoSection({ form }: IndividualInfoSectionProps) {
           options={RegionType.options}
           isRequired
         />
-      </FormField>
 
-      <FormField>
         <TextInput
           name="specificCityTown"
           control={control}
           label="Current City"
           isRequired
         />
-      </FormField>
 
-      <FormField>
+        <TextInput
+          name="gainFile"
+          control={control}
+          label="GAIN File (SA) (Optional)"
+        />
+
         <TextInput
           name="secondaryContact"
           control={control}
-          label="Is there a secondary contact?"
-          description="Optional"
+          label="Secondary Contact (Optional)"
         />
-      </FormField>
 
-      <FormField>
-        <TextAreaField
-          name="bestWayToReach"
-          control={control}
-          label="Best way to reach the individual"
-          description="Optional"
-        />
-      </FormField>
+        <div className="form-field-full">
+          <TextAreaField
+            name="bestWayToReach"
+            control={control}
+            label="Best way to reach the individual (Optional)"
+          />
+        </div>
 
-      <FormField>
-        <RadioGroupField
-          name="currentlyHomeless"
-          control={control}
-          label="Are they currently experiencing homelessness?"
-          options={YesNoUnknown.options}
-          isRequired
-        />
-      </FormField>
+        <div className="form-field-full">
+          <RadioGroupField
+            name="currentlyHomeless"
+            control={control}
+            label="Are they currently experiencing homelessness?"
+            options={YesNoUnknown.options}
+            isRequired
+          />
+        </div>
 
-      <FormField>
+        {showAtRiskField && (
+          <div className="form-field-full">
+            <RadioGroupField
+              name="atRiskOfLosingHousing"
+              control={control}
+              label="Are they currently at risk of losing housing?"
+              options={YesNoUnknown.options}
+              isRequired
+            />
+          </div>
+        )}
+
         <SelectField
           name="pendingRelease"
           control={control}
-          label="Are they pending release or recently released?"
+          label="Pending release or recently released? (Optional)"
           options={ReleaseFromType.options}
-          description="Optional"
-          placeholder=""
         />
-      </FormField>
+
+        {showReleaseDateField && (
+          <TextInput
+            name="releaseDischargeDate"
+            control={control}
+            label="Release/Discharge Date"
+            type="date"
+          />
+        )}
+      </div>
     </section>
   );
 }

@@ -10,7 +10,7 @@ interface TextInputProps<T extends FieldValues> {
   name: FieldPath<T>;
   control: Control<T>;
   label: string;
-  type?: "text" | "email" | "tel" | "password" | "url";
+  type?: "text" | "email" | "tel" | "password" | "url" | "date";
   description?: string;
   isRequired?: boolean;
 }

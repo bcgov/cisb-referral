@@ -21,59 +21,66 @@ export function SupportServicesSection({ form }: SupportServicesSectionProps) {
     <section>
       <h2>Support Services</h2>
 
-      <FormField>
-        <MultiSelectField
-          id="currentlyConnectedSupports"
-          name="currentlyConnectedSupports"
-          control={control}
-          options={SupportType.options}
-          placeholder="Select supports..."
-          label="Which supports are they currently connected with?"
-        />
-      </FormField>
+      <div className="form-grid">
+        <div className="form-field-full">
+          <FormField>
+            <MultiSelectField
+              id="currentlyConnectedSupports"
+              name="currentlyConnectedSupports"
+              control={control}
+              options={SupportType.options}
+              placeholder="Select supports..."
+              label="Which supports are they currently connected with? (Optional)"
+            />
+          </FormField>
+        </div>
 
-      {showCurrentSupportsOther && (
-        <FormField>
-          <TextInput
-            name="currentlyConnectedSupportsOther"
-            control={control}
-            label="Specify Other Supports"
-            isRequired
-          />
-        </FormField>
-      )}
+        {showCurrentSupportsOther && (
+          <FormField>
+            <TextInput
+              name="currentlyConnectedSupportsOther"
+              control={control}
+              label="Specify Other Supports"
+              isRequired
+            />
+          </FormField>
+        )}
 
-      <FormField>
-        <MultiSelectField
-          id="neededSupports"
-          name="neededSupports"
-          control={control}
-          options={SupportType.options}
-          placeholder="Select supports..."
-          label="Which supports do they need?"
-        />
-      </FormField>
+        <div className="form-field-full">
+          <FormField>
+            <MultiSelectField
+              id="neededSupports"
+              name="neededSupports"
+              control={control}
+              options={SupportType.options}
+              placeholder="Select supports..."
+              label="Which supports do they need? (Optional)"
+            />
+          </FormField>
+        </div>
 
-      {showNeededSupportsOther && (
-        <FormField>
-          <TextInput
-            name="neededSupportsOther"
-            control={control}
-            label="Specify Other Supports Needed"
-            isRequired
-          />
-        </FormField>
-      )}
+        {showNeededSupportsOther && (
+          <FormField>
+            <TextInput
+              name="neededSupportsOther"
+              control={control}
+              label="Specify Other Supports Needed"
+              isRequired
+            />
+          </FormField>
+        )}
 
-      <FormField>
-        <TextAreaField
-          name="referralSummary"
-          control={control}
-          label="Brief summary of the reason for referral"
-          description="Optional"
-          maxLength={2000}
-        />
-      </FormField>
+        <div className="form-field-full">
+          <FormField>
+            <TextAreaField
+              name="referralSummary"
+              control={control}
+              label="Brief summary of the reason for referral (Optional)"
+              maxLength={2000}
+            />
+          </FormField>
+        </div>
+      </div>
     </section>
   );
 }
