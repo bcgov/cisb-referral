@@ -1,18 +1,21 @@
-import { Header, Footer } from "@bcgov/design-system-react-components";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Layout } from "./components";
+import { Referrals, Regions, Ministries, AgencyTypes } from "./pages";
 import "./App.css";
 
 function App() {
   return (
-    <div className="app-layout">
-      <Header title="CISB Admin" />
-      <main className="main-content">
-        <div className="content-container">
-          <h1>CISB Admin</h1>
-          <p>Admin dashboard for managing referrals.</p>
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/referrals" replace />} />
+          <Route path="referrals" element={<Referrals />} />
+          <Route path="regions" element={<Regions />} />
+          <Route path="ministries" element={<Ministries />} />
+          <Route path="agency-types" element={<AgencyTypes />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
