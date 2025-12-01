@@ -5,7 +5,7 @@ import "./App.css";
 function App() {
   return (
     <div className="app-layout">
-      <Header title="CISB Referral Portal" />
+      <Header title="CISB Referral" />
       <main className="main-content">
         <ReferralForm />
       </main>
