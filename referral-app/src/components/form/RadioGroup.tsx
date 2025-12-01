@@ -1,20 +1,54 @@
-import type { UseFormRegisterReturn } from "react-hook-form";
+import {
+  RadioGroup as BCGovRadioGroup,
+  Radio,
+} from "@bcgov/design-system-react-components";
+import {
+  useController,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form";
 
-interface RadioGroupProps {
-  name: string;
+interface RadioGroupFieldProps<T extends FieldValues> {
+  name: FieldPath<T>;
+  control: Control<T>;
+  label: string;
   options: readonly string[];
-  registration: UseFormRegisterReturn;
+  description?: string;
+  isRequired?: boolean;
+  orientation?: "horizontal" | "vertical";
 }
 
-export function RadioGroup({ name, options, registration }: RadioGroupProps) {
+export function RadioGroupField<T extends FieldValues>({
+  name,
+  control,
+  label,
+  options,
+  description,
+  isRequired = false,
+  orientation = "horizontal",
+}: RadioGroupFieldProps<T>) {
+  const {
+    field,
+    fieldState: { error },
+  } = useController({ name, control });
+
   return (
-    <div className="radio-group" role="radiogroup" aria-labelledby={name}>
+    <BCGovRadioGroup
+      label={label}
+      value={field.value ?? ""}
+      onChange={field.onChange}
+      orientation={orientation}
+      description={description}
+      isRequired={isRequired}
+      isInvalid={!!error}
+      errorMessage={error?.message}
+    >
       {options.map((opt) => (
-        <label key={opt}>
-          <input type="radio" value={opt} {...registration} />
+        <Radio key={opt} value={opt}>
           {opt}
-        </label>
+        </Radio>
       ))}
-    </div>
+    </BCGovRadioGroup>
   );
 }

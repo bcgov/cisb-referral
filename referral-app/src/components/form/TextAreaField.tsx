@@ -1,4 +1,4 @@
-import { TextField } from "@bcgov/design-system-react-components";
+import { TextArea } from "@bcgov/design-system-react-components";
 import {
   useController,
   type Control,
@@ -6,37 +6,37 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
-interface TextInputProps<T extends FieldValues> {
+interface TextAreaFieldProps<T extends FieldValues> {
   name: FieldPath<T>;
   control: Control<T>;
   label: string;
-  type?: "text" | "email" | "tel" | "password" | "url";
   description?: string;
+  maxLength?: number;
   isRequired?: boolean;
 }
 
-export function TextInput<T extends FieldValues>({
+export function TextAreaField<T extends FieldValues>({
   name,
   control,
   label,
-  type = "text",
   description,
+  maxLength,
   isRequired = false,
-}: TextInputProps<T>) {
+}: TextAreaFieldProps<T>) {
   const {
     field,
     fieldState: { error },
   } = useController({ name, control });
 
   return (
-    <TextField
+    <TextArea
       label={label}
-      type={type}
       value={field.value ?? ""}
       onChange={field.onChange}
       onBlur={field.onBlur}
       name={field.name}
       description={description}
+      maxLength={maxLength}
       isRequired={isRequired}
       isInvalid={!!error}
       errorMessage={error?.message}

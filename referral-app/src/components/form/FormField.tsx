@@ -1,29 +1,14 @@
-import type { FieldError } from "react-hook-form";
 import type { ReactNode } from "react";
 
 interface FormFieldProps {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  error?: FieldError;
   children: ReactNode;
+  className?: string;
 }
 
-export function FormField({
-  label,
-  htmlFor,
-  required = false,
-  error,
-  children,
-}: FormFieldProps) {
-  return (
-    <div className="form-field">
-      <label htmlFor={htmlFor}>
-        {label}
-        {required && " *"}
-      </label>
-      {children}
-      {error && <span className="error">{error.message}</span>}
-    </div>
-  );
+/**
+ * Simple wrapper for form field layout consistency.
+ * BC Gov components handle their own labels, errors, and descriptions.
+ */
+export function FormField({ children, className = "" }: FormFieldProps) {
+  return <div className={`form-field ${className}`.trim()}>{children}</div>;
 }

@@ -9,8 +9,8 @@ import {
   FormField,
   SelectField,
   TextInput,
-  TextArea,
-  RadioGroup,
+  TextAreaField,
+  RadioGroupField,
 } from "../form";
 
 interface IndividualInfoSectionProps {
@@ -18,140 +18,130 @@ interface IndividualInfoSectionProps {
 }
 
 export function IndividualInfoSection({ form }: IndividualInfoSectionProps) {
-  const {
-    register,
-    formState: { errors },
-  } = form;
+  const { control } = form;
 
   return (
     <section>
       <h2>Individual&apos;s Info</h2>
 
-      <FormField
-        label="First Name (Required)"
-        htmlFor="individualFirstName"
-        required
-        error={errors.individualFirstName}
-      >
+      <FormField>
         <TextInput
-          id="individualFirstName"
-          registration={register("individualFirstName")}
+          name="individualFirstName"
+          control={control}
+          label="First Name"
+          isRequired
         />
       </FormField>
 
-      <FormField label="Middle Name (Optional)" htmlFor="individualMiddleName">
+      <FormField>
         <TextInput
-          id="individualMiddleName"
-          registration={register("individualMiddleName")}
+          name="individualMiddleName"
+          control={control}
+          label="Middle Name"
+          description="Optional"
         />
       </FormField>
 
-      <FormField label="Last Name (Optional)" htmlFor="individualLastName">
+      <FormField>
         <TextInput
-          id="individualLastName"
-          registration={register("individualLastName")}
+          name="individualLastName"
+          control={control}
+          label="Last Name"
+          description="Optional"
         />
       </FormField>
 
-      <FormField
-        label="Preferred Name (Optional)"
-        htmlFor="individualPreferredName"
-      >
+      <FormField>
         <TextInput
-          id="individualPreferredName"
-          registration={register("individualPreferredName")}
+          name="individualPreferredName"
+          control={control}
+          label="Preferred Name"
+          description="Optional"
         />
       </FormField>
 
-      <FormField label="GAIN File (SA) (Optional)" htmlFor="gainFile">
-        <TextInput id="gainFile" registration={register("gainFile")} />
+      <FormField>
+        <TextInput
+          name="gainFile"
+          control={control}
+          label="GAIN File (SA)"
+          description="Optional"
+        />
       </FormField>
 
-      <FormField label="Phone Number (Optional)" htmlFor="individualPhone">
+      <FormField>
         <TextInput
-          id="individualPhone"
+          name="individualPhone"
+          control={control}
+          label="Phone Number"
           type="tel"
-          registration={register("individualPhone")}
+          description="Optional"
         />
       </FormField>
 
-      <FormField
-        label="Date of Birth (Optional)"
-        htmlFor="individualDateOfBirth"
-      >
+      <FormField>
         <TextInput
-          id="individualDateOfBirth"
-          type="date"
-          registration={register("individualDateOfBirth")}
+          name="individualDateOfBirth"
+          control={control}
+          label="Date of Birth"
+          description="Optional (YYYY-MM-DD)"
         />
       </FormField>
 
-      <FormField
-        label="Current Region (Required)"
-        htmlFor="currentRegion"
-        required
-        error={errors.currentRegion}
-      >
+      <FormField>
         <SelectField
-          id="currentRegion"
+          name="currentRegion"
+          control={control}
+          label="Current Region"
           options={RegionType.options}
-          registration={register("currentRegion")}
+          isRequired
         />
       </FormField>
 
-      <FormField
-        label="Current City (Required)"
-        htmlFor="specificCityTown"
-        required
-        error={errors.specificCityTown}
-      >
+      <FormField>
         <TextInput
-          id="specificCityTown"
-          registration={register("specificCityTown")}
+          name="specificCityTown"
+          control={control}
+          label="Current City"
+          isRequired
         />
       </FormField>
 
-      <FormField
-        label="Is there a secondary contact? (Optional)"
-        htmlFor="secondaryContact"
-      >
+      <FormField>
         <TextInput
-          id="secondaryContact"
-          registration={register("secondaryContact")}
+          name="secondaryContact"
+          control={control}
+          label="Is there a secondary contact?"
+          description="Optional"
         />
       </FormField>
 
-      <FormField
-        label="Best way to reach the individual (Optional)"
-        htmlFor="bestWayToReach"
-      >
-        <TextArea
-          id="bestWayToReach"
-          registration={register("bestWayToReach")}
+      <FormField>
+        <TextAreaField
+          name="bestWayToReach"
+          control={control}
+          label="Best way to reach the individual"
+          description="Optional"
         />
       </FormField>
 
-      <FormField
-        label="Are they currently experiencing homelessness? (Required)"
-        htmlFor="currentlyHomeless"
-        required
-        error={errors.currentlyHomeless}
-      >
-        <RadioGroup
+      <FormField>
+        <RadioGroupField
           name="currentlyHomeless"
+          control={control}
+          label="Are they currently experiencing homelessness?"
           options={YesNoUnknown.options}
-          registration={register("currentlyHomeless")}
+          isRequired
         />
       </FormField>
 
-      <FormField
-        label="Are they pending release or recently released? (Optional)"
-        htmlFor="pendingRelease"
-      >
+      <FormField>
         <SelectField
-          id="pendingRelease"
+          name="pendingRelease"
+          control={control}
+          label="Are they pending release or recently released?"
           options={ReleaseFromType.options}
-          registration={register("pendingRelease")}
+          description="Optional"
           placeholder=""
         />
       </FormField>

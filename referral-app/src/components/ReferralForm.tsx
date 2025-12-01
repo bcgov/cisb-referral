@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { z } from "zod";
+import { Button } from "@bcgov/design-system-react-components";
 import {
   referralSchema,
   type ReferralFormData,
@@ -32,13 +33,17 @@ export function ReferralForm() {
   };
 
   return (
-    <div>
+    <div className="referral-form-container">
       <h1>CISB Referral Form</h1>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <ReferralDetailsSection form={form} />
         <IndividualInfoSection form={form} />
         <SupportServicesSection form={form} />
-        <button type="submit">Submit</button>
+        <div className="form-actions">
+          <Button type="submit" variant="primary">
+            Submit Referral
+          </Button>
+        </div>
       </form>
     </div>
   );

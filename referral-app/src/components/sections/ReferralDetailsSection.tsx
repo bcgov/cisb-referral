@@ -12,11 +12,7 @@ interface ReferralDetailsSectionProps {
 }
 
 export function ReferralDetailsSection({ form }: ReferralDetailsSectionProps) {
-  const {
-    register,
-    watch,
-    formState: { errors },
-  } = form;
+  const { control, watch } = form;
 
   const referredBy = watch("referredBy");
   const ministryName = watch("ministryName");
@@ -30,52 +26,44 @@ export function ReferralDetailsSection({ form }: ReferralDetailsSectionProps) {
     <section>
       <h2>Referral Details</h2>
 
-      <FormField
-        label="Referred by (Required)"
-        htmlFor="referredBy"
-        required
-        error={errors.referredBy}
-      >
+      <FormField>
         <SelectField
-          id="referredBy"
+          name="referredBy"
+          control={control}
+          label="Referred by"
           options={ReferredByType.options}
-          registration={register("referredBy")}
+          isRequired
         />
       </FormField>
 
       {showMinistryFields && (
         <>
-          <FormField
-            label="Name of Ministry"
-            htmlFor="ministryName"
-            required
-            error={errors.ministryName}
-          >
+          <FormField>
             <SelectField
-              id="ministryName"
+              name="ministryName"
+              control={control}
+              label="Name of Ministry"
               options={MinistryName.options}
-              registration={register("ministryName")}
+              isRequired
             />
           </FormField>
 
           {ministryName === "Other" && (
-            <FormField
-              label="Specify Ministry"
-              htmlFor="ministryNameOther"
-              required
-              error={errors.ministryNameOther}
-            >
+            <FormField>
               <TextInput
-                id="ministryNameOther"
-                registration={register("ministryNameOther")}
+                name="ministryNameOther"
+                control={control}
+                label="Specify Ministry"
+                isRequired
               />
             </FormField>
           )}
 
-          <FormField label="Program Area" htmlFor="programArea">
+          <FormField>
             <TextInput
-              id="programArea"
-              registration={register("programArea")}
+              name="programArea"
+              control={control}
+              label="Program Area"
             />
           </FormField>
         </>
@@ -83,36 +71,31 @@ export function ReferralDetailsSection({ form }: ReferralDetailsSectionProps) {
 
       {showAgencyFields && (
         <>
-          <FormField
-            label="Partner Agency Name"
-            htmlFor="partnerAgencyName"
-            required
-            error={errors.partnerAgencyName}
-          >
+          <FormField>
             <TextInput
-              id="partnerAgencyName"
-              registration={register("partnerAgencyName")}
+              name="partnerAgencyName"
+              control={control}
+              label="Partner Agency Name"
+              isRequired
             />
           </FormField>
 
-          <FormField label="Type of Agency" htmlFor="agencyType">
+          <FormField>
             <SelectField
-              id="agencyType"
+              name="agencyType"
+              control={control}
+              label="Type of Agency"
               options={AgencyType.options}
-              registration={register("agencyType")}
             />
           </FormField>
 
           {agencyType === "Other" && (
-            <FormField
-              label="Specify Agency Type"
-              htmlFor="agencyTypeOther"
-              required
-              error={errors.agencyTypeOther}
-            >
+            <FormField>
               <TextInput
-                id="agencyTypeOther"
-                registration={register("agencyTypeOther")}
+                name="agencyTypeOther"
+                control={control}
+                label="Specify Agency Type"
+                isRequired
               />
             </FormField>
           )}
@@ -120,46 +103,37 @@ export function ReferralDetailsSection({ form }: ReferralDetailsSectionProps) {
       )}
 
       {showSDPRField && (
-        <FormField label="Person ID" htmlFor="personId">
-          <TextInput id="personId" registration={register("personId")} />
+        <FormField>
+          <TextInput name="personId" control={control} label="Person ID" />
         </FormField>
       )}
 
-      <FormField
-        label="Full Name (Required)"
-        htmlFor="referrerContactName"
-        required
-        error={errors.referrerContactName}
-      >
+      <FormField>
         <TextInput
-          id="referrerContactName"
-          registration={register("referrerContactName")}
+          name="referrerContactName"
+          control={control}
+          label="Full Name"
+          isRequired
         />
       </FormField>
 
-      <FormField
-        label="Phone Number (Required)"
-        htmlFor="referrerPhone"
-        required
-        error={errors.referrerPhone}
-      >
+      <FormField>
         <TextInput
-          id="referrerPhone"
+          name="referrerPhone"
+          control={control}
+          label="Phone Number"
           type="tel"
-          registration={register("referrerPhone")}
+          isRequired
         />
       </FormField>
 
-      <FormField
-        label="Email (Required)"
-        htmlFor="referrerEmail"
-        required
-        error={errors.referrerEmail}
-      >
+      <FormField>
         <TextInput
-          id="referrerEmail"
+          name="referrerEmail"
+          control={control}
+          label="Email"
           type="email"
-          registration={register("referrerEmail")}
+          isRequired
         />
       </FormField>
     </section>
