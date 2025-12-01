@@ -1,0 +1,130 @@
+/* App Layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f2f2f2;
+}
+
+/* Form Card Container */
+.referral-form-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Blue Header Banner */
+.referral-form-container h1 {
+  background-color: #003366;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 1rem 2rem;
+  text-align: center;
+}
+
+/* Form Content */
+.referral-form-container form {
+  padding: 2rem;
+}
+
+/* Section Headers */
+.referral-form-container h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #313132;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d6d6d6;
+}
+
+.referral-form-container h2:first-of-type {
+  margin-top: 0;
+}
+
+.referral-form-container section {
+  margin-bottom: 1.5rem;
+}
+
+/* Form Field Layout - Two Column Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 2rem;
+}
+
+.form-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
+.form-field {
+  margin-bottom: 1rem;
+}
+
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+/* Make BC Gov form components stretch to full width */
+.form-grid > *,
+.form-grid .form-field {
+  width: 100%;
+}
+
+/* BC Gov TextField and TextArea full width */
+.form-grid [class*="TextField"],
+.form-grid [class*="TextArea"],
+.form-grid [class*="Select"] {
+  width: 100%;
+}
+
+/* Target the actual input/textarea elements inside BC Gov components */
+.form-grid input[type="text"],
+.form-grid input[type="email"],
+.form-grid input[type="tel"],
+.form-grid input[type="date"],
+.form-grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Form Actions */
+.form-actions {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #d6d6d6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Multi-select Field */
+.multi-select-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .referral-form-container form {
+    padding: 1rem;
+  }
+}

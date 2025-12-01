@@ -1,0 +1,24 @@
+/* Reset default styles - BC Gov Design Tokens handle theming */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "BC Sans", "Noto Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #f2f2f2;
+  color: #313132;
+}
+
+#root {
+  min-height: 100vh;
+}

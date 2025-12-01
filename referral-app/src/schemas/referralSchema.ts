@@ -36,24 +36,23 @@ export const AgencyType = z.enum([
 ]);
 
 export const RegionType = z.enum([
-  "Fraser South: Delta, Surrey, White Rock",
-  "Fraser North: Tri Cities, Mission, Burnaby",
-  "Fraser Valley: Maple Ridge, Hope",
+  "Fraser North: Tri Cities, New Westminster, Burnaby",
+  "Fraser Central/Surrey: Surrey, White Rock, North Delta",
+  "Fraser South: Abbotsford, Chilliwack, Hope",
+  "Vancouver DTES/Downtown",
+  "Vancouver Island Central & North (North of Malahat)",
+  "Interior North: Vernon, Kamloops, 100 Mile",
+  "Interior South & Kootenays: Kelowna, Nakusp, Cranbrook",
+  "Vancouver North & West: West End, North Shore, Whistler",
   "Northern BC (North of Williams Lake)",
-  "Central & North Vancouver Island (North of Malahat)",
-  "South Vancouver Island & Salt Spring Island",
-  "Central & Northern Interior: Vernon, Kamloops, 100 Mile",
-  "Southern Interior & Kootenays: Kelowna, Nakusp, Cranbrook",
-  "North & West Vancouver: Downtown Vancouver, Whistler",
+  "Vancouver East/South & Richmond; South Delta, Ladner, Tsawwassen",
+  "Vancouver Island South & Gulf Islands",
   "Sunshine Coast & Bowen Island",
-  "South Vancouver & Richmond",
-  "Vancouver DTES",
 ]);
 
 export const YesNoUnknown = z.enum(["Yes", "No", "Unknown"]);
 
 export const ReleaseFromType = z.enum([
-  "No",
   "Hospital/Medical Facility",
   "Corrections",
   "Youth Transition from MCFD",
@@ -97,35 +96,34 @@ const baseSchema = z.object({
 
   // Common referrer fields
   referrerContactName: z.string().min(1, "Contact name is required"),
-  referrerEmail: z.string().email("Please enter a valid email"),
+  referrerEmail: z.email({ message: "Please enter a valid email" }),
   referrerPhone: z.string().min(10, "Please enter a valid phone number"),
 
   // Section 2: Individual Information
   individualFirstName: z.string().min(1, "First name is required"),
   individualMiddleName: z.string().optional(),
-  individualLastName: z.string().optional(), // Optional in production form
+  individualLastName: z.string().optional(),
   individualPreferredName: z.string().optional(),
-  gainFile: z.string().optional(), // GAIN File (SA) field
+  gainFile: z.string().optional(),
   individualPhone: z.string().optional(),
-  individualDateOfBirth: z.string().optional(), // Will be date string from input
+  individualDateOfBirth: z.string().optional(),
   currentRegion: RegionType,
   specificCityTown: z.string().min(1, "Current city is required"),
-  secondaryContact: z.string().optional(),
-  bestWayToReach: z.string().optional(),
+  secondaryContact: z.string().max(100).optional(),
+  bestWayToReach: z.string().max(500).optional(),
 
   // Section 3: Housing Status & Critical Transitions
   currentlyHomeless: YesNoUnknown,
-  pendingRelease: ReleaseFromType,
+  atRiskOfLosingHousing: YesNoUnknown.optional(),
+  pendingRelease: ReleaseFromType.optional(),
+  releaseDischargeDate: z.string().optional(),
 
   // Section 4: Support Services
   currentlyConnectedSupports: z.array(SupportType).default([]),
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportType).default([]),
   neededSupportsOther: z.string().optional(),
-  referralSummary: z
-    .string()
-    .max(5000, "Summary must be less than 1000 words (approx 5000 characters)")
-    .optional(),
+  referralSummary: z.string().max(5000).optional(),
 });
 
 // Refined schema with conditional validation
@@ -134,14 +132,14 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
   if (data.referredBy === "Partner Ministry") {
     if (!data.ministryName) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Ministry name is required when referred by Partner Ministry",
         path: ["ministryName"],
       });
     }
     if (data.ministryName === "Other" && !data.ministryNameOther) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Please specify the ministry name",
         path: ["ministryNameOther"],
       });
@@ -152,7 +150,7 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
   if (data.referredBy === "Partner Agency") {
     if (!data.partnerAgencyName) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Partner agency name is required when referred by Partner Agency",
         path: ["partnerAgencyName"],
@@ -160,50 +158,78 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
     }
     if (data.agencyType === "Other" && !data.agencyTypeOther) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Please specify the agency type",
         path: ["agencyTypeOther"],
       });
     }
   }
 
+  // Conditional requiredness: atRiskOfLosingHousing required when homeless is "No" or "Unknown"
+  if (
+    (data.currentlyHomeless === "No" || data.currentlyHomeless === "Unknown") &&
+    !data.atRiskOfLosingHousing
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Please indicate if they are at risk of losing housing",
+      path: ["atRiskOfLosingHousing"],
+    });
+  }
+
   // Support "Others" validations
   if (
-    data.currentlyConnectedSupports.includes("Others" as any) &&
+    data.currentlyConnectedSupports.includes("Others") &&
     !data.currentlyConnectedSupportsOther
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Please specify other supports",
       path: ["currentlyConnectedSupportsOther"],
     });
   }
 
-  if (
-    data.neededSupports.includes("Others" as any) &&
-    !data.neededSupportsOther
-  ) {
+  if (data.neededSupports.includes("Others") && !data.neededSupportsOther) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Please specify other supports needed",
       path: ["neededSupportsOther"],
     });
   }
 });
 
-// Helper function to determine flags
-export function getReferralFlags(data: ReferralFormData): string[] {
-  const flags: string[] = [];
-
+/**
+ * Determines if the referral should be flagged as urgent
+ * Business Rules:
+ * 1. Experiencing Homelessness is Yes
+ * 2. At Risk of Losing Housing is Yes
+ * 3. Pending Release has a value AND Release/Discharge Date is within 3-4 days
+ */
+export function isUrgentReferral(data: ReferralFormData): boolean {
+  // Rule 1: Currently experiencing homelessness
   if (data.currentlyHomeless === "Yes") {
-    flags.push("HOUSING_RISK");
+    return true;
   }
 
-  if (data.pendingRelease !== "No") {
-    flags.push("CRITICAL_TRANSITION");
+  // Rule 2: At risk of losing housing
+  if (data.atRiskOfLosingHousing === "Yes") {
+    return true;
   }
 
-  return flags;
+  // Rule 3: Pending release with discharge date within 3-4 days
+  if (data.pendingRelease && data.releaseDischargeDate) {
+    const releaseDate = new Date(data.releaseDischargeDate);
+    const today = new Date();
+    const diffTime = releaseDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Within 3-4 days (0-4 days from now)
+    if (diffDays >= 0 && diffDays <= 4) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export type ReferralFormData = z.infer<typeof referralSchema>;
