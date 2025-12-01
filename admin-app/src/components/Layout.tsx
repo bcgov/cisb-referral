@@ -35,7 +35,9 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
-      <Footer />
+      <div className="app-footer">
+        <Footer />
+      </div>
     </div>
   );
 }

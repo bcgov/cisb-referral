@@ -2,13 +2,25 @@
 .app-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
   background-color: #f2f2f2;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
+}
+
+/* Footer */
+.app-footer {
+  flex-shrink: 0;
 }

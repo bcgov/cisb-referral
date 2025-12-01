@@ -78,6 +78,14 @@
   background-color: #f8f8f8;
 }
 
+.data-table tbody tr.clickable-row {
+  cursor: pointer;
+}
+
+.data-table tbody tr.clickable-row:hover {
+  background-color: #e8f4fd;
+}
+
 /* Column widths - using fixed table layout */
 .col-checkbox {
   width: 40px;
@@ -169,6 +177,19 @@
 }
 
 .icon-button:hover {
+  color: #003366;
+}
+
+/* Icon link */
+.icon-link {
+  display: inline-block;
+  font-size: 1rem;
+  color: #0066cc;
+  text-decoration: none;
+  padding: 0.25rem;
+}
+
+.icon-link:hover {
   color: #003366;
 }
 

@@ -1,9 +1,4 @@
 /* Sidebar Navigation */
-.app-body {
-  display: flex;
-  flex: 1;
-}
-
 .sidebar {
   width: 220px;
   background-color: #38598a;

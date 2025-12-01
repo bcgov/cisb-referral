@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import "./Referrals.css";
 
 interface Referral {
@@ -16,8 +17,25 @@ interface Referral {
 }
 
 export function Referrals() {
+  const navigate = useNavigate();
+
   // TODO: Fetch referrals from API
-  const referrals: Referral[] = [];
+  const referrals: Referral[] = [
+    {
+      id: 1,
+      urgent: true,
+      createdOn: "12/1/2024 2:30 PM",
+      referrerContactName: "Adam Hodgins",
+      referredBy: "Partner Ministry",
+      status: "Open",
+      outcome: "",
+      firstName: "John",
+      lastName: "Smith",
+      currentRegion: "Interior North: Vernon...",
+      city: "100 Mile",
+      teamMember: "",
+    },
+  ];
 
   return (
     <div className="page-container">
@@ -49,20 +67,31 @@ export function Referrals() {
               <th className="col-region">Current Region</th>
               <th className="col-city">City/Town</th>
               <th className="col-team-member">Team Member</th>
-              <th className="col-actions"></th>
             </tr>
           </thead>
           <tbody>
             {referrals.length === 0 ? (
               <tr>
-                <td colSpan={13} className="empty-state">
+                <td colSpan={12} className="empty-state">
                   No referrals found.
                 </td>
               </tr>
             ) : (
               referrals.map((referral) => (
-                <tr key={referral.id}>
-                  <td className="col-checkbox">
+                <tr
+                  key={referral.id}
+                  className="clickable-row"
+                  onClick={(e) => {
+                    // Don't navigate if clicking on checkbox
+                    if ((e.target as HTMLElement).tagName !== "INPUT") {
+                      navigate(`/referrals/${referral.id}`);
+                    }
+                  }}
+                >
+                  <td
+                    className="col-checkbox"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input type="checkbox" />
                   </td>
                   <td className="col-urgent">
@@ -88,11 +117,6 @@ export function Referrals() {
                   <td className="col-region">{referral.currentRegion}</td>
                   <td className="col-city">{referral.city}</td>
                   <td className="col-team-member">{referral.teamMember}</td>
-                  <td className="col-actions">
-                    <button className="icon-button" title="Open referral">
-                      ↗
-                    </button>
-                  </td>
                 </tr>
               ))
             )}

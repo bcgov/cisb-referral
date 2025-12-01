@@ -1,0 +1,73 @@
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.back-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* Detail Content */
+.detail-content {
+  padding: 1.5rem;
+  background-color: #ffffff;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.placeholder-text {
+  color: #606060;
+  font-style: italic;
+}
+
+/* Admin Notice */
+.admin-notice {
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+/* Audit Table */
+.audit-table-container {
+  overflow-x: auto;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.audit-table th,
+.audit-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.audit-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #313132;
+}
+
+.audit-table tbody tr:hover {
+  background-color: #f8f8f8;
+}
+
+.audit-table .empty-state {
+  text-align: center;
+  color: #606060;
+  padding: 2rem;
+}
