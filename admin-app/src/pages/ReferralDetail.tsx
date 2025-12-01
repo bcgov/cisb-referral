@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Tabs, Section, FieldGrid, Field } from "../components/ui";
-import "./ReferralDetail.css";
 
 type TabType = "details" | "referrer-individual" | "related";
 
@@ -18,13 +17,18 @@ export function ReferralDetail() {
   // TODO: Fetch referral from API using id
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="header-left">
-          <Link to="/referrals" className="back-link">
+    <div className="flex flex-col flex-1">
+      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+        <div className="flex flex-col gap-2">
+          <Link
+            to="/referrals"
+            className="text-bcgov-link no-underline text-sm hover:underline"
+          >
             ← Back to Referrals
           </Link>
-          <h1>Referral #{id}</h1>
+          <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
+            Referral #{id}
+          </h1>
         </div>
       </div>
 
@@ -34,7 +38,7 @@ export function ReferralDetail() {
         onTabChange={(tab) => setActiveTab(tab as TabType)}
       />
 
-      <div className="detail-content">
+      <div className="p-6 bg-white flex-1">
         {activeTab === "details" && <ReferralDetailsTab />}
         {activeTab === "referrer-individual" && <ReferrerIndividualTab />}
         {activeTab === "related" && <AuditHistoryTab />}
@@ -99,7 +103,7 @@ function ReferralDetailsTab() {
 function ReferrerIndividualTab() {
   return (
     <Section title="Referrer & Individual Information">
-      <p className="placeholder-text">
+      <p className="text-bcgov-gray italic">
         Referrer and individual information will be displayed here.
       </p>
     </Section>
@@ -112,24 +116,36 @@ function AuditHistoryTab() {
 
   return (
     <Section title="Audit History">
-      <p className="admin-notice">
+      <p className="text-amber-800 bg-amber-100 border border-amber-200 rounded p-3 text-sm mb-4">
         This section is only visible to system administrators.
       </p>
-      <div className="audit-table-container">
-        <table className="audit-table">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th>Date/Time</th>
-              <th>Action</th>
-              <th>Field Changed</th>
-              <th>Old Value</th>
-              <th>New Value</th>
-              <th>Changed By</th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                Date/Time
+              </th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                Action
+              </th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                Field Changed
+              </th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                Old Value
+              </th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                New Value
+              </th>
+              <th className="p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark">
+                Changed By
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan={6} className="empty-state">
+              <td colSpan={6} className="text-center text-bcgov-gray p-8">
                 No audit history available.
               </td>
             </tr>

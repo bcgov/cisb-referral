@@ -1,26 +1,30 @@
-/* Reset and base styles */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@import "tailwindcss";
+
+/* BC Gov Theme */
+@theme {
+  --font-family-sans: "BC Sans", "Noto Sans", Arial, sans-serif;
+
+  /* BC Gov Colors */
+  --color-bcgov-blue: #003366;
+  --color-bcgov-gold: #fcba19;
+  --color-bcgov-blue-light: #38598a;
+  --color-bcgov-blue-dark: #1a3a5c;
+  --color-bcgov-blue-hover: #2d4a73;
+  --color-bcgov-gray: #606060;
+  --color-bcgov-gray-dark: #313132;
+  --color-bcgov-gray-light: #f2f2f2;
+  --color-bcgov-border: #d6d6d6;
+  --color-bcgov-link: #0066cc;
 }
 
-:root {
-  font-family: "BC Sans", "Noto Sans", Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #313132;
-  background-color: #f2f2f2;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
+/* Base styles */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: var(--font-family-sans);
+  color: var(--color-bcgov-gray-dark);
+  background-color: var(--color-bcgov-gray-light);
 }
 
 #root {

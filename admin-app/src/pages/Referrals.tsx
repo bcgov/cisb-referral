@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import "./Referrals.css";
 
 interface Referral {
   id: number;
@@ -15,6 +14,13 @@ interface Referral {
   city: string;
   teamMember: string;
 }
+
+const statusStyles: Record<string, string> = {
+  open: "bg-blue-100 text-bcgov-link",
+  assigned: "bg-amber-100 text-amber-800",
+  contactmade: "bg-green-100 text-green-800",
+  closed: "bg-gray-100 text-bcgov-gray",
+};
 
 export function Referrals() {
   const navigate = useNavigate();
@@ -38,41 +44,65 @@ export function Referrals() {
   ];
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1>Referrals</h1>
-        <div className="page-actions">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+        <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
+          Referrals
+        </h1>
+        <div className="flex gap-2">
           <input
             type="text"
             placeholder="Filter by keyword"
-            className="filter-input"
+            className="py-2 px-3 border border-bcgov-border rounded text-sm w-50 focus:outline-none focus:border-bcgov-blue focus:ring-2 focus:ring-bcgov-blue/20"
           />
         </div>
       </div>
-      <div className="table-container">
-        <table className="data-table">
+      <div className="flex-1 overflow-auto bg-white">
+        <table className="w-full border-collapse text-sm table-fixed">
           <thead>
             <tr>
-              <th className="col-checkbox">
+              <th className="w-10 text-center p-3 border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10">
                 <input type="checkbox" />
               </th>
-              <th className="col-urgent">Urgent</th>
-              <th className="col-date">Created On</th>
-              <th className="col-contact-name">Referred By: Contact Name</th>
-              <th className="col-referred-by">Referred By</th>
-              <th className="col-status">Referral Status</th>
-              <th className="col-outcome">Referral Outcome</th>
-              <th className="col-name">First Name</th>
-              <th className="col-name">Last Name</th>
-              <th className="col-region">Current Region</th>
-              <th className="col-city">City/Town</th>
-              <th className="col-team-member">Team Member</th>
+              <th className="w-[70px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Urgent
+              </th>
+              <th className="w-[130px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Created On
+              </th>
+              <th className="w-40 p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Referred By: Contact Name
+              </th>
+              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Referred By
+              </th>
+              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Referral Status
+              </th>
+              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Referral Outcome
+              </th>
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                First Name
+              </th>
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Last Name
+              </th>
+              <th className="w-[140px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Current Region
+              </th>
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                City/Town
+              </th>
+              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                Team Member
+              </th>
             </tr>
           </thead>
           <tbody>
             {referrals.length === 0 ? (
               <tr>
-                <td colSpan={12} className="empty-state">
+                <td colSpan={12} className="text-center p-8 text-bcgov-gray">
                   No referrals found.
                 </td>
               </tr>
@@ -80,43 +110,60 @@ export function Referrals() {
               referrals.map((referral) => (
                 <tr
                   key={referral.id}
-                  className="clickable-row"
+                  className="cursor-pointer hover:bg-blue-50"
                   onClick={(e) => {
-                    // Don't navigate if clicking on checkbox
                     if ((e.target as HTMLElement).tagName !== "INPUT") {
                       navigate(`/referrals/${referral.id}`);
                     }
                   }}
                 >
                   <td
-                    className="col-checkbox"
+                    className="w-10 text-center p-3 border-b border-gray-200"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input type="checkbox" />
                   </td>
-                  <td className="col-urgent">
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.urgent ? "Yes" : "No"}
                   </td>
-                  <td className="col-date">{referral.createdOn}</td>
-                  <td className="col-contact-name">
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.createdOn}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.referrerContactName}
                   </td>
-                  <td className="col-referred-by">{referral.referredBy}</td>
-                  <td className="col-status">
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.referredBy}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     <span
-                      className={`status-badge status-${referral.status
-                        .toLowerCase()
-                        .replace("-", "")}`}
+                      className={`inline-block py-1 px-2 rounded text-xs font-medium ${
+                        statusStyles[
+                          referral.status.toLowerCase().replace("-", "")
+                        ] || ""
+                      }`}
                     >
                       {referral.status}
                     </span>
                   </td>
-                  <td className="col-outcome">{referral.outcome}</td>
-                  <td className="col-name">{referral.firstName}</td>
-                  <td className="col-name">{referral.lastName}</td>
-                  <td className="col-region">{referral.currentRegion}</td>
-                  <td className="col-city">{referral.city}</td>
-                  <td className="col-team-member">{referral.teamMember}</td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.outcome}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.firstName}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.lastName}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.currentRegion}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.city}
+                  </td>
+                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {referral.teamMember}
+                  </td>
                 </tr>
               ))
             )}

@@ -7,7 +7,6 @@ import {
   Ministries,
   AgencyTypes,
 } from "./pages";
-import "./App.css";
 
 function App() {
   return (
