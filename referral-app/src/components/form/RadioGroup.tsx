@@ -10,13 +10,13 @@ import {
 } from "react-hook-form";
 
 interface RadioGroupFieldProps<T extends FieldValues> {
-  name: FieldPath<T>;
-  control: Control<T>;
-  label: string;
-  options: readonly string[];
-  description?: string;
-  isRequired?: boolean;
-  orientation?: "horizontal" | "vertical";
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly label: string;
+  readonly options: readonly string[];
+  readonly description?: string;
+  readonly isRequired?: boolean;
+  readonly orientation?: "horizontal" | "vertical";
 }
 
 export function RadioGroupField<T extends FieldValues>({
@@ -27,7 +27,7 @@ export function RadioGroupField<T extends FieldValues>({
   description,
   isRequired = false,
   orientation = "horizontal",
-}: RadioGroupFieldProps<T>) {
+}: Readonly<RadioGroupFieldProps<T>>) {
   const {
     field,
     fieldState: { error },

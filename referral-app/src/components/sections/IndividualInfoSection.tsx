@@ -13,10 +13,12 @@ import {
 } from "../form";
 
 interface IndividualInfoSectionProps {
-  form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormData>;
 }
 
-export function IndividualInfoSection({ form }: IndividualInfoSectionProps) {
+export function IndividualInfoSection({
+  form,
+}: Readonly<IndividualInfoSectionProps>) {
   const { control, watch } = form;
 
   const currentlyHomeless = watch("currentlyHomeless");

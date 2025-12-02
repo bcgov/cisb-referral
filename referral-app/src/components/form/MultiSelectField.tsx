@@ -3,19 +3,19 @@ import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
 
 interface Option {
-  value: string;
-  label: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 interface MultiSelectFieldProps<T extends FieldValues> {
-  id: string;
-  name: FieldPath<T>;
-  control: Control<T>;
-  options: readonly string[];
-  placeholder?: string;
-  label?: string;
-  description?: string;
-  isRequired?: boolean;
+  readonly id: string;
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly options: readonly string[];
+  readonly placeholder?: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly isRequired?: boolean;
 }
 
 export function MultiSelectField<T extends FieldValues>({
@@ -27,7 +27,7 @@ export function MultiSelectField<T extends FieldValues>({
   label,
   description,
   isRequired = false,
-}: MultiSelectFieldProps<T>) {
+}: Readonly<MultiSelectFieldProps<T>>) {
   const {
     field: { onChange, value, ref },
     fieldState: { error },

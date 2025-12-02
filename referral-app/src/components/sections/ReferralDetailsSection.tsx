@@ -8,10 +8,12 @@ import {
 import { SelectField, TextInput } from "../form";
 
 interface ReferralDetailsSectionProps {
-  form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormData>;
 }
 
-export function ReferralDetailsSection({ form }: ReferralDetailsSectionProps) {
+export function ReferralDetailsSection({
+  form,
+}: Readonly<ReferralDetailsSectionProps>) {
   const { control, watch } = form;
 
   const referredBy = watch("referredBy");

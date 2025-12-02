@@ -7,12 +7,12 @@ import {
 } from "react-hook-form";
 
 interface TextAreaFieldProps<T extends FieldValues> {
-  name: FieldPath<T>;
-  control: Control<T>;
-  label: string;
-  description?: string;
-  maxLength?: number;
-  isRequired?: boolean;
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly label: string;
+  readonly description?: string;
+  readonly maxLength?: number;
+  readonly isRequired?: boolean;
 }
 
 export function TextAreaField<T extends FieldValues>({
@@ -22,7 +22,7 @@ export function TextAreaField<T extends FieldValues>({
   description,
   maxLength,
   isRequired = false,
-}: TextAreaFieldProps<T>) {
+}: Readonly<TextAreaFieldProps<T>>) {
   const {
     field,
     fieldState: { error },
