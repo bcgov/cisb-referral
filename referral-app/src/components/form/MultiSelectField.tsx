@@ -3,19 +3,42 @@ import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
 
 interface Option {
-  value: string;
-  label: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 interface MultiSelectFieldProps<T extends FieldValues> {
-  id: string;
-  name: FieldPath<T>;
-  control: Control<T>;
-  options: readonly string[];
-  placeholder?: string;
-  label?: string;
-  description?: string;
-  isRequired?: boolean;
+  readonly id: string;
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly options: readonly string[];
+  readonly placeholder?: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly isRequired?: boolean;
+}
+
+function getControlBorderColor(hasError: boolean, isFocused: boolean): string {
+  if (hasError) {
+    return "var(--support-border-color-danger)";
+  }
+  if (isFocused) {
+    return "var(--surface-color-border-active)";
+  }
+  return "var(--surface-color-border-default)";
+}
+
+function getOptionBackgroundColor(
+  isSelected: boolean,
+  isFocused: boolean
+): string {
+  if (isSelected) {
+    return "var(--surface-color-primary-button-default)";
+  }
+  if (isFocused) {
+    return "var(--surface-color-background-light-blue)";
+  }
+  return "transparent";
 }
 
 export function MultiSelectField<T extends FieldValues>({
@@ -27,7 +50,7 @@ export function MultiSelectField<T extends FieldValues>({
   label,
   description,
   isRequired = false,
-}: MultiSelectFieldProps<T>) {
+}: Readonly<MultiSelectFieldProps<T>>) {
   const {
     field: { onChange, value, ref },
     fieldState: { error },
@@ -86,11 +109,7 @@ export function MultiSelectField<T extends FieldValues>({
         styles={{
           control: (base, state) => ({
             ...base,
-            borderColor: error
-              ? "var(--support-border-color-danger)"
-              : state.isFocused
-              ? "var(--surface-color-border-active)"
-              : "var(--surface-color-border-default)",
+            borderColor: getControlBorderColor(!!error, state.isFocused),
             borderRadius: "var(--layout-border-radius-medium)",
             boxShadow: state.isFocused
               ? "0 0 0 2px var(--surface-color-border-active)"
@@ -101,11 +120,10 @@ export function MultiSelectField<T extends FieldValues>({
           }),
           option: (base, state) => ({
             ...base,
-            backgroundColor: state.isSelected
-              ? "var(--surface-color-primary-button-default)"
-              : state.isFocused
-              ? "var(--surface-color-background-light-blue)"
-              : "transparent",
+            backgroundColor: getOptionBackgroundColor(
+              state.isSelected,
+              state.isFocused
+            ),
           }),
         }}
       />

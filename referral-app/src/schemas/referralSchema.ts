@@ -126,58 +126,81 @@ const baseSchema = z.object({
   referralSummary: z.string().max(5000).optional(),
 });
 
-// Refined schema with conditional validation
-export const referralSchema = baseSchema.superRefine((data, ctx) => {
-  // Partner Ministry validations
-  if (data.referredBy === "Partner Ministry") {
-    if (!data.ministryName) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Ministry name is required when referred by Partner Ministry",
-        path: ["ministryName"],
-      });
-    }
-    if (data.ministryName === "Other" && !data.ministryNameOther) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Please specify the ministry name",
-        path: ["ministryNameOther"],
-      });
-    }
+// Helper type for base schema data
+type BaseSchemaData = z.infer<typeof baseSchema>;
+
+// Validation helper functions to reduce cognitive complexity
+function validatePartnerMinistry(
+  data: BaseSchemaData,
+  ctx: z.RefinementCtx
+): void {
+  if (data.referredBy !== "Partner Ministry") {
+    return;
   }
 
-  // Partner Agency validations
-  if (data.referredBy === "Partner Agency") {
-    if (!data.partnerAgencyName) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "Partner agency name is required when referred by Partner Agency",
-        path: ["partnerAgencyName"],
-      });
-    }
-    if (data.agencyType === "Other" && !data.agencyTypeOther) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Please specify the agency type",
-        path: ["agencyTypeOther"],
-      });
-    }
+  if (!data.ministryName) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Ministry name is required when referred by Partner Ministry",
+      path: ["ministryName"],
+    });
   }
 
-  // Conditional requiredness: atRiskOfLosingHousing required when homeless is "No" or "Unknown"
-  if (
-    (data.currentlyHomeless === "No" || data.currentlyHomeless === "Unknown") &&
-    !data.atRiskOfLosingHousing
-  ) {
+  if (data.ministryName === "Other" && !data.ministryNameOther) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Please specify the ministry name",
+      path: ["ministryNameOther"],
+    });
+  }
+}
+
+function validatePartnerAgency(
+  data: BaseSchemaData,
+  ctx: z.RefinementCtx
+): void {
+  if (data.referredBy !== "Partner Agency") {
+    return;
+  }
+
+  if (!data.partnerAgencyName) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Partner agency name is required when referred by Partner Agency",
+      path: ["partnerAgencyName"],
+    });
+  }
+
+  if (data.agencyType === "Other" && !data.agencyTypeOther) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Please specify the agency type",
+      path: ["agencyTypeOther"],
+    });
+  }
+}
+
+function validateHousingStatus(
+  data: BaseSchemaData,
+  ctx: z.RefinementCtx
+): void {
+  const requiresAtRiskField =
+    data.currentlyHomeless === "No" || data.currentlyHomeless === "Unknown";
+
+  if (requiresAtRiskField && !data.atRiskOfLosingHousing) {
     ctx.addIssue({
       code: "custom",
       message: "Please indicate if they are at risk of losing housing",
       path: ["atRiskOfLosingHousing"],
     });
   }
+}
 
-  // Support "Others" validations
+function validateSupportServices(
+  data: BaseSchemaData,
+  ctx: z.RefinementCtx
+): void {
   if (
     data.currentlyConnectedSupports.includes("Others") &&
     !data.currentlyConnectedSupportsOther
@@ -196,6 +219,14 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
       path: ["neededSupportsOther"],
     });
   }
+}
+
+// Refined schema with conditional validation
+export const referralSchema = baseSchema.superRefine((data, ctx) => {
+  validatePartnerMinistry(data, ctx);
+  validatePartnerAgency(data, ctx);
+  validateHousingStatus(data, ctx);
+  validateSupportServices(data, ctx);
 });
 
 /**

@@ -4,10 +4,12 @@ import { SupportType } from "../../schemas/referralSchema";
 import { FormField, TextInput, TextAreaField, MultiSelectField } from "../form";
 
 interface SupportServicesSectionProps {
-  form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormData>;
 }
 
-export function SupportServicesSection({ form }: SupportServicesSectionProps) {
+export function SupportServicesSection({
+  form,
+}: Readonly<SupportServicesSectionProps>) {
   const { control, watch } = form;
 
   const currentlyConnectedSupports = watch("currentlyConnectedSupports");

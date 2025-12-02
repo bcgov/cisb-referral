@@ -8,13 +8,13 @@ import {
 import type { Key } from "react-aria-components";
 
 interface SelectFieldProps<T extends FieldValues> {
-  name: FieldPath<T>;
-  control: Control<T>;
-  label: string;
-  options: readonly string[];
-  placeholder?: string;
-  description?: string;
-  isRequired?: boolean;
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly label: string;
+  readonly options: readonly string[];
+  readonly placeholder?: string;
+  readonly description?: string;
+  readonly isRequired?: boolean;
 }
 
 export function SelectField<T extends FieldValues>({
@@ -25,7 +25,7 @@ export function SelectField<T extends FieldValues>({
   placeholder = "Select an option",
   description,
   isRequired = false,
-}: SelectFieldProps<T>) {
+}: Readonly<SelectFieldProps<T>>) {
   const {
     field,
     fieldState: { error },

@@ -7,12 +7,12 @@ import {
 } from "react-hook-form";
 
 interface TextInputProps<T extends FieldValues> {
-  name: FieldPath<T>;
-  control: Control<T>;
-  label: string;
-  type?: "text" | "email" | "tel" | "password" | "url" | "date";
-  description?: string;
-  isRequired?: boolean;
+  readonly name: FieldPath<T>;
+  readonly control: Control<T>;
+  readonly label: string;
+  readonly type?: "text" | "email" | "tel" | "password" | "url" | "date";
+  readonly description?: string;
+  readonly isRequired?: boolean;
 }
 
 export function TextInput<T extends FieldValues>({
@@ -22,7 +22,7 @@ export function TextInput<T extends FieldValues>({
   type = "text",
   description,
   isRequired = false,
-}: TextInputProps<T>) {
+}: Readonly<TextInputProps<T>>) {
   const {
     field,
     fieldState: { error },
