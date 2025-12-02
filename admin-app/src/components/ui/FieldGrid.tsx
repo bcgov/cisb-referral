@@ -1,8 +1,8 @@
 interface FieldGridProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }
 
-export function FieldGrid({ children }: FieldGridProps) {
+export function FieldGrid({ children }: Readonly<FieldGridProps>) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 gap-x-8">
       {children}
@@ -11,12 +11,16 @@ export function FieldGrid({ children }: FieldGridProps) {
 }
 
 interface FieldProps {
-  label: string;
-  value?: string | null;
-  fullWidth?: boolean;
+  readonly label: string;
+  readonly value?: string | null;
+  readonly fullWidth?: boolean;
 }
 
-export function Field({ label, value, fullWidth = false }: FieldProps) {
+export function Field({
+  label,
+  value,
+  fullWidth = false,
+}: Readonly<FieldProps>) {
   return (
     <div className={`flex flex-col gap-1 ${fullWidth ? "md:col-span-2" : ""}`}>
       <label className="text-xs font-medium text-bcgov-gray uppercase tracking-wide">

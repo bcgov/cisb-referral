@@ -4,12 +4,12 @@ export interface Tab {
 }
 
 interface TabsProps {
-  tabs: readonly Tab[];
-  activeTab: string;
-  onTabChange: (tabId: string) => void;
+  readonly tabs: readonly Tab[];
+  readonly activeTab: string;
+  readonly onTabChange: (tabId: string) => void;
 }
 
-export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
+export function Tabs({ tabs, activeTab, onTabChange }: Readonly<TabsProps>) {
   return (
     <div className="flex bg-white border-b border-bcgov-border">
       {tabs.map((tab) => (
