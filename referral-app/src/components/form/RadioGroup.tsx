@@ -9,14 +9,25 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
+export interface SelectOption {
+  readonly id: string;
+  readonly name: string;
+}
+
+type OptionsType = readonly string[] | readonly SelectOption[];
+
 interface RadioGroupFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
   readonly control: Control<T>;
   readonly label: string;
-  readonly options: readonly string[];
+  readonly options: OptionsType;
   readonly description?: string;
   readonly isRequired?: boolean;
   readonly orientation?: "horizontal" | "vertical";
+}
+
+function isStringArray(options: OptionsType): options is readonly string[] {
+  return options.length === 0 || typeof options[0] === "string";
 }
 
 export function RadioGroupField<T extends FieldValues>({
@@ -33,6 +44,10 @@ export function RadioGroupField<T extends FieldValues>({
     fieldState: { error },
   } = useController({ name, control });
 
+  const items = isStringArray(options)
+    ? options.map((opt) => ({ id: opt, label: opt }))
+    : options.map((opt) => ({ id: opt.id, label: opt.name }));
+
   return (
     <BCGovRadioGroup
       label={label}
@@ -44,9 +59,9 @@ export function RadioGroupField<T extends FieldValues>({
       isInvalid={!!error}
       errorMessage={error?.message}
     >
-      {options.map((opt) => (
-        <Radio key={opt} value={opt}>
-          {opt}
+      {items.map((item) => (
+        <Radio key={item.id} value={item.id}>
+          {item.label}
         </Radio>
       ))}
     </BCGovRadioGroup>

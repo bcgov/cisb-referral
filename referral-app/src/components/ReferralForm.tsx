@@ -12,6 +12,7 @@ import {
   IndividualInfoSection,
   SupportServicesSection,
 } from "./sections";
+import { useLookupData } from "../hooks";
 
 const defaultValues: Partial<z.infer<typeof referralSchema>> = {
   currentlyConnectedSupports: [],
@@ -19,6 +20,9 @@ const defaultValues: Partial<z.infer<typeof referralSchema>> = {
 };
 
 export function ReferralForm() {
+  const { regions, ministries, agencyTypes, isLoading, error } =
+    useLookupData();
+
   const form = useForm<ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
     defaultValues,
@@ -31,12 +35,24 @@ export function ReferralForm() {
     alert(`Form submitted! Urgent: ${isUrgent}`);
   };
 
+  if (isLoading) {
+    return <div>Loading form...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading form data. Please try again later.</div>;
+  }
+
   return (
     <div className="referral-form-container">
       <h1>CISB Referral Form</h1>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <ReferralDetailsSection form={form} />
-        <IndividualInfoSection form={form} />
+        <ReferralDetailsSection
+          form={form}
+          ministries={ministries}
+          agencyTypes={agencyTypes}
+        />
+        <IndividualInfoSection form={form} regions={regions} />
         <SupportServicesSection form={form} />
         <div className="form-actions">
           <Button type="submit" variant="primary">

@@ -7,15 +7,26 @@ interface Option {
   readonly label: string;
 }
 
+export interface SelectOption {
+  readonly id: string;
+  readonly name: string;
+}
+
+type OptionsType = readonly string[] | readonly SelectOption[];
+
 interface MultiSelectFieldProps<T extends FieldValues> {
   readonly id: string;
   readonly name: FieldPath<T>;
   readonly control: Control<T>;
-  readonly options: readonly string[];
+  readonly options: OptionsType;
   readonly placeholder?: string;
   readonly label?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
+}
+
+function isStringArray(options: OptionsType): options is readonly string[] {
+  return options.length === 0 || typeof options[0] === "string";
 }
 
 function getControlBorderColor(hasError: boolean, isFocused: boolean): string {
@@ -59,10 +70,9 @@ export function MultiSelectField<T extends FieldValues>({
     control,
   });
 
-  const selectOptions: Option[] = options.map((opt) => ({
-    value: opt,
-    label: opt,
-  }));
+  const selectOptions: Option[] = isStringArray(options)
+    ? options.map((opt) => ({ value: opt, label: opt }))
+    : options.map((opt) => ({ value: opt.id, label: opt.name }));
 
   const selectedValues = selectOptions.filter((opt) =>
     (value as string[] | undefined)?.includes(opt.value)

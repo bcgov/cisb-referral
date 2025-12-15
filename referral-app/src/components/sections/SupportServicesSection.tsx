@@ -1,6 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 import type { ReferralFormData } from "../../schemas/referralSchema";
-import { SupportType } from "../../schemas/referralSchema";
+import { SupportType, SupportTypeOptions } from "../../schemas/referralSchema";
 import { FormField, TextInput, TextAreaField, MultiSelectField } from "../form";
 
 interface SupportServicesSectionProps {
@@ -15,9 +15,10 @@ export function SupportServicesSection({
   const currentlyConnectedSupports = watch("currentlyConnectedSupports");
   const neededSupports = watch("neededSupports");
 
-  const showCurrentSupportsOther =
-    currentlyConnectedSupports?.includes("Others");
-  const showNeededSupportsOther = neededSupports?.includes("Others");
+  const showCurrentSupportsOther = currentlyConnectedSupports?.includes(
+    SupportType.OTHERS
+  );
+  const showNeededSupportsOther = neededSupports?.includes(SupportType.OTHERS);
 
   return (
     <section>
@@ -30,7 +31,7 @@ export function SupportServicesSection({
               id="currentlyConnectedSupports"
               name="currentlyConnectedSupports"
               control={control}
-              options={SupportType.options}
+              options={SupportTypeOptions}
               placeholder="Select supports..."
               label="Which supports are they currently connected with? (Optional)"
             />
@@ -54,7 +55,7 @@ export function SupportServicesSection({
               id="neededSupports"
               name="neededSupports"
               control={control}
-              options={SupportType.options}
+              options={SupportTypeOptions}
               placeholder="Select supports..."
               label="Which supports do they need? (Optional)"
             />
