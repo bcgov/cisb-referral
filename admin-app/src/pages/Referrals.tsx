@@ -1,47 +1,59 @@
 import { useNavigate } from "react-router-dom";
-
-interface Referral {
-  id: number;
-  urgent: boolean;
-  createdOn: string;
-  referrerContactName: string;
-  referredBy: string;
-  status: string;
-  outcome: string;
-  firstName: string;
-  lastName: string;
-  currentRegion: string;
-  city: string;
-  teamMember: string;
-}
+import { useQuery } from "@tanstack/react-query";
+import { apiService } from "../services";
+import type { Referral } from "../types";
 
 const statusStyles: Record<string, string> = {
   open: "bg-blue-100 text-bcgov-link",
   assigned: "bg-amber-100 text-amber-800",
-  contactmade: "bg-green-100 text-green-800",
+  contact_made: "bg-green-100 text-green-800",
   closed: "bg-gray-100 text-bcgov-gray",
 };
+
+const referredByLabels: Record<string, string> = {
+  PARTNER_MINISTRY: "Partner Ministry",
+  SDPR_INTERNAL: "SDPR Internal",
+  PARTNER_AGENCY: "Partner Agency",
+};
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 export function Referrals() {
   const navigate = useNavigate();
 
-  // TODO: Fetch referrals from API
-  const referrals: Referral[] = [
-    {
-      id: 1,
-      urgent: true,
-      createdOn: "12/1/2024 2:30 PM",
-      referrerContactName: "Adam Hodgins",
-      referredBy: "Partner Ministry",
-      status: "Open",
-      outcome: "",
-      firstName: "John",
-      lastName: "Smith",
-      currentRegion: "Interior North: Vernon...",
-      city: "100 Mile",
-      teamMember: "",
-    },
-  ];
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["referrals"],
+    queryFn: () => apiService.fetchReferrals(),
+  });
+
+  const referrals = data?.data ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Loading referrals...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-red-600">
+          Error loading referrals. Please try again.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -107,7 +119,7 @@ export function Referrals() {
                 </td>
               </tr>
             ) : (
-              referrals.map((referral) => (
+              referrals.map((referral: Referral) => (
                 <tr
                   key={referral.id}
                   className="cursor-pointer hover:bg-blue-50"
@@ -124,45 +136,45 @@ export function Referrals() {
                     <input type="checkbox" />
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.urgent ? "Yes" : "No"}
+                    {referral.flag ? "Yes" : "No"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.createdOn}
+                    {formatDate(referral.createdAt)}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.referrerContactName}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.referredBy}
+                    {referredByLabels[referral.referredBy] ||
+                      referral.referredBy}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     <span
                       className={`inline-block py-1 px-2 rounded text-xs font-medium ${
-                        statusStyles[
-                          referral.status.toLowerCase().replace("-", "")
-                        ] || ""
+                        statusStyles[referral.referralStatus.toLowerCase()] ||
+                        ""
                       }`}
                     >
-                      {referral.status}
+                      {referral.referralStatus}
                     </span>
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.outcome}
+                    {referral.referralOutcome || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.firstName}
+                    {referral.individualFirstName}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.lastName}
+                    {referral.individualLastName}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.currentRegion}
+                    {referral.region?.name || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.city}
+                    {referral.city || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.teamMember}
+                    {referral.assignedToId || "—"}
                   </td>
                 </tr>
               ))
