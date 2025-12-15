@@ -77,25 +77,15 @@ enum ReferralOutcome {
 model Region {
   id                          String    @id @default(uuid())
   name                        String    @unique
-  managerUserId               String?
-  manager                     User?     @relation("RegionManager", fields: [managerUserId], references: [id])
   managerEmail                String?
-  supervisorUserId            String?
-  supervisor                  User?     @relation("RegionSupervisor", fields: [supervisorUserId], references: [id])
   supervisorEmail             String?
-  assistantSupervisorUserId   String?
-  assistantSupervisor         User?     @relation("RegionAssistantSupervisor", fields: [assistantSupervisorUserId], references: [id])
   assistantSupervisorEmail    String?
-  teamMemberUserId            String?
-  teamMember                  User?     @relation("RegionTeamMember", fields: [teamMemberUserId], references: [id])
-  teamMemberEmail             String?
   sharedMailboxEmail          String?
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
-  createdBy                   String?
-  
+
   referrals                   Referral[]
-  
+
   @@map("regions")
 }
 
@@ -145,12 +135,7 @@ model User {
   
   assignedReferrals         Referral[]   @relation("AssignedReferrals")
   statusHistoryEntries      ReferralStatusHistory[]
-  
-  managedRegions            Region[]     @relation("RegionManager")
-  supervisedRegions         Region[]     @relation("RegionSupervisor")
-  assistantSupervisedRegions Region[]    @relation("RegionAssistantSupervisor")
-  teamMemberRegions         Region[]     @relation("RegionTeamMember")
-  
+
   @@index([email])
   @@index([role])
   @@index([isActive])

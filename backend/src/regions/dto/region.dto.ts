@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegionDto {
   @ApiProperty()
@@ -7,30 +7,15 @@ export class RegionDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty({ required: false })
-  managerUserId?: number;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   managerEmail?: string;
 
-  @ApiProperty({ required: false })
-  supervisorUserId?: number;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   supervisorEmail?: string;
 
-  @ApiProperty({ required: false })
-  assistantSupervisorUserId?: number;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   assistantSupervisorEmail?: string;
 
-  @ApiProperty({ required: false })
-  teamMemberUserId?: number;
-
-  @ApiProperty({ required: false })
-  teamMemberEmail?: string;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   sharedMailboxEmail?: string;
 }
