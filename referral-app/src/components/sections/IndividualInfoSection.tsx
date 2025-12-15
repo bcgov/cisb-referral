@@ -54,7 +54,7 @@ export function IndividualInfoSection({
         <TextInput
           name="individualLastName"
           control={control}
-          label="Last Name (Optional)"
+          label="Last Name (Required)"
         />
 
         <TextInput
