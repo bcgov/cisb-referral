@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { z } from "zod";
@@ -5,7 +6,6 @@ import { Button } from "@bcgov/design-system-react-components";
 import {
   referralSchema,
   type ReferralFormData,
-  isUrgentReferral,
 } from "../schemas/referralSchema";
 import {
   ReferralDetailsSection,
@@ -13,6 +13,7 @@ import {
   SupportServicesSection,
 } from "./sections";
 import { useLookupData } from "../hooks";
+import { createReferral } from "../services";
 
 const defaultValues: Partial<z.infer<typeof referralSchema>> = {
   currentlyConnectedSupports: [],
@@ -23,16 +24,31 @@ export function ReferralForm() {
   const { regions, ministries, agencyTypes, isLoading, error } =
     useLookupData();
 
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "idle" | "loading" | "success" | "error";
+    message?: string;
+  }>({ type: "idle" });
+
   const form = useForm<ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
     defaultValues,
   });
 
-  const onSubmit = (data: ReferralFormData) => {
-    const isUrgent = isUrgentReferral(data);
-    console.log("Form submitted:", data);
-    console.log("Urgent:", isUrgent);
-    alert(`Form submitted! Urgent: ${isUrgent}`);
+  const onSubmit = async (data: ReferralFormData) => {
+    setSubmitStatus({ type: "loading" });
+
+    try {
+      const response = await createReferral(data);
+      setSubmitStatus({
+        type: "success",
+        message: `Referral submitted successfully! Reference: ${response.id}`,
+      });
+      form.reset();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to submit referral";
+      setSubmitStatus({ type: "error", message });
+    }
   };
 
   if (isLoading) {
@@ -46,6 +62,15 @@ export function ReferralForm() {
   return (
     <div className="referral-form-container">
       <h1>CISB Referral Form</h1>
+
+      {submitStatus.type === "success" && (
+        <div className="alert alert-success">{submitStatus.message}</div>
+      )}
+
+      {submitStatus.type === "error" && (
+        <div className="alert alert-error">{submitStatus.message}</div>
+      )}
+
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <ReferralDetailsSection
           form={form}
@@ -55,8 +80,14 @@ export function ReferralForm() {
         <IndividualInfoSection form={form} regions={regions} />
         <SupportServicesSection form={form} />
         <div className="form-actions">
-          <Button type="submit" variant="primary">
-            Submit Referral
+          <Button
+            type="submit"
+            variant="primary"
+            isDisabled={submitStatus.type === "loading"}
+          >
+            {submitStatus.type === "loading"
+              ? "Submitting..."
+              : "Submit Referral"}
           </Button>
         </div>
       </form>
