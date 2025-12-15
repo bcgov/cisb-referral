@@ -1,7 +1,27 @@
-import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+  Body,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { MinistriesService } from './ministries.service';
 import { MinistryDto } from './dto/ministry.dto';
+import { CreateMinistryDto } from './dto/create-ministry.dto';
+import { UpdateMinistryDto } from './dto/update-ministry.dto';
 import { Ministry } from '@prisma/client';
 
 @ApiTags('ministries')
@@ -35,9 +55,55 @@ export class MinistriesController {
     type: MinistryDto,
   })
   @ApiResponse({ status: 404, description: 'Ministry not found' })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<Ministry | null> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Ministry> {
     return this.ministriesService.findOne(id);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new ministry' })
+  @ApiBody({ type: CreateMinistryDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Ministry created successfully',
+    type: MinistryDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({
+    status: 409,
+    description: 'Ministry with this name already exists',
+  })
+  async create(
+    @Body() createMinistryDto: CreateMinistryDto,
+  ): Promise<Ministry> {
+    return this.ministriesService.create(createMinistryDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a ministry' })
+  @ApiBody({ type: UpdateMinistryDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Ministry updated successfully',
+    type: MinistryDto,
+  })
+  @ApiResponse({ status: 404, description: 'Ministry not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Ministry with this name already exists',
+  })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateMinistryDto: UpdateMinistryDto,
+  ): Promise<Ministry> {
+    return this.ministriesService.update(id, updateMinistryDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a ministry' })
+  @ApiResponse({ status: 204, description: 'Ministry deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Ministry not found' })
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    await this.ministriesService.remove(id);
   }
 }
