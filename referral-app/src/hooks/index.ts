@@ -1,0 +1,1 @@
+export { useLookupData } from "./useLookupData";
