@@ -1,26 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  fetchRegions,
-  fetchMinistries,
-  fetchAgencyTypes,
-} from "../services/api";
+import { apiService } from "../services";
 
 export function useLookupData() {
   const regions = useQuery({
     queryKey: ["regions"],
-    queryFn: fetchRegions,
+    queryFn: () => apiService.fetchRegions(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const ministries = useQuery({
     queryKey: ["ministries"],
-    queryFn: () => fetchMinistries(),
+    queryFn: () => apiService.fetchMinistries(),
     staleTime: 5 * 60 * 1000,
   });
 
   const agencyTypes = useQuery({
     queryKey: ["agency-types"],
-    queryFn: () => fetchAgencyTypes(),
+    queryFn: () => apiService.fetchAgencyTypes(),
     staleTime: 5 * 60 * 1000,
   });
 

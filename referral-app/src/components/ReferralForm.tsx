@@ -13,7 +13,7 @@ import {
   SupportServicesSection,
 } from "./sections";
 import { useLookupData } from "../hooks";
-import { createReferral } from "../services";
+import { apiService } from "../services";
 
 const defaultValues: Partial<z.infer<typeof referralSchema>> = {
   currentlyConnectedSupports: [],
@@ -38,7 +38,7 @@ export function ReferralForm() {
     setSubmitStatus({ type: "loading" });
 
     try {
-      const response = await createReferral(data);
+      const response = await apiService.createReferral(data);
       setSubmitStatus({
         type: "success",
         message: `Referral submitted successfully! Reference: ${response.id}`,
