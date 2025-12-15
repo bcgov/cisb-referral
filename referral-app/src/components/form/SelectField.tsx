@@ -7,14 +7,25 @@ import {
 } from "react-hook-form";
 import type { Key } from "react-aria-components";
 
+export interface SelectOption {
+  readonly id: string;
+  readonly name: string;
+}
+
+type OptionsType = readonly string[] | readonly SelectOption[];
+
 interface SelectFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
   readonly control: Control<T>;
   readonly label: string;
-  readonly options: readonly string[];
+  readonly options: OptionsType;
   readonly placeholder?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
+}
+
+function isStringArray(options: OptionsType): options is readonly string[] {
+  return options.length === 0 || typeof options[0] === "string";
 }
 
 export function SelectField<T extends FieldValues>({
@@ -31,10 +42,9 @@ export function SelectField<T extends FieldValues>({
     fieldState: { error },
   } = useController({ name, control });
 
-  const items = options.map((opt) => ({
-    id: opt,
-    label: opt,
-  }));
+  const items = isStringArray(options)
+    ? options.map((opt) => ({ id: opt, label: opt }))
+    : options.map((opt) => ({ id: opt.id, label: opt.name }));
 
   const handleSelectionChange = (key: Key | null) => {
     field.onChange(key ?? "");
@@ -44,8 +54,8 @@ export function SelectField<T extends FieldValues>({
     <Select
       label={label}
       items={items}
-      selectedKey={field.value || null}
-      onSelectionChange={handleSelectionChange}
+      value={field.value || null}
+      onChange={handleSelectionChange}
       onBlur={field.onBlur}
       name={field.name}
       placeholder={placeholder}
