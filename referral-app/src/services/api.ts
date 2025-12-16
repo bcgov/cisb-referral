@@ -56,9 +56,13 @@ class APIService {
   async createReferral(
     data: Record<string, unknown>
   ): Promise<ReferralResponse> {
+    // Remove empty strings - backend expects undefined for optional fields
+    const cleanedData = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== "")
+    );
     const response = await this.client.post<ReferralResponse>(
       "/referrals",
-      data
+      cleanedData
     );
     return response.data;
   }

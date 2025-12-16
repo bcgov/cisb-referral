@@ -11,7 +11,7 @@ import {
   TextAreaField,
   RadioGroupField,
 } from "../form";
-import type { Region } from "../../services/api";
+import type { Region } from "../../types";
 
 interface IndividualInfoSectionProps {
   readonly form: UseFormReturn<ReferralFormData>;
@@ -74,6 +74,7 @@ export function IndividualInfoSection({
           name="individualDateOfBirth"
           control={control}
           label="Date of Birth (Optional)"
+          type="date"
         />
 
         <SelectField

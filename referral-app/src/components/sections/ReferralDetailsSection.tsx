@@ -5,7 +5,7 @@ import {
   ReferredByTypeOptions,
 } from "../../schemas/referralSchema";
 import { SelectField, TextInput } from "../form";
-import type { Ministry, AgencyType } from "../../services/api";
+import type { Ministry, AgencyType } from "../../types";
 
 interface ReferralDetailsSectionProps {
   readonly form: UseFormReturn<ReferralFormData>;
