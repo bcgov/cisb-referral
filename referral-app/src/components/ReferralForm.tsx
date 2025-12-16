@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { z } from "zod";
@@ -21,11 +22,12 @@ const defaultValues: Partial<z.infer<typeof referralSchema>> = {
 };
 
 export function ReferralForm() {
+  const navigate = useNavigate();
   const { regions, ministries, agencyTypes, isLoading, error } =
     useLookupData();
 
   const [submitStatus, setSubmitStatus] = useState<{
-    type: "idle" | "loading" | "success" | "error";
+    type: "idle" | "loading" | "error";
     message?: string;
   }>({ type: "idle" });
 
@@ -39,11 +41,7 @@ export function ReferralForm() {
 
     try {
       const response = await apiService.createReferral(data);
-      setSubmitStatus({
-        type: "success",
-        message: `Referral submitted successfully! Reference: ${response.id}`,
-      });
-      form.reset();
+      navigate(`/success?ref=${response.id}`);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to submit referral";
@@ -62,10 +60,6 @@ export function ReferralForm() {
   return (
     <div className="referral-form-container">
       <h1>CISB Referral Form</h1>
-
-      {submitStatus.type === "success" && (
-        <div className="alert alert-success">{submitStatus.message}</div>
-      )}
 
       {submitStatus.type === "error" && (
         <div className="alert alert-error">{submitStatus.message}</div>
