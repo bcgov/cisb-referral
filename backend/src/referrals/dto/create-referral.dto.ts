@@ -118,10 +118,10 @@ export class CreateReferralDto {
   @IsString()
   individualMiddleName?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  individualLastName: string;
+  individualLastName?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

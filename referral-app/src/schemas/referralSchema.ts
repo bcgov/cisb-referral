@@ -156,7 +156,7 @@ const baseSchema = z.object({
   // Section 2: Individual Information
   individualFirstName: z.string().min(1, "First name is required"),
   individualMiddleName: z.string().optional(),
-  individualLastName: z.string().min(1, "Last name is required"),
+  individualLastName: z.string().optional(),
   individualPreferredName: z.string().optional(),
   gainFile: z.string().optional(),
   individualPhone: z.string().optional(),
