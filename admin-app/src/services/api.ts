@@ -21,21 +21,8 @@ class APIService {
     });
 
     this.client.interceptors.response.use(
-      (response: AxiosResponse) => {
-        console.info(
-          `[API] ${response.config.method?.toUpperCase()} ${
-            response.config.url
-          } - ${response.status}`
-        );
-        return response;
-      },
-      (error) => {
-        console.error(
-          "[API] Request failed:",
-          error.response?.data || error.message
-        );
-        return Promise.reject(error);
-      }
+      (response: AxiosResponse) => response,
+      (error) => Promise.reject(error)
     );
   }
 
