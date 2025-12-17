@@ -1,14 +1,12 @@
 import Select from "react-select";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
-import type { SelectOption } from "../../types";
+import { isStringArray, type OptionsType } from "../../utils/formHelpers";
 
 interface Option {
   readonly value: string;
   readonly label: string;
 }
-
-type OptionsType = readonly string[] | readonly SelectOption[];
 
 interface MultiSelectFieldProps<T extends FieldValues> {
   readonly id: string;
@@ -19,10 +17,6 @@ interface MultiSelectFieldProps<T extends FieldValues> {
   readonly label?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
-}
-
-function isStringArray(options: OptionsType): options is readonly string[] {
-  return options.length === 0 || typeof options[0] === "string";
 }
 
 function getControlBorderColor(hasError: boolean, isFocused: boolean): string {

@@ -8,9 +8,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
-import type { SelectOption } from "../../types";
-
-type OptionsType = readonly string[] | readonly SelectOption[];
+import { isStringArray, type OptionsType } from "../../utils/formHelpers";
 
 interface RadioGroupFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -20,10 +18,6 @@ interface RadioGroupFieldProps<T extends FieldValues> {
   readonly description?: string;
   readonly isRequired?: boolean;
   readonly orientation?: "horizontal" | "vertical";
-}
-
-function isStringArray(options: OptionsType): options is readonly string[] {
-  return options.length === 0 || typeof options[0] === "string";
 }
 
 export function RadioGroupField<T extends FieldValues>({

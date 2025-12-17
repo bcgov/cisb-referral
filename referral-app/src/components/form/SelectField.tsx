@@ -6,9 +6,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { Key } from "react-aria-components";
-import type { SelectOption } from "../../types";
-
-type OptionsType = readonly string[] | readonly SelectOption[];
+import { isStringArray, type OptionsType } from "../../utils/formHelpers";
 
 interface SelectFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -18,10 +16,6 @@ interface SelectFieldProps<T extends FieldValues> {
   readonly placeholder?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
-}
-
-function isStringArray(options: OptionsType): options is readonly string[] {
-  return options.length === 0 || typeof options[0] === "string";
 }
 
 export function SelectField<T extends FieldValues>({
