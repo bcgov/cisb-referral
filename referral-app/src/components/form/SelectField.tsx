@@ -6,11 +6,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { Key } from "react-aria-components";
-
-export interface SelectOption {
-  readonly id: string;
-  readonly name: string;
-}
+import type { SelectOption } from "../../types";
 
 type OptionsType = readonly string[] | readonly SelectOption[];
 

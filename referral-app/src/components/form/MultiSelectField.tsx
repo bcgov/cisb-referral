@@ -1,15 +1,11 @@
 import Select from "react-select";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
+import type { SelectOption } from "../../types";
 
 interface Option {
   readonly value: string;
   readonly label: string;
-}
-
-export interface SelectOption {
-  readonly id: string;
-  readonly name: string;
 }
 
 type OptionsType = readonly string[] | readonly SelectOption[];

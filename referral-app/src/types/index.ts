@@ -28,3 +28,8 @@ export interface ReferralResponse {
   ministry?: Ministry;
   agencyType?: AgencyType;
 }
+
+export interface SelectOption {
+  readonly id: string;
+  readonly name: string;
+}

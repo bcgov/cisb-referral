@@ -8,11 +8,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
-
-export interface SelectOption {
-  readonly id: string;
-  readonly name: string;
-}
+import type { SelectOption } from "../../types";
 
 type OptionsType = readonly string[] | readonly SelectOption[];
 
