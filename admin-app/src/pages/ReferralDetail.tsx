@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, Section, FieldGrid, Field } from "../components/ui";
 import { apiService } from "../services";
+import { referredByLabels } from "../constants";
 import type { Referral } from "../types";
 
 type TabType = "details" | "referrer-individual" | "related";
@@ -12,12 +13,6 @@ const TABS = [
   { id: "referrer-individual", label: "Referrer & Individual Info" },
   { id: "related", label: "Audit History" },
 ] as const;
-
-const referredByLabels: Record<string, string> = {
-  PARTNER_MINISTRY: "Partner Ministry",
-  SDPR_INTERNAL: "SDPR Internal",
-  PARTNER_AGENCY: "Partner Agency",
-};
 
 const yesNoUnknownLabels: Record<string, string> = {
   YES: "Yes",

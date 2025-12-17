@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiService } from "../services";
+import { referredByLabels } from "../constants";
 import type { Referral } from "../types";
 
 const statusStyles: Record<string, string> = {
@@ -8,12 +9,6 @@ const statusStyles: Record<string, string> = {
   assigned: "bg-amber-100 text-amber-800",
   contact_made: "bg-green-100 text-green-800",
   closed: "bg-gray-100 text-bcgov-gray",
-};
-
-const referredByLabels: Record<string, string> = {
-  PARTNER_MINISTRY: "Partner Ministry",
-  SDPR_INTERNAL: "SDPR Internal",
-  PARTNER_AGENCY: "Partner Agency",
 };
 
 function formatDate(dateString: string): string {
