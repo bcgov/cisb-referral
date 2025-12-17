@@ -157,10 +157,10 @@ export function Referrals() {
                     {referral.referralOutcome || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.individualFirstName}
+                    {referral.individualFirstName || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.individualLastName}
+                    {referral.individualLastName || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.region?.name || "—"}
