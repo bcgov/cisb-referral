@@ -1,6 +1,7 @@
 import Select from "react-select";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
+import { isStringArray, type OptionsType } from "../../utils/formHelpers";
 
 interface Option {
   readonly value: string;
@@ -11,7 +12,7 @@ interface MultiSelectFieldProps<T extends FieldValues> {
   readonly id: string;
   readonly name: FieldPath<T>;
   readonly control: Control<T>;
-  readonly options: readonly string[];
+  readonly options: OptionsType;
   readonly placeholder?: string;
   readonly label?: string;
   readonly description?: string;
@@ -59,10 +60,9 @@ export function MultiSelectField<T extends FieldValues>({
     control,
   });
 
-  const selectOptions: Option[] = options.map((opt) => ({
-    value: opt,
-    label: opt,
-  }));
+  const selectOptions: Option[] = isStringArray(options)
+    ? options.map((opt) => ({ value: opt, label: opt }))
+    : options.map((opt) => ({ value: opt.id, label: opt.name }));
 
   const selectedValues = selectOptions.filter((opt) =>
     (value as string[] | undefined)?.includes(opt.value)

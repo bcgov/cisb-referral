@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, Section, FieldGrid, Field } from "../components/ui";
+import { apiService } from "../services";
+import { referredByLabels } from "../constants";
+import type { Referral } from "../types";
 
 type TabType = "details" | "referrer-individual" | "related";
 
@@ -10,11 +14,86 @@ const TABS = [
   { id: "related", label: "Audit History" },
 ] as const;
 
+const yesNoUnknownLabels: Record<string, string> = {
+  YES: "Yes",
+  NO: "No",
+  UNKNOWN: "Unknown",
+};
+
+const releaseFromLabels: Record<string, string> = {
+  NO: "No",
+  HOSPITAL_MEDICAL_FACILITY: "Hospital/Medical Facility",
+  CORRECTIONS: "Corrections",
+  YOUTH_TRANSITION_MCFD: "Youth Transition (MCFD)",
+  YOUTH_TRANSITION_DELEGATED_ABORIGINAL_AGENCY:
+    "Youth Transition (Delegated Aboriginal Agency)",
+  ALCOHOL_DRUG_FACILITY: "Alcohol/Drug Facility",
+};
+
+const supportLabels: Record<string, string> = {
+  CULTURAL: "Cultural",
+  COMMUNITY_SUPPORTS: "Community Supports",
+  FOOD_SECURITY: "Food Security",
+  HOUSING: "Housing",
+  INCOME_ASSISTANCE_PROVINCIAL: "Income Assistance (Provincial)",
+  INCOME_ASSISTANCE_FEDERAL: "Income Assistance (Federal)",
+  MENTAL_HEALTH: "Mental Health",
+  SYSTEM_NAVIGATION: "System Navigation",
+  HEALTH_SERVICES: "Health Services",
+  SUBSTANCE_USE: "Substance Use",
+  INDIGENOUS_SUPPORTS: "Indigenous Supports",
+  INTEGRATED_JUSTICE_SUPPORTS: "Integrated Justice Supports",
+  OTHERS: "Others",
+};
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatSupports(supports: string[]): string {
+  if (!supports || supports.length === 0) return "—";
+  return supports.map((s) => supportLabels[s] || s).join(", ");
+}
+
 export function ReferralDetail() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("details");
 
-  // TODO: Fetch referral from API using id
+  const {
+    data: referral,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["referral", id],
+    queryFn: () => apiService.fetchReferral(id!),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Loading referral...</p>
+      </div>
+    );
+  }
+
+  if (error || !referral) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-red-600">
+          Error loading referral. Please try again.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -39,74 +118,153 @@ export function ReferralDetail() {
       />
 
       <div className="p-6 bg-white flex-1">
-        {activeTab === "details" && <ReferralDetailsTab />}
-        {activeTab === "referrer-individual" && <ReferrerIndividualTab />}
+        {activeTab === "details" && <ReferralDetailsTab referral={referral} />}
+        {activeTab === "referrer-individual" && (
+          <ReferrerIndividualTab referral={referral} />
+        )}
         {activeTab === "related" && <AuditHistoryTab />}
       </div>
     </div>
   );
 }
 
-function ReferralDetailsTab() {
+interface TabProps {
+  referral: Referral;
+}
+
+function ReferralDetailsTab({ referral }: TabProps) {
   return (
     <>
       <Section title="Referral Outcome and Assignment">
         <FieldGrid>
-          <Field label="Referral Outcome" value="—" />
-          <Field label="Assigned Team Member" value="—" />
-          <Field label="Community Partner Name" value="—" />
-          <Field label="Assigned Team Member Email" value="—" />
+          <Field
+            label="Referral Outcome"
+            value={referral.referralOutcome || "—"}
+          />
+          <Field
+            label="Assigned Team Member"
+            value={referral.assignedToId || "—"}
+          />
+          <Field
+            label="Community Partner Name"
+            value={referral.partnerAgencyName || "—"}
+          />
         </FieldGrid>
       </Section>
 
       <Section title="Referred By Info">
         <FieldGrid>
-          <Field label="Referred By" value="—" />
-          <Field label="Name of Agency" value="—" />
-          <Field label="Name of Ministry" value="—" />
-          <Field label="Type of Agency" value="—" />
-          <Field label="Other Ministry" value="—" />
-          <Field label="Other Agency" value="—" />
-          <Field label="Program Area" value="—" />
+          <Field
+            label="Referred By"
+            value={referredByLabels[referral.referredBy] || referral.referredBy}
+          />
+          <Field
+            label="Name of Ministry"
+            value={referral.ministry?.name || "—"}
+          />
+          <Field
+            label="Type of Agency"
+            value={referral.agencyType?.name || "—"}
+          />
+          <Field label="Program Area" value={referral.programArea || "—"} />
         </FieldGrid>
       </Section>
 
       <Section title="Progress and Status">
         <FieldGrid>
-          <Field label="Referral Status" value="—" />
-          <Field label="Flagged Urgent" value="—" />
-          <Field label="Assigned On" value="—" />
-          <Field label="First Contact Made On" value="—" />
-          <Field label="Length Of Time To Triage (Hours)" value="—" />
+          <Field label="Referral Status" value={referral.referralStatus} />
+          <Field label="Flagged Urgent" value={referral.flag ? "Yes" : "No"} />
+          <Field label="Assigned On" value={formatDate(referral.assignedOn)} />
           <Field
-            label="Length Of Time To Contact After Triage (Hours)"
-            value="—"
+            label="First Contact Made On"
+            value={formatDate(referral.firstContactMadeOn)}
+          />
+          <Field label="Created At" value={formatDate(referral.createdAt)} />
+        </FieldGrid>
+      </Section>
+
+      <Section title="Housing & Release Info">
+        <FieldGrid>
+          <Field
+            label="Homelessness"
+            value={yesNoUnknownLabels[referral.homelessness || ""] || "—"}
+          />
+          <Field
+            label="At Risk of Losing Housing"
+            value={yesNoUnknownLabels[referral.losingHousing || ""] || "—"}
+          />
+          <Field
+            label="Pending Release From"
+            value={releaseFromLabels[referral.pendingRelease || ""] || "—"}
+          />
+          <Field
+            label="Release Date"
+            value={formatDate(referral.releaseDate)}
           />
         </FieldGrid>
       </Section>
 
-      <Section title="Other Details">
+      <Section title="Support Services">
         <FieldGrid>
-          <Field label="Supports Currently Connected" value="—" />
-          <Field label="Current Region" value="—" />
-          <Field label="Other Currently Connected Supports" value="—" />
-          <Field label="Specific City/Town" value="—" />
-          <Field label="Needed Supports" value="—" />
-          <Field label="Referral Reason" value="—" fullWidth />
-          <Field label="Other Needed Supports" value="—" />
+          <Field
+            label="Currently Connected Supports"
+            value={formatSupports(referral.currentlyConnectedSupports)}
+            fullWidth
+          />
+          <Field
+            label="Needed Supports"
+            value={formatSupports(referral.neededSupports)}
+            fullWidth
+          />
+          <Field label="Current Region" value={referral.region?.name || "—"} />
+          <Field label="Specific City/Town" value={referral.city || "—"} />
+          <Field
+            label="Additional Information"
+            value={referral.additionalInformation || "—"}
+            fullWidth
+          />
         </FieldGrid>
       </Section>
     </>
   );
 }
 
-function ReferrerIndividualTab() {
+function ReferrerIndividualTab({ referral }: TabProps) {
   return (
-    <Section title="Referrer & Individual Information">
-      <p className="text-bcgov-gray italic">
-        Referrer and individual information will be displayed here.
-      </p>
-    </Section>
+    <>
+      <Section title="Referrer Contact Information">
+        <FieldGrid>
+          <Field label="Contact Name" value={referral.referrerContactName} />
+          <Field label="Contact Email" value={referral.referrerContactEmail} />
+          <Field
+            label="Contact Phone"
+            value={referral.referrerContactPhone || "—"}
+          />
+        </FieldGrid>
+      </Section>
+
+      <Section title="Individual Information">
+        <FieldGrid>
+          <Field label="First Name" value={referral.individualFirstName} />
+          <Field label="Last Name" value={referral.individualLastName} />
+          <Field
+            label="Preferred Name"
+            value={referral.individualPreferredName || "—"}
+          />
+          <Field
+            label="Date of Birth"
+            value={formatDate(referral.individualDateOfBirth)}
+          />
+          <Field label="Pronouns" value={referral.individualPronouns || "—"} />
+          <Field label="Email" value={referral.individualEmail || "—"} />
+          <Field label="Phone" value={referral.individualPhone || "—"} />
+          <Field
+            label="Consent to Contact"
+            value={referral.consentToContact ? "Yes" : "No"}
+          />
+        </FieldGrid>
+      </Section>
+    </>
   );
 }
 

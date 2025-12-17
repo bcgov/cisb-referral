@@ -2,27 +2,29 @@ import type { UseFormReturn } from "react-hook-form";
 import type { ReferralFormData } from "../../schemas/referralSchema";
 import {
   ReferredByType,
-  MinistryName,
-  AgencyType,
+  ReferredByTypeOptions,
 } from "../../schemas/referralSchema";
 import { SelectField, TextInput } from "../form";
+import type { Ministry, AgencyType } from "../../types";
 
 interface ReferralDetailsSectionProps {
   readonly form: UseFormReturn<ReferralFormData>;
+  readonly ministries: Ministry[];
+  readonly agencyTypes: AgencyType[];
 }
 
 export function ReferralDetailsSection({
   form,
+  ministries,
+  agencyTypes,
 }: Readonly<ReferralDetailsSectionProps>) {
   const { control, watch } = form;
 
   const referredBy = watch("referredBy");
-  const ministryName = watch("ministryName");
-  const agencyType = watch("agencyType");
 
-  const showMinistryFields = referredBy === "Partner Ministry";
-  const showAgencyFields = referredBy === "Partner Agency";
-  const showSDPRField = referredBy === "SDPR Internal";
+  const showMinistryFields = referredBy === ReferredByType.PARTNER_MINISTRY;
+  const showAgencyFields = referredBy === ReferredByType.PARTNER_AGENCY;
+  const showSDPRField = referredBy === ReferredByType.SDPR_INTERNAL;
 
   return (
     <section>
@@ -33,7 +35,7 @@ export function ReferralDetailsSection({
           name="referredBy"
           control={control}
           label="Referred By"
-          options={ReferredByType.options}
+          options={ReferredByTypeOptions}
           isRequired
         />
 
@@ -64,21 +66,18 @@ export function ReferralDetailsSection({
       {showMinistryFields && (
         <div className="form-grid">
           <SelectField
-            name="ministryName"
+            name="ministryId"
             control={control}
             label="Name of Ministry"
-            options={MinistryName.options}
+            options={ministries}
             isRequired
           />
 
-          {ministryName === "Other" && (
-            <TextInput
-              name="ministryNameOther"
-              control={control}
-              label="Specify Ministry"
-              isRequired
-            />
-          )}
+          <TextInput
+            name="ministryNameOther"
+            control={control}
+            label="Specify Ministry (if not listed)"
+          />
 
           <TextInput
             name="programArea"
@@ -98,20 +97,17 @@ export function ReferralDetailsSection({
           />
 
           <SelectField
-            name="agencyType"
+            name="agencyTypeId"
             control={control}
             label="Type of Agency"
-            options={AgencyType.options}
+            options={agencyTypes}
           />
 
-          {agencyType === "Other" && (
-            <TextInput
-              name="agencyTypeOther"
-              control={control}
-              label="Specify Agency Type"
-              isRequired
-            />
-          )}
+          <TextInput
+            name="agencyTypeOther"
+            control={control}
+            label="Specify Agency Type (if not listed)"
+          />
         </div>
       )}
 

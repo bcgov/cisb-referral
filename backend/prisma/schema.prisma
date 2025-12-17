@@ -180,15 +180,15 @@ model Referral {
   referrerContactName   String
   referrerEmail         String
   referrerPhone         String
-  
+
   individualFirstName   String
   individualMiddleName  String?
-  individualLastName    String
+  individualLastName    String?
   individualPreferredName String?
   gainFile              String?
   individualDateOfBirth DateTime?   @db.Date
   individualPhone       String?
-  
+
   regionId              String
   region                Region       @relation(fields: [regionId], references: [id])
   specificCityTown      String

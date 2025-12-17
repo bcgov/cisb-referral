@@ -1,94 +1,148 @@
 import { z } from "zod";
 
-// Enum types for dropdowns - matches exact production form
-export const ReferredByType = z.enum([
-  "Partner Ministry",
-  "SDPR Internal",
-  "Partner Agency",
+// Backend enum values with display labels
+// These match the Prisma schema enums exactly
+
+export const ReferredByType = {
+  PARTNER_MINISTRY: "PARTNER_MINISTRY",
+  SDPR_INTERNAL: "SDPR_INTERNAL",
+  PARTNER_AGENCY: "PARTNER_AGENCY",
+} as const;
+
+export const ReferredByTypeLabels: Record<string, string> = {
+  PARTNER_MINISTRY: "Partner Ministry",
+  SDPR_INTERNAL: "SDPR Internal",
+  PARTNER_AGENCY: "Partner Agency",
+};
+
+export const ReferredByTypeOptions = Object.entries(ReferredByTypeLabels).map(
+  ([id, name]) => ({ id, name })
+);
+
+export const YesNoUnknown = {
+  YES: "YES",
+  NO: "NO",
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export const YesNoUnknownLabels: Record<string, string> = {
+  YES: "Yes",
+  NO: "No",
+  UNKNOWN: "Unknown",
+};
+
+export const YesNoUnknownOptions = Object.entries(YesNoUnknownLabels).map(
+  ([id, name]) => ({ id, name })
+);
+
+export const ReleaseFromType = {
+  HOSPITAL_MEDICAL_FACILITY: "HOSPITAL_MEDICAL_FACILITY",
+  CORRECTIONS: "CORRECTIONS",
+  YOUTH_TRANSITION_MCFD: "YOUTH_TRANSITION_MCFD",
+  YOUTH_TRANSITION_DELEGATED_ABORIGINAL_AGENCY:
+    "YOUTH_TRANSITION_DELEGATED_ABORIGINAL_AGENCY",
+  ALCOHOL_DRUG_FACILITY: "ALCOHOL_DRUG_FACILITY",
+} as const;
+
+export const ReleaseFromTypeLabels: Record<string, string> = {
+  HOSPITAL_MEDICAL_FACILITY: "Hospital/Medical Facility",
+  CORRECTIONS: "Corrections",
+  YOUTH_TRANSITION_MCFD: "Youth Transition from MCFD",
+  YOUTH_TRANSITION_DELEGATED_ABORIGINAL_AGENCY:
+    "Youth Transition from Delegated Aboriginal Agency",
+  ALCOHOL_DRUG_FACILITY: "Alcohol and Drug Facility",
+};
+
+export const ReleaseFromTypeOptions = Object.entries(ReleaseFromTypeLabels).map(
+  ([id, name]) => ({ id, name })
+);
+
+export const SupportType = {
+  CULTURAL: "CULTURAL",
+  COMMUNITY_SUPPORTS: "COMMUNITY_SUPPORTS",
+  FOOD_SECURITY: "FOOD_SECURITY",
+  HOUSING: "HOUSING",
+  INCOME_ASSISTANCE_PROVINCIAL: "INCOME_ASSISTANCE_PROVINCIAL",
+  INCOME_ASSISTANCE_FEDERAL: "INCOME_ASSISTANCE_FEDERAL",
+  MENTAL_HEALTH: "MENTAL_HEALTH",
+  SYSTEM_NAVIGATION: "SYSTEM_NAVIGATION",
+  HEALTH_SERVICES: "HEALTH_SERVICES",
+  SUBSTANCE_USE: "SUBSTANCE_USE",
+  INDIGENOUS_SUPPORTS: "INDIGENOUS_SUPPORTS",
+  INTEGRATED_JUSTICE_SUPPORTS: "INTEGRATED_JUSTICE_SUPPORTS",
+  OTHERS: "OTHERS",
+} as const;
+
+export const SupportTypeLabels: Record<string, string> = {
+  CULTURAL: "Cultural",
+  COMMUNITY_SUPPORTS: "Community Supports",
+  FOOD_SECURITY: "Food Security",
+  HOUSING: "Housing",
+  INCOME_ASSISTANCE_PROVINCIAL: "Income Assistance - Provincial",
+  INCOME_ASSISTANCE_FEDERAL: "Income Assistance - Federal",
+  MENTAL_HEALTH: "Mental Health",
+  SYSTEM_NAVIGATION: "System Navigation",
+  HEALTH_SERVICES: "Health Services",
+  SUBSTANCE_USE: "Substance Use",
+  INDIGENOUS_SUPPORTS: "Indigenous Supports",
+  INTEGRATED_JUSTICE_SUPPORTS: "Integrated Justice Supports",
+  OTHERS: "Others",
+};
+
+export const SupportTypeOptions = Object.entries(SupportTypeLabels).map(
+  ([id, name]) => ({ id, name })
+);
+
+// Zod enums using backend values
+const ReferredByEnum = z.enum([
+  ReferredByType.PARTNER_MINISTRY,
+  ReferredByType.SDPR_INTERNAL,
+  ReferredByType.PARTNER_AGENCY,
 ]);
 
-export const MinistryName = z.enum([
-  "Ministry of Social Development & Poverty Reduction",
-  "Ministry of Children and Family Development",
-  "Ministry of Citizens' Services",
-  "Ministry of Forests, Lands and Natural Resources",
-  "Ministry of Health",
-  "Ministry of Housing",
-  "Ministry of Mental Health and Addictions",
-  "Ministry of Transportation and Infrastructure",
-  "Ministry of Emergency Management and Climate Readiness",
-  "Ministry of Attorney General",
-  "Other",
+const YesNoUnknownEnum = z.enum([
+  YesNoUnknown.YES,
+  YesNoUnknown.NO,
+  YesNoUnknown.UNKNOWN,
 ]);
 
-export const AgencyType = z.enum([
-  "Advocate",
-  "BC Housing",
-  "Community Living BC",
-  "Food Security",
-  "Housing",
-  "Health Authority",
-  "Legal Services",
-  "Immigration Services",
-  "Youth Services",
-  "Indigenous Services",
-  "Other",
+const ReleaseFromEnum = z.enum([
+  ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
+  ReleaseFromType.CORRECTIONS,
+  ReleaseFromType.YOUTH_TRANSITION_MCFD,
+  ReleaseFromType.YOUTH_TRANSITION_DELEGATED_ABORIGINAL_AGENCY,
+  ReleaseFromType.ALCOHOL_DRUG_FACILITY,
 ]);
 
-export const RegionType = z.enum([
-  "Fraser North: Tri Cities, New Westminster, Burnaby",
-  "Fraser Central/Surrey: Surrey, White Rock, North Delta",
-  "Fraser South: Abbotsford, Chilliwack, Hope",
-  "Vancouver DTES/Downtown",
-  "Vancouver Island Central & North (North of Malahat)",
-  "Interior North: Vernon, Kamloops, 100 Mile",
-  "Interior South & Kootenays: Kelowna, Nakusp, Cranbrook",
-  "Vancouver North & West: West End, North Shore, Whistler",
-  "Northern BC (North of Williams Lake)",
-  "Vancouver East/South & Richmond; South Delta, Ladner, Tsawwassen",
-  "Vancouver Island South & Gulf Islands",
-  "Sunshine Coast & Bowen Island",
-]);
-
-export const YesNoUnknown = z.enum(["Yes", "No", "Unknown"]);
-
-export const ReleaseFromType = z.enum([
-  "Hospital/Medical Facility",
-  "Corrections",
-  "Youth Transition from MCFD",
-  "Youth Transition from Delegated Aboriginal Agency",
-  "Alcohol and Drug Facility",
-]);
-
-export const SupportType = z.enum([
-  "Cultural",
-  "Community Supports",
-  "Food Security",
-  "Housing",
-  "Income Assistance - Provincial",
-  "Income Assistance - Federal",
-  "Mental Health",
-  "System Navigation",
-  "Health Services",
-  "Substance Use",
-  "Indigenous Supports",
-  "Integrated Justice Supports",
-  "Others",
+const SupportTypeEnum = z.enum([
+  SupportType.CULTURAL,
+  SupportType.COMMUNITY_SUPPORTS,
+  SupportType.FOOD_SECURITY,
+  SupportType.HOUSING,
+  SupportType.INCOME_ASSISTANCE_PROVINCIAL,
+  SupportType.INCOME_ASSISTANCE_FEDERAL,
+  SupportType.MENTAL_HEALTH,
+  SupportType.SYSTEM_NAVIGATION,
+  SupportType.HEALTH_SERVICES,
+  SupportType.SUBSTANCE_USE,
+  SupportType.INDIGENOUS_SUPPORTS,
+  SupportType.INTEGRATED_JUSTICE_SUPPORTS,
+  SupportType.OTHERS,
 ]);
 
 // Base schema for all fields
 const baseSchema = z.object({
   // Section 1: Referrer Information
-  referredBy: ReferredByType,
+  referredBy: ReferredByEnum,
 
-  // Conditional fields for Partner Ministry
-  ministryName: MinistryName.optional(),
+  // Conditional fields for Partner Ministry (now using ID reference)
+  ministryId: z.string().uuid().optional(),
   ministryNameOther: z.string().optional(),
   programArea: z.string().optional(),
 
   // Conditional fields for Partner Agency
   partnerAgencyName: z.string().optional(),
-  agencyType: AgencyType.optional(),
+  agencyTypeId: z.string().uuid().optional(),
   agencyTypeOther: z.string().optional(),
 
   // SDPR Internal
@@ -107,21 +161,21 @@ const baseSchema = z.object({
   gainFile: z.string().optional(),
   individualPhone: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
-  currentRegion: RegionType,
+  regionId: z.string().uuid("Please select a region"),
   specificCityTown: z.string().min(1, "Current city is required"),
   secondaryContact: z.string().max(100).optional(),
   bestWayToReach: z.string().max(500).optional(),
 
   // Section 3: Housing Status & Critical Transitions
-  currentlyHomeless: YesNoUnknown,
-  atRiskOfLosingHousing: YesNoUnknown.optional(),
-  pendingRelease: ReleaseFromType.optional(),
-  releaseDischargeDate: z.string().optional(),
+  currentlyHomeless: YesNoUnknownEnum,
+  losingHousing: YesNoUnknownEnum.optional(),
+  pendingRelease: ReleaseFromEnum.optional(),
+  releaseDate: z.string().optional(),
 
   // Section 4: Support Services
-  currentlyConnectedSupports: z.array(SupportType).default([]),
+  currentlyConnectedSupports: z.array(SupportTypeEnum).default([]),
   currentlyConnectedSupportsOther: z.string().optional(),
-  neededSupports: z.array(SupportType).default([]),
+  neededSupports: z.array(SupportTypeEnum).default([]),
   neededSupportsOther: z.string().optional(),
   referralSummary: z.string().max(5000).optional(),
 });
@@ -134,23 +188,15 @@ function validatePartnerMinistry(
   data: BaseSchemaData,
   ctx: z.RefinementCtx
 ): void {
-  if (data.referredBy !== "Partner Ministry") {
+  if (data.referredBy !== ReferredByType.PARTNER_MINISTRY) {
     return;
   }
 
-  if (!data.ministryName) {
+  if (!data.ministryId) {
     ctx.addIssue({
       code: "custom",
-      message: "Ministry name is required when referred by Partner Ministry",
-      path: ["ministryName"],
-    });
-  }
-
-  if (data.ministryName === "Other" && !data.ministryNameOther) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Please specify the ministry name",
-      path: ["ministryNameOther"],
+      message: "Ministry is required when referred by Partner Ministry",
+      path: ["ministryId"],
     });
   }
 }
@@ -159,7 +205,7 @@ function validatePartnerAgency(
   data: BaseSchemaData,
   ctx: z.RefinementCtx
 ): void {
-  if (data.referredBy !== "Partner Agency") {
+  if (data.referredBy !== ReferredByType.PARTNER_AGENCY) {
     return;
   }
 
@@ -171,28 +217,21 @@ function validatePartnerAgency(
       path: ["partnerAgencyName"],
     });
   }
-
-  if (data.agencyType === "Other" && !data.agencyTypeOther) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Please specify the agency type",
-      path: ["agencyTypeOther"],
-    });
-  }
 }
 
 function validateHousingStatus(
   data: BaseSchemaData,
   ctx: z.RefinementCtx
 ): void {
-  const requiresAtRiskField =
-    data.currentlyHomeless === "No" || data.currentlyHomeless === "Unknown";
+  const requiresLosingHousingField =
+    data.currentlyHomeless === YesNoUnknown.NO ||
+    data.currentlyHomeless === YesNoUnknown.UNKNOWN;
 
-  if (requiresAtRiskField && !data.atRiskOfLosingHousing) {
+  if (requiresLosingHousingField && !data.losingHousing) {
     ctx.addIssue({
       code: "custom",
       message: "Please indicate if they are at risk of losing housing",
-      path: ["atRiskOfLosingHousing"],
+      path: ["losingHousing"],
     });
   }
 }
@@ -202,7 +241,7 @@ function validateSupportServices(
   ctx: z.RefinementCtx
 ): void {
   if (
-    data.currentlyConnectedSupports.includes("Others") &&
+    data.currentlyConnectedSupports.includes(SupportType.OTHERS) &&
     !data.currentlyConnectedSupportsOther
   ) {
     ctx.addIssue({
@@ -212,7 +251,10 @@ function validateSupportServices(
     });
   }
 
-  if (data.neededSupports.includes("Others") && !data.neededSupportsOther) {
+  if (
+    data.neededSupports.includes(SupportType.OTHERS) &&
+    !data.neededSupportsOther
+  ) {
     ctx.addIssue({
       code: "custom",
       message: "Please specify other supports needed",
@@ -238,18 +280,18 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
  */
 export function isUrgentReferral(data: ReferralFormData): boolean {
   // Rule 1: Currently experiencing homelessness
-  if (data.currentlyHomeless === "Yes") {
+  if (data.currentlyHomeless === YesNoUnknown.YES) {
     return true;
   }
 
   // Rule 2: At risk of losing housing
-  if (data.atRiskOfLosingHousing === "Yes") {
+  if (data.losingHousing === YesNoUnknown.YES) {
     return true;
   }
 
   // Rule 3: Pending release with discharge date within 3-4 days
-  if (data.pendingRelease && data.releaseDischargeDate) {
-    const releaseDate = new Date(data.releaseDischargeDate);
+  if (data.pendingRelease && data.releaseDate) {
+    const releaseDate = new Date(data.releaseDate);
     const today = new Date();
     const diffTime = releaseDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
