@@ -1,13 +1,5 @@
 # CISB Referral Application
 
-A BC Government application for managing community and individual support referrals. The system includes an admin portal for staff to manage referrals and lookup data, plus a public-facing portal for partner ministries and agencies to submit referrals.
-
-## Features
-
-- **Public Referral Submission** - Partner ministries and agencies can submit referrals for individuals needing support services
-- **Admin Portal** - Staff can manage referrals, track status, and maintain lookup data (regions, ministries, agency types)
-- **Referral Workflow** - Track referrals through statuses: Open → Assigned → Contact Made → Closed
-- **Regional Routing** - Referrals are routed to appropriate BC regions with assigned staff
 
 ## Tech Stack
 
