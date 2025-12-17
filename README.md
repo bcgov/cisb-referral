@@ -1,32 +1,42 @@
 # CISB Referral Application
 
-A multi-tenant application for managing referrals with separate admin and public-facing portals.
+A BC Government application for managing community and individual support referrals. The system includes an admin portal for staff to manage referrals and lookup data, plus a public-facing portal for partner ministries and agencies to submit referrals.
+
+## Features
+
+- **Public Referral Submission** - Partner ministries and agencies can submit referrals for individuals needing support services
+- **Admin Portal** - Staff can manage referrals, track status, and maintain lookup data (regions, ministries, agency types)
+- **Referral Workflow** - Track referrals through statuses: Open → Assigned → Contact Made → Closed
+- **Regional Routing** - Referrals are routed to appropriate BC regions with assigned staff
 
 ## Tech Stack
 
-- **Frontend**: Vue 3 + TypeScript + Vite
-  - Admin portal (`/admin`)
-  - Public referral submission (`/referral`)
-- **Backend**: NestJS + TypeScript
-- **Database**: PostgreSQL + Prisma ORM
-- **Authentication**: Keycloak (separate instances for admin and referral)
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
+  - [BC Gov Design System](https://github.com/bcgov/design-system) React components
+  - React Query for data fetching
+  - React Hook Form + Zod for form validation (referral app)
+- **Backend**: NestJS 11 + TypeScript
+  - Prisma ORM with PostgreSQL
+  - Swagger API documentation
+  - Winston logging
+- **Database**: PostgreSQL with Prisma migrations
 
 ## Project Structure
 
 ```
 cisb-referral/
-├── admin-app/          # Admin portal (Vue 3)
-├── referral-app/       # Public referral submission (Vue 3)
-├── backend/            # REST API (NestJS)
-├── database/           # Database schema and migrations (Prisma)
+├── admin-app/          # Admin portal (React)
+├── referral-app/       # Public referral submission (React)
+├── backend/            # REST API (NestJS + Prisma)
+│   └── prisma/         # Database schema and migrations
 └── docs/               # Documentation
 ```
 
 ## Prerequisites
 
 - Node.js 18+
-- Docker Desktop (for local PostgreSQL)
-- npm or pnpm
+- PostgreSQL (local or Docker)
+- npm
 
 ## Getting Started
 
@@ -39,12 +49,12 @@ npm run install:all
 ### 2. Set Up Database
 
 ```bash
-cd database
+cd backend
 cp .env.example .env
 # Edit .env with your database connection details
-npm run db:up        # Start PostgreSQL via Docker
-npm run db:migrate   # Run Prisma migrations
-npm run db:generate  # Generate Prisma client
+npm run prisma:migrate:dev   # Run Prisma migrations
+npm run prisma:generate      # Generate Prisma client
+npm run prisma:seed          # Seed initial data (optional)
 ```
 
 ### 3. Start Development Servers
@@ -68,9 +78,13 @@ npm run dev:backend    # Backend API: http://localhost:3000
 | `npm run dev:admin`    | Start admin frontend only             |
 | `npm run dev:referral` | Start referral frontend only          |
 | `npm run dev:backend`  | Start backend API only                |
-| `npm run dev:database` | Start PostgreSQL only                 |
 | `npm run build`        | Build all applications for production |
-| `npm run bootstrap`    | Set up database for first-time use    |
+
+## API Documentation
+
+When running locally, Swagger documentation is available at:
+
+- http://localhost:3000/api
 
 ## Development Workflow
 
@@ -84,10 +98,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Documentation
 
+- [Database Schema](docs/database-schema.md)
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [License](LICENSE)
-- Additional docs in `/docs` directory
 
 ## License
 
