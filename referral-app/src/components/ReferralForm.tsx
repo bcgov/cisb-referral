@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { z } from "zod";
+import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
   referralSchema,
@@ -43,8 +44,14 @@ export function ReferralForm() {
       const response = await apiService.createReferral(data);
       navigate(`/success?ref=${response.id}`);
     } catch (err) {
+      const axiosError = err as AxiosError<{
+        message?: string;
+        error?: string;
+      }>;
       const message =
-        err instanceof Error ? err.message : "Failed to submit referral";
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        (err instanceof Error ? err.message : "Failed to submit referral");
       setSubmitStatus({ type: "error", message });
     }
   };
