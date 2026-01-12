@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Section,
-  FieldGrid,
   Field,
   MultiSelect,
   TextInput,
@@ -19,7 +18,14 @@ import {
   supportLabels,
 } from "../../constants";
 import { calculateTriageTime, calculateContactTime } from "../../utils";
-import type { Referral, User, UpdateReferralDto, Region } from "../../types";
+import type {
+  Referral,
+  User,
+  UpdateReferralDto,
+  Region,
+  Ministry,
+  AgencyType,
+} from "../../types";
 import { ReferralStatus, ReferralOutcome } from "../../types";
 
 const STATUS_OPTIONS = Object.entries(statusLabels).map(([value, label]) => ({
@@ -36,6 +42,14 @@ const FLAG_OPTIONS = [
   { value: "NO", label: "No" },
   { value: "YES", label: "Yes" },
 ] as const;
+
+const REFERRED_BY_OPTIONS = [
+  { value: "", label: "— Select —" },
+  ...Object.entries(referredByLabels).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
 
 interface ReferralDetailsTabProps {
   referral: Referral;
@@ -63,6 +77,14 @@ export function ReferralDetailsTab({
     neededSupports: referral.neededSupports,
     neededSupportsOther: referral.neededSupportsOther,
     referralSummary: referral.referralSummary,
+    // Referred By Info
+    referredBy: referral.referredBy,
+    ministryId: referral.ministryId,
+    ministryNameOther: referral.ministryNameOther,
+    agencyTypeId: referral.agencyTypeId,
+    agencyTypeOther: referral.agencyTypeOther,
+    partnerAgencyName: referral.partnerAgencyName,
+    programArea: referral.programArea,
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -73,6 +95,16 @@ export function ReferralDetailsTab({
   const { data: regions = [] } = useQuery({
     queryKey: ["regions"],
     queryFn: () => apiService.fetchRegions(),
+  });
+
+  const { data: ministries = [] } = useQuery({
+    queryKey: ["ministries"],
+    queryFn: () => apiService.fetchMinistries(),
+  });
+
+  const { data: agencyTypes = [] } = useQuery({
+    queryKey: ["agencyTypes"],
+    queryFn: () => apiService.fetchAgencyTypes(),
   });
 
   const filteredUsers = users.filter(
@@ -96,6 +128,26 @@ export function ReferralDetailsTab({
       value: region.id,
       label: region.name,
     })),
+  ];
+
+  const ministryOptions = [
+    { value: "", label: "— Select Ministry —" },
+    ...ministries
+      .filter((m: Ministry) => m.isActive)
+      .map((ministry: Ministry) => ({
+        value: ministry.id,
+        label: ministry.name,
+      })),
+  ];
+
+  const agencyTypeOptions = [
+    { value: "", label: "— Select Agency Type —" },
+    ...agencyTypes
+      .filter((a: AgencyType) => a.isActive)
+      .map((agencyType: AgencyType) => ({
+        value: agencyType.id,
+        label: agencyType.name,
+      })),
   ];
 
   const updateField = <K extends keyof UpdateReferralDto>(
@@ -225,31 +277,48 @@ export function ReferralDetailsTab({
       </Section>
 
       <Section title="Referred By Info">
-        <FieldGrid>
-          <Field
-            label="Referred By"
-            value={referredByLabels[referral.referredBy] || referral.referredBy}
-            fullWidth
-          />
-          <Field
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="md:col-span-2">
+            <SelectInput
+              label="Referred By"
+              value={formData.referredBy}
+              onChange={(v) => updateField("referredBy", v || "")}
+              options={REFERRED_BY_OPTIONS}
+            />
+          </div>
+          <SelectInput
             label="Name of Ministry"
-            value={referral.ministry?.name || "—"}
+            value={formData.ministryId}
+            onChange={(v) => updateField("ministryId", v)}
+            options={ministryOptions}
           />
-          <Field
+          <TextInput
             label="Name of Agency"
-            value={referral.partnerAgencyName || "—"}
+            value={formData.partnerAgencyName}
+            onChange={(v) => updateField("partnerAgencyName", v)}
           />
-          <Field
+          <TextInput
             label="Other Ministry"
-            value={referral.ministryNameOther || "—"}
+            value={formData.ministryNameOther}
+            onChange={(v) => updateField("ministryNameOther", v)}
           />
-          <Field
+          <SelectInput
             label="Type of Agency"
-            value={referral.agencyType?.name || "—"}
+            value={formData.agencyTypeId}
+            onChange={(v) => updateField("agencyTypeId", v)}
+            options={agencyTypeOptions}
           />
-          <Field label="Program Area" value={referral.programArea || "—"} />
-          <Field label="Other Agency" value={referral.agencyTypeOther || "—"} />
-        </FieldGrid>
+          <TextInput
+            label="Program Area"
+            value={formData.programArea}
+            onChange={(v) => updateField("programArea", v)}
+          />
+          <TextInput
+            label="Other Agency"
+            value={formData.agencyTypeOther}
+            onChange={(v) => updateField("agencyTypeOther", v)}
+          />
+        </div>
       </Section>
 
       <Section title="Progress and Status">

@@ -160,6 +160,14 @@ export interface UpdateReferralDto {
   neededSupports?: string[];
   neededSupportsOther?: string | null;
   referralSummary?: string | null;
+  // Referred By Info fields
+  referredBy?: string;
+  ministryId?: string | null;
+  ministryNameOther?: string | null;
+  agencyTypeId?: string | null;
+  agencyTypeOther?: string | null;
+  partnerAgencyName?: string | null;
+  programArea?: string | null;
   // Referrer fields
   referrerContactName?: string;
   referrerEmail?: string;

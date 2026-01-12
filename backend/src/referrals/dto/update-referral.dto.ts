@@ -115,6 +115,42 @@ export class UpdateReferralDto {
   @IsString()
   referralSummary?: string;
 
+  // Referred By Info fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referredBy?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  ministryId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  ministryNameOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  agencyTypeId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  agencyTypeOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  partnerAgencyName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  programArea?: string;
+
   // Referrer fields
   @ApiProperty({ required: false })
   @IsOptional()
