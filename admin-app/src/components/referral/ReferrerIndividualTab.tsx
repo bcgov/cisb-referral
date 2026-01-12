@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { Section, TextInput, DateInput, SelectInput } from "../ui";
 import { apiService } from "../../services";
+import { yesNoUnknownLabels, releaseFromLabels } from "../../constants";
 import type { Referral, UpdateReferralDto } from "../../types";
 
 const YES_NO_OPTIONS = [
   { value: "", label: "— Select —" },
-  { value: "YES", label: "Yes" },
-  { value: "NO", label: "No" },
-  { value: "UNKNOWN", label: "Unknown" },
-] as const;
+  ...Object.entries(yesNoUnknownLabels).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
+
+const RELEASE_FROM_OPTIONS = [
+  { value: "", label: "— Select —" },
+  ...Object.entries(releaseFromLabels).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
 
 interface ReferrerIndividualTabProps {
   referral: Referral;
@@ -158,7 +168,7 @@ export function ReferrerIndividualTab({
             label="Pending or Recently Released"
             value={formData.pendingRelease}
             onChange={(v) => updateField("pendingRelease", v)}
-            options={YES_NO_OPTIONS}
+            options={RELEASE_FROM_OPTIONS}
           />
 
           <TextInput
