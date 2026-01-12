@@ -5,4 +5,11 @@ export { FieldGrid, Field } from "./FieldGrid";
 export { Table } from "./Table";
 export { Dialog } from "./Dialog";
 export { MultiSelect } from "./MultiSelect";
-export { FormField, TextInput, DateInput, SelectInput } from "./FormField";
+export {
+  FormField,
+  TextInput,
+  DateInput,
+  SelectInput,
+  TextAreaInput,
+  ReadOnlyField,
+} from "./FormField";

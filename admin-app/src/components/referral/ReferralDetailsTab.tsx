@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Section, FieldGrid, Field, MultiSelect } from "../ui";
+import {
+  Section,
+  FieldGrid,
+  Field,
+  MultiSelect,
+  TextInput,
+  DateInput,
+  SelectInput,
+  TextAreaInput,
+  ReadOnlyField,
+} from "../ui";
 import { apiService } from "../../services";
 import {
   referredByLabels,
@@ -8,13 +18,24 @@ import {
   outcomeLabels,
   supportLabels,
 } from "../../constants";
-import {
-  formatDateForInput,
-  calculateTriageTime,
-  calculateContactTime,
-} from "../../utils";
+import { calculateTriageTime, calculateContactTime } from "../../utils";
 import type { Referral, User, UpdateReferralDto, Region } from "../../types";
 import { ReferralStatus, ReferralOutcome } from "../../types";
+
+const STATUS_OPTIONS = Object.entries(statusLabels).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+const OUTCOME_OPTIONS = [
+  { value: "", label: "— Select Outcome —" },
+  ...Object.entries(outcomeLabels).map(([value, label]) => ({ value, label })),
+];
+
+const FLAG_OPTIONS = [
+  { value: "NO", label: "No" },
+  { value: "YES", label: "Yes" },
+] as const;
 
 interface ReferralDetailsTabProps {
   referral: Referral;
@@ -69,6 +90,21 @@ export function ReferralDetailsTab({
     })
   );
 
+  const regionOptions = [
+    { value: "", label: "— Select Region —" },
+    ...regions.map((region: Region) => ({
+      value: region.id,
+      label: region.name,
+    })),
+  ];
+
+  const updateField = <K extends keyof UpdateReferralDto>(
+    field: K,
+    value: UpdateReferralDto[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
@@ -105,28 +141,14 @@ export function ReferralDetailsTab({
 
       <Section title="Referral Outcome and Assignment">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Referral Outcome
-            </label>
-            <select
-              value={formData.referralOutcome || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  referralOutcome: (e.target.value as ReferralOutcome) || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            >
-              <option value="">— Select Outcome —</option>
-              {Object.entries(outcomeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectInput
+            label="Referral Outcome"
+            value={formData.referralOutcome}
+            onChange={(v) =>
+              updateField("referralOutcome", (v as ReferralOutcome) || null)
+            }
+            options={OUTCOME_OPTIONS}
+          />
           <div>
             <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
               Assigned Team Member
@@ -157,7 +179,7 @@ export function ReferralDetailsTab({
                     type="button"
                     className="w-full px-3 py-2 text-left hover:bg-gray-100 text-bcgov-gray"
                     onMouseDown={() => {
-                      setFormData({ ...formData, assignedToId: null });
+                      updateField("assignedToId", null);
                       setUserSearch("");
                       setShowUserDropdown(false);
                     }}
@@ -170,7 +192,7 @@ export function ReferralDetailsTab({
                       type="button"
                       className="w-full px-3 py-2 text-left hover:bg-gray-100"
                       onMouseDown={() => {
-                        setFormData({ ...formData, assignedToId: user.id });
+                        updateField("assignedToId", user.id);
                         setUserSearch("");
                         setShowUserDropdown(false);
                       }}
@@ -190,33 +212,15 @@ export function ReferralDetailsTab({
               )}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Community Partner Name
-            </label>
-            <input
-              type="text"
-              value={formData.communityPartnerName || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  communityPartnerName: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Assigned Team Member Email
-            </label>
-            <input
-              type="text"
-              value={selectedUser?.email || "—"}
-              disabled
-              className="w-full px-3 py-2 border border-bcgov-border rounded bg-gray-100 text-bcgov-gray"
-            />
-          </div>
+          <TextInput
+            label="Community Partner Name"
+            value={formData.communityPartnerName}
+            onChange={(v) => updateField("communityPartnerName", v)}
+          />
+          <ReadOnlyField
+            label="Assigned Team Member Email"
+            value={selectedUser?.email}
+          />
         </div>
       </Section>
 
@@ -250,77 +254,28 @@ export function ReferralDetailsTab({
 
       <Section title="Progress and Status">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Referral Status
-            </label>
-            <select
-              value={formData.referralStatus || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  referralStatus: e.target.value as ReferralStatus,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            >
-              {Object.entries(statusLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Flagged Urgent
-            </label>
-            <select
-              value={formData.flag ? "YES" : "NO"}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  flag: e.target.value === "YES",
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            >
-              <option value="NO">No</option>
-              <option value="YES">Yes</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Assigned On
-            </label>
-            <input
-              type="date"
-              value={formatDateForInput(formData.assignedOn || null)}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  assignedOn: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              First Contact Made On
-            </label>
-            <input
-              type="date"
-              value={formatDateForInput(formData.firstContactMadeOn || null)}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  firstContactMadeOn: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
+          <SelectInput
+            label="Referral Status"
+            value={formData.referralStatus}
+            onChange={(v) => updateField("referralStatus", v as ReferralStatus)}
+            options={STATUS_OPTIONS}
+          />
+          <SelectInput
+            label="Flagged Urgent"
+            value={formData.flag ? "YES" : "NO"}
+            onChange={(v) => updateField("flag", v === "YES")}
+            options={FLAG_OPTIONS}
+          />
+          <DateInput
+            label="Assigned On"
+            value={formData.assignedOn}
+            onChange={(v) => updateField("assignedOn", v)}
+          />
+          <DateInput
+            label="First Contact Made On"
+            value={formData.firstContactMadeOn}
+            onChange={(v) => updateField("firstContactMadeOn", v)}
+          />
           <Field
             label="Length of Time to Triage"
             value={calculateTriageTime(referral.createdAt, referral.assignedOn)}
@@ -343,103 +298,46 @@ export function ReferralDetailsTab({
             options={supportOptions}
             value={formData.currentlyConnectedSupports || []}
             onChange={(values) =>
-              setFormData({ ...formData, currentlyConnectedSupports: values })
+              updateField("currentlyConnectedSupports", values)
             }
             placeholder="Search supports..."
           />
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Current Region
-            </label>
-            <select
-              value={formData.regionId || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, regionId: e.target.value || null })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            >
-              <option value="">— Select Region —</option>
-              {regions.map((region: Region) => (
-                <option key={region.id} value={region.id}>
-                  {region.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Other Currently Connected Supports
-            </label>
-            <input
-              type="text"
-              value={formData.currentlyConnectedSupportsOther || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  currentlyConnectedSupportsOther: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Specific City/Town
-            </label>
-            <input
-              type="text"
-              value={formData.specificCityTown || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  specificCityTown: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
+          <SelectInput
+            label="Current Region"
+            value={formData.regionId}
+            onChange={(v) => updateField("regionId", v)}
+            options={regionOptions}
+          />
+          <TextInput
+            label="Other Currently Connected Supports"
+            value={formData.currentlyConnectedSupportsOther}
+            onChange={(v) => updateField("currentlyConnectedSupportsOther", v)}
+          />
+          <TextInput
+            label="Specific City/Town"
+            value={formData.specificCityTown}
+            onChange={(v) => updateField("specificCityTown", v)}
+          />
           <MultiSelect
             id="neededSupports"
             label="Needed Supports"
             options={supportOptions}
             value={formData.neededSupports || []}
-            onChange={(values) =>
-              setFormData({ ...formData, neededSupports: values })
-            }
+            onChange={(values) => updateField("neededSupports", values)}
             placeholder="Search supports..."
           />
-          <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Other Needed Supports
-            </label>
-            <input
-              type="text"
-              value={formData.neededSupportsOther || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  neededSupportsOther: e.target.value || null,
-                })
-              }
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
-              Referral Reason
-            </label>
-            <textarea
-              value={formData.referralSummary || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  referralSummary: e.target.value || null,
-                })
-              }
-              rows={5}
-              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue resize-y"
-            />
-          </div>
+          <TextInput
+            label="Other Needed Supports"
+            value={formData.neededSupportsOther}
+            onChange={(v) => updateField("neededSupportsOther", v)}
+          />
+          <TextAreaInput
+            label="Referral Reason"
+            value={formData.referralSummary}
+            onChange={(v) => updateField("referralSummary", v)}
+            rows={5}
+            fullWidth
+          />
         </div>
       </Section>
 

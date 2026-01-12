@@ -102,3 +102,51 @@ export function SelectInput({
     </FormField>
   );
 }
+
+interface TextAreaInputProps {
+  readonly label: string;
+  readonly value: string | null | undefined;
+  readonly onChange: (value: string | null) => void;
+  readonly rows?: number;
+  readonly fullWidth?: boolean;
+}
+
+export function TextAreaInput({
+  label,
+  value,
+  onChange,
+  rows = 5,
+  fullWidth = false,
+}: Readonly<TextAreaInputProps>) {
+  return (
+    <div className={fullWidth ? "md:col-span-2" : ""}>
+      <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+        {label}
+      </label>
+      <textarea
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        rows={rows}
+        className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue resize-y"
+      />
+    </div>
+  );
+}
+
+interface ReadOnlyFieldProps {
+  readonly label: string;
+  readonly value: string | null | undefined;
+}
+
+export function ReadOnlyField({ label, value }: Readonly<ReadOnlyFieldProps>) {
+  return (
+    <FormField label={label}>
+      <input
+        type="text"
+        value={value || "—"}
+        disabled
+        className="w-full px-3 py-2 border border-bcgov-border rounded bg-gray-100 text-bcgov-gray"
+      />
+    </FormField>
+  );
+}
