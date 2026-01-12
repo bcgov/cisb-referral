@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Tabs } from '../components/ui';
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Tabs } from "../components/ui";
 import {
   ReferralDetailsTab,
   ReferrerIndividualTab,
   AuditHistoryTab,
-} from '../components/referral';
-import { apiService } from '../services';
+} from "../components/referral";
+import { apiService } from "../services";
 
-type TabType = 'details' | 'referrer-individual' | 'related';
+type TabType = "details" | "referrer-individual" | "related";
 
 const TABS = [
-  { id: 'details', label: 'Referral Details' },
-  { id: 'referrer-individual', label: 'Referrer & Individual Info' },
-  { id: 'related', label: 'Audit History' },
+  { id: "details", label: "Referral Details" },
+  { id: "referrer-individual", label: "Referrer & Individual Info" },
+  { id: "related", label: "Audit History" },
 ] as const;
 
 export function ReferralDetail() {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<TabType>('details');
+  const [activeTab, setActiveTab] = useState<TabType>("details");
   const queryClient = useQueryClient();
 
   const {
@@ -27,13 +27,13 @@ export function ReferralDetail() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['referral', id],
+    queryKey: ["referral", id],
     queryFn: () => apiService.fetchReferral(id!),
     enabled: !!id,
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ['users'],
+    queryKey: ["users"],
     queryFn: () => apiService.fetchUsers(),
   });
 
@@ -77,21 +77,21 @@ export function ReferralDetail() {
         onTabChange={(tab) => setActiveTab(tab as TabType)}
       />
 
-      <div className="p-6 bg-white flex-1">
-        {activeTab === 'details' && (
+      <div className="p-6 bg-gray-100 flex-1">
+        {activeTab === "details" && (
           <ReferralDetailsTab
             key={referral.id}
             referral={referral}
             users={users}
             onUpdate={() =>
-              queryClient.invalidateQueries({ queryKey: ['referral', id] })
+              queryClient.invalidateQueries({ queryKey: ["referral", id] })
             }
           />
         )}
-        {activeTab === 'referrer-individual' && (
+        {activeTab === "referrer-individual" && (
           <ReferrerIndividualTab referral={referral} />
         )}
-        {activeTab === 'related' && <AuditHistoryTab />}
+        {activeTab === "related" && <AuditHistoryTab />}
       </div>
     </div>
   );
