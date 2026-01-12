@@ -71,8 +71,10 @@ export interface Referral {
   referredBy: string;
   ministryId: string | null;
   ministry: Ministry | null;
+  ministryNameOther: string | null;
   agencyTypeId: string | null;
   agencyType: AgencyType | null;
+  agencyTypeOther: string | null;
   partnerAgencyName: string | null;
   programArea: string | null;
   referrerContactName: string;
@@ -87,20 +89,66 @@ export interface Referral {
   individualPhone: string | null;
   regionId: string | null;
   region: Region | null;
-  city: string | null;
-  homelessness: string | null;
+  specificCityTown: string | null;
+  currentlyHomeless: string | null;
   losingHousing: string | null;
   pendingRelease: string | null;
   releaseDate: string | null;
   currentlyConnectedSupports: string[];
+  currentlyConnectedSupportsOther: string | null;
   neededSupports: string[];
-  additionalInformation: string | null;
-  consentToContact: boolean;
+  neededSupportsOther: string | null;
+  referralSummary: string | null;
+  communityPartnerName: string | null;
   assignedToId: string | null;
+  assignedTo: User | null;
   assignedOn: string | null;
   firstContactMadeOn: string | null;
+  followUpDate: string | null;
+  dueDate: string | null;
+  completedDate: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export const ReferralStatus = {
+  OPEN: "OPEN",
+  ASSIGNED: "ASSIGNED",
+  CONTACT_MADE: "CONTACT_MADE",
+  CLOSED: "CLOSED",
+} as const;
+
+export type ReferralStatus =
+  (typeof ReferralStatus)[keyof typeof ReferralStatus];
+
+export const ReferralOutcome = {
+  BCEA_APPLICATION_SUBMITTED: "BCEA_APPLICATION_SUBMITTED",
+  BCEA_APPLICATION_COMPLETED_FILE_OPENED:
+    "BCEA_APPLICATION_COMPLETED_FILE_OPENED",
+  SUPPLEMENTS_ISSUED: "SUPPLEMENTS_ISSUED",
+  CASE_MANAGED: "CASE_MANAGED",
+  SERVICES_PROVIDED: "SERVICES_PROVIDED",
+  NOT_LOCATED: "NOT_LOCATED",
+  LOCATED_REFUSED_SERVICE: "LOCATED_REFUSED_SERVICE",
+  NON_APPROPRIATE_REFERRAL_RETURNED: "NON_APPROPRIATE_REFERRAL_RETURNED",
+  REFERRED_TO_VS_CS: "REFERRED_TO_VS_CS",
+  REFERRED_TO_COMMUNITY_PARTNER: "REFERRED_TO_COMMUNITY_PARTNER",
+} as const;
+
+export type ReferralOutcome =
+  (typeof ReferralOutcome)[keyof typeof ReferralOutcome];
+
+export interface UpdateReferralDto {
+  referralStatus?: ReferralStatus;
+  assignedToId?: string | null;
+  referralOutcome?: ReferralOutcome | null;
+  communityPartnerName?: string | null;
+  flag?: boolean;
+  assignedOn?: string | null;
+  firstContactMadeOn?: string | null;
+  followUpDate?: string | null;
+  dueDate?: string | null;
+  completedDate?: string | null;
 }
 
 export interface PaginatedResponse<T> {

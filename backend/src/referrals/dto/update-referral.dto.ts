@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  IsBoolean,
+} from 'class-validator';
 
 export enum ReferralStatus {
   OPEN = 'OPEN',
@@ -41,6 +47,21 @@ export class UpdateReferralDto {
   @IsOptional()
   @IsString()
   communityPartnerName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  flag?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  assignedOn?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  firstContactMadeOn?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

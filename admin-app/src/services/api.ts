@@ -17,6 +17,7 @@ import type {
   CreateUserDto,
   UpdateUserDto,
   UserRole,
+  UpdateReferralDto,
 } from "../types";
 
 class APIService {
@@ -48,6 +49,14 @@ class APIService {
 
   async fetchReferral(id: string): Promise<Referral> {
     const response = await this.client.get<Referral>(`/referrals/${id}`);
+    return response.data;
+  }
+
+  async updateReferral(id: string, data: UpdateReferralDto): Promise<Referral> {
+    const response = await this.client.patch<Referral>(
+      `/referrals/${id}`,
+      data
+    );
     return response.data;
   }
 

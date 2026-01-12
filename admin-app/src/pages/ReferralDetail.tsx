@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, Section, FieldGrid, Field } from "../components/ui";
 import { apiService } from "../services";
 import { referredByLabels } from "../constants";
-import type { Referral } from "../types";
+import type { Referral, User, UpdateReferralDto } from "../types";
+import { ReferralStatus, ReferralOutcome } from "../types";
 
 type TabType = "details" | "referrer-individual" | "related";
 
@@ -46,6 +47,27 @@ const supportLabels: Record<string, string> = {
   OTHERS: "Others",
 };
 
+const statusLabels: Record<string, string> = {
+  OPEN: "Open",
+  ASSIGNED: "Assigned",
+  CONTACT_MADE: "Contact Made",
+  CLOSED: "Closed",
+};
+
+const outcomeLabels: Record<string, string> = {
+  BCEA_APPLICATION_SUBMITTED: "BCEA Application Submitted",
+  BCEA_APPLICATION_COMPLETED_FILE_OPENED:
+    "BCEA Application Completed - File Opened",
+  SUPPLEMENTS_ISSUED: "Supplements Issued",
+  CASE_MANAGED: "Case Managed",
+  SERVICES_PROVIDED: "Services Provided",
+  NOT_LOCATED: "Not Located",
+  LOCATED_REFUSED_SERVICE: "Located - Refused Service",
+  NON_APPROPRIATE_REFERRAL_RETURNED: "Non-Appropriate Referral - Returned",
+  REFERRED_TO_VS_CS: "Referred to VS/CS",
+  REFERRED_TO_COMMUNITY_PARTNER: "Referred to Community Partner",
+};
+
 function formatDate(dateString: string | null): string {
   if (!dateString) return "—";
   const date = new Date(dateString);
@@ -53,8 +75,6 @@ function formatDate(dateString: string | null): string {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   });
 }
 
@@ -63,9 +83,16 @@ function formatSupports(supports: string[]): string {
   return supports.map((s) => supportLabels[s] || s).join(", ");
 }
 
+function formatDateForInput(dateString: string | null): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toISOString().split("T")[0];
+}
+
 export function ReferralDetail() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("details");
+  const queryClient = useQueryClient();
 
   const {
     data: referral,
@@ -75,6 +102,11 @@ export function ReferralDetail() {
     queryKey: ["referral", id],
     queryFn: () => apiService.fetchReferral(id!),
     enabled: !!id,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiService.fetchUsers(),
   });
 
   if (isLoading) {
@@ -106,7 +138,7 @@ export function ReferralDetail() {
             ← Back to Referrals
           </Link>
           <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
-            Referral #{id}
+            Referral #{id?.substring(0, 8)}
           </h1>
         </div>
       </div>
@@ -118,7 +150,16 @@ export function ReferralDetail() {
       />
 
       <div className="p-6 bg-white flex-1">
-        {activeTab === "details" && <ReferralDetailsTab referral={referral} />}
+        {activeTab === "details" && (
+          <ReferralDetailsTab
+            key={referral.id}
+            referral={referral}
+            users={users}
+            onUpdate={() =>
+              queryClient.invalidateQueries({ queryKey: ["referral", id] })
+            }
+          />
+        )}
         {activeTab === "referrer-individual" && (
           <ReferrerIndividualTab referral={referral} />
         )}
@@ -132,24 +173,206 @@ interface TabProps {
   referral: Referral;
 }
 
-function ReferralDetailsTab({ referral }: TabProps) {
+interface EditableTabProps extends TabProps {
+  users: User[];
+  onUpdate: () => void;
+}
+
+function ReferralDetailsTab({ referral, users, onUpdate }: EditableTabProps) {
+  const [formData, setFormData] = useState<UpdateReferralDto>({
+    referralStatus: referral.referralStatus as ReferralStatus,
+    referralOutcome: referral.referralOutcome as ReferralOutcome | null,
+    assignedToId: referral.assignedToId,
+    communityPartnerName: referral.communityPartnerName,
+    flag: referral.flag,
+    assignedOn: referral.assignedOn,
+    firstContactMadeOn: referral.firstContactMadeOn,
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.fullName.toLowerCase().includes(userSearch.toLowerCase()) ||
+      user.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const selectedUser = users.find((u) => u.id === formData.assignedToId);
+
+  // Calculate triage time (hours from creation to assignment)
+  const calculateTriageTime = (): string => {
+    if (!referral.assignedOn) return "—";
+    const created = new Date(referral.createdAt);
+    const assigned = new Date(referral.assignedOn);
+    const hours = Math.round(
+      (assigned.getTime() - created.getTime()) / (1000 * 60 * 60)
+    );
+    return `${hours} hours`;
+  };
+
+  // Calculate contact time (hours from assignment to first contact)
+  const calculateContactTime = (): string => {
+    if (!referral.assignedOn || !referral.firstContactMadeOn) return "—";
+    const assigned = new Date(referral.assignedOn);
+    const contacted = new Date(referral.firstContactMadeOn);
+    const hours = Math.round(
+      (contacted.getTime() - assigned.getTime()) / (1000 * 60 * 60)
+    );
+    return `${hours} hours`;
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      await apiService.updateReferral(referral.id, formData);
+      setSaveSuccess(true);
+      onUpdate();
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      console.error("Failed to update referral:", error);
+      setSaveError(
+        error.response?.data?.message || "Failed to update referral"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
+      {saveError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+          {saveError}
+        </div>
+      )}
+      {saveSuccess && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+          Referral updated successfully.
+        </div>
+      )}
+
       <Section title="Referral Outcome and Assignment">
-        <FieldGrid>
-          <Field
-            label="Referral Outcome"
-            value={referral.referralOutcome || "—"}
-          />
-          <Field
-            label="Assigned Team Member"
-            value={referral.assignedToId || "—"}
-          />
-          <Field
-            label="Community Partner Name"
-            value={referral.partnerAgencyName || "—"}
-          />
-        </FieldGrid>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Referral Outcome
+            </label>
+            <select
+              value={formData.referralOutcome || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  referralOutcome: (e.target.value as ReferralOutcome) || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            >
+              <option value="">— Select Outcome —</option>
+              {Object.entries(outcomeLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Assigned Team Member
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={
+                  showUserDropdown ? userSearch : selectedUser?.fullName || ""
+                }
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                }}
+                onFocus={() => {
+                  setShowUserDropdown(true);
+                  setUserSearch("");
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowUserDropdown(false), 200);
+                }}
+                placeholder="Search team members..."
+                className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+              />
+              {showUserDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-bcgov-border rounded shadow-lg max-h-48 overflow-auto">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 text-left hover:bg-gray-100 text-bcgov-gray"
+                    onMouseDown={() => {
+                      setFormData({ ...formData, assignedToId: null });
+                      setUserSearch("");
+                      setShowUserDropdown(false);
+                    }}
+                  >
+                    — Clear Selection —
+                  </button>
+                  {filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                      onMouseDown={() => {
+                        setFormData({ ...formData, assignedToId: user.id });
+                        setUserSearch("");
+                        setShowUserDropdown(false);
+                      }}
+                    >
+                      <div className="font-medium">{user.fullName}</div>
+                      <div className="text-sm text-bcgov-gray">
+                        {user.email}
+                      </div>
+                    </button>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <div className="px-3 py-2 text-bcgov-gray">
+                      No users found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Community Partner Name
+            </label>
+            <input
+              type="text"
+              value={formData.communityPartnerName || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  communityPartnerName: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Assigned Team Member Email
+            </label>
+            <input
+              type="text"
+              value={selectedUser?.email || "—"}
+              disabled
+              className="w-full px-3 py-2 border border-bcgov-border rounded bg-gray-100 text-bcgov-gray"
+            />
+          </div>
+        </div>
       </Section>
 
       <Section title="Referred By Info">
@@ -163,31 +386,111 @@ function ReferralDetailsTab({ referral }: TabProps) {
             value={referral.ministry?.name || "—"}
           />
           <Field
+            label="Name of Agency"
+            value={referral.partnerAgencyName || "—"}
+          />
+          <Field
+            label="Other Ministry"
+            value={referral.ministryNameOther || "—"}
+          />
+          <Field
             label="Type of Agency"
             value={referral.agencyType?.name || "—"}
           />
           <Field label="Program Area" value={referral.programArea || "—"} />
+          <Field label="Other Agency" value={referral.agencyTypeOther || "—"} />
         </FieldGrid>
       </Section>
 
       <Section title="Progress and Status">
-        <FieldGrid>
-          <Field label="Referral Status" value={referral.referralStatus} />
-          <Field label="Flagged Urgent" value={referral.flag ? "Yes" : "No"} />
-          <Field label="Assigned On" value={formatDate(referral.assignedOn)} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Referral Status
+            </label>
+            <select
+              value={formData.referralStatus || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  referralStatus: e.target.value as ReferralStatus,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            >
+              {Object.entries(statusLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Flagged Urgent
+            </label>
+            <select
+              value={formData.flag ? "YES" : "NO"}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  flag: e.target.value === "YES",
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            >
+              <option value="NO">No</option>
+              <option value="YES">Yes</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Assigned On
+            </label>
+            <input
+              type="date"
+              value={formatDateForInput(formData.assignedOn || null)}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  assignedOn: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              First Contact Made On
+            </label>
+            <input
+              type="date"
+              value={formatDateForInput(formData.firstContactMadeOn || null)}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  firstContactMadeOn: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
           <Field
-            label="First Contact Made On"
-            value={formatDate(referral.firstContactMadeOn)}
+            label="Length of Time to Triage"
+            value={calculateTriageTime()}
           />
-          <Field label="Created At" value={formatDate(referral.createdAt)} />
-        </FieldGrid>
+          <Field
+            label="Length of Time to Contact After Triage"
+            value={calculateContactTime()}
+          />
+        </div>
       </Section>
 
       <Section title="Housing & Release Info">
         <FieldGrid>
           <Field
             label="Homelessness"
-            value={yesNoUnknownLabels[referral.homelessness || ""] || "—"}
+            value={yesNoUnknownLabels[referral.currentlyHomeless || ""] || "—"}
           />
           <Field
             label="At Risk of Losing Housing"
@@ -204,27 +507,48 @@ function ReferralDetailsTab({ referral }: TabProps) {
         </FieldGrid>
       </Section>
 
-      <Section title="Support Services">
+      <Section title="Other Details">
         <FieldGrid>
           <Field
-            label="Currently Connected Supports"
+            label="Supports Currently Connected"
             value={formatSupports(referral.currentlyConnectedSupports)}
             fullWidth
+          />
+          <Field label="Current Region" value={referral.region?.name || "—"} />
+          <Field
+            label="Other Currently Connected Supports"
+            value={referral.currentlyConnectedSupportsOther || "—"}
+          />
+          <Field
+            label="Specific City/Town"
+            value={referral.specificCityTown || "—"}
           />
           <Field
             label="Needed Supports"
             value={formatSupports(referral.neededSupports)}
             fullWidth
           />
-          <Field label="Current Region" value={referral.region?.name || "—"} />
-          <Field label="Specific City/Town" value={referral.city || "—"} />
           <Field
-            label="Additional Information"
-            value={referral.additionalInformation || "—"}
+            label="Other Needed Supports"
+            value={referral.neededSupportsOther || "—"}
+          />
+          <Field
+            label="Referral Reason"
+            value={referral.referralSummary || "—"}
             fullWidth
           />
         </FieldGrid>
       </Section>
+
+      <div className="flex justify-end mt-6 pt-4 border-t border-bcgov-border">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2 bg-bcgov-blue text-white rounded hover:bg-bcgov-blue-dark disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
     </>
   );
 }
@@ -246,7 +570,7 @@ function ReferrerIndividualTab({ referral }: TabProps) {
       <Section title="Individual Information">
         <FieldGrid>
           <Field label="First Name" value={referral.individualFirstName} />
-          <Field label="Last Name" value={referral.individualLastName} />
+          <Field label="Last Name" value={referral.individualLastName || "—"} />
           <Field
             label="Preferred Name"
             value={referral.individualPreferredName || "—"}
@@ -258,10 +582,6 @@ function ReferrerIndividualTab({ referral }: TabProps) {
           <Field label="Pronouns" value={referral.individualPronouns || "—"} />
           <Field label="Email" value={referral.individualEmail || "—"} />
           <Field label="Phone" value={referral.individualPhone || "—"} />
-          <Field
-            label="Consent to Contact"
-            value={referral.consentToContact ? "Yes" : "No"}
-          />
         </FieldGrid>
       </Section>
     </>
@@ -269,9 +589,6 @@ function ReferrerIndividualTab({ referral }: TabProps) {
 }
 
 function AuditHistoryTab() {
-  // TODO: Check if user is system admin, hide tab if not
-  // TODO: Fetch audit history from API
-
   return (
     <Section title="Audit History">
       <p className="text-amber-800 bg-amber-100 border border-amber-200 rounded p-3 text-sm mb-4">
