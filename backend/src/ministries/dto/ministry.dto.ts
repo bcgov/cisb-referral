@@ -7,9 +7,6 @@ export class MinistryDto {
   @ApiProperty()
   name: string;
 
-  @ApiPropertyOptional()
-  code?: string;
-
   @ApiProperty()
   isActive: boolean;
 }

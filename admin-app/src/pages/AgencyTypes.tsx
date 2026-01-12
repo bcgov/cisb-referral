@@ -16,7 +16,6 @@ export function AgencyTypes() {
   );
   const [formData, setFormData] = useState<CreateAgencyTypeDto>({
     name: "",
-    isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +39,7 @@ export function AgencyTypes() {
 
   const handleAdd = () => {
     setEditingAgencyType(null);
-    setFormData({ name: "", isActive: true });
+    setFormData({ name: "" });
     setError(null);
     setDialogOpen(true);
   };
@@ -49,7 +48,6 @@ export function AgencyTypes() {
     setEditingAgencyType(agencyType);
     setFormData({
       name: agencyType.name,
-      isActive: agencyType.isActive,
     });
     setError(null);
     setDialogOpen(true);
@@ -64,7 +62,6 @@ export function AgencyTypes() {
       if (editingAgencyType) {
         const updateData: UpdateAgencyTypeDto = {
           name: formData.name,
-          isActive: formData.isActive,
         };
         await apiService.updateAgencyType(editingAgencyType.id, updateData);
       } else {
@@ -84,21 +81,6 @@ export function AgencyTypes() {
     {
       key: "name",
       header: "Name",
-    },
-    {
-      key: "isActive",
-      header: "Status",
-      render: (agencyType: AgencyType) => (
-        <span
-          className={`px-2 py-1 rounded text-xs font-medium ${
-            agencyType.isActive
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {agencyType.isActive ? "Active" : "Inactive"}
-        </span>
-      ),
     },
   ];
 
@@ -153,23 +135,6 @@ export function AgencyTypes() {
               className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               required
             />
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              checked={formData.isActive}
-              onChange={(e) =>
-                setFormData({ ...formData, isActive: e.target.checked })
-              }
-              className="w-4 h-4 text-bcgov-blue border-bcgov-border rounded focus:ring-bcgov-blue"
-            />
-            <label
-              htmlFor="isActive"
-              className="ml-2 text-sm text-bcgov-gray-dark"
-            >
-              Active
-            </label>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button

@@ -12,7 +12,6 @@ export interface Region {
 export interface Ministry {
   id: string;
   name: string;
-  code?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -46,13 +45,11 @@ export interface UpdateRegionDto {
 
 export interface CreateMinistryDto {
   name: string;
-  code?: string;
   isActive?: boolean;
 }
 
 export interface UpdateMinistryDto {
   name?: string;
-  code?: string;
   isActive?: boolean;
 }
 
