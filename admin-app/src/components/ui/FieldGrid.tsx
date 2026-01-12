@@ -1,13 +1,13 @@
 interface FieldGridProps {
   readonly children: React.ReactNode;
+  readonly columns?: 2 | 3;
 }
 
-export function FieldGrid({ children }: Readonly<FieldGridProps>) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 gap-x-8">
-      {children}
-    </div>
-  );
+export function FieldGrid({ children, columns = 2 }: Readonly<FieldGridProps>) {
+  const gridCols =
+    columns === 3 ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2";
+
+  return <div className={`grid ${gridCols} gap-4 gap-x-8`}>{children}</div>;
 }
 
 interface FieldProps {
