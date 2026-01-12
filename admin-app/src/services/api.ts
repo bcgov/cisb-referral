@@ -13,6 +13,10 @@ import type {
   UpdateMinistryDto,
   CreateAgencyTypeDto,
   UpdateAgencyTypeDto,
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  UserRole,
 } from "../types";
 
 class APIService {
@@ -95,6 +99,29 @@ class APIService {
       `/agency-types/${id}`,
       data
     );
+    return response.data;
+  }
+
+  async fetchUsers(role?: UserRole, isActive?: boolean): Promise<User[]> {
+    const params: Record<string, string> = {};
+    if (role) params.role = role;
+    if (isActive !== undefined) params.isActive = String(isActive);
+    const response = await this.client.get<User[]>("/users", { params });
+    return response.data;
+  }
+
+  async createUser(data: CreateUserDto): Promise<User> {
+    const response = await this.client.post<User>("/users", data);
+    return response.data;
+  }
+
+  async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    const response = await this.client.patch<User>(`/users/${id}`, data);
+    return response.data;
+  }
+
+  async deleteUser(id: string): Promise<User> {
+    const response = await this.client.delete<User>(`/users/${id}`);
     return response.data;
   }
 }

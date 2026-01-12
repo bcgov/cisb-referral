@@ -119,3 +119,39 @@ export interface FetchReferralsParams {
   status?: string;
   regionId?: string;
 }
+
+export const UserRole = {
+  USER: "USER",
+  ADMIN: "ADMIN",
+  SYSTEM_ADMINISTRATOR: "SYSTEM_ADMINISTRATOR",
+} as const;
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  address?: string | null;
+  contact?: string | null;
+  role: UserRole;
+  isActive: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUserDto {
+  fullName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface UpdateUserDto {
+  fullName?: string;
+  email?: string;
+  address?: string;
+  contact?: string;
+  role?: UserRole;
+  isActive?: boolean;
+}
