@@ -89,7 +89,13 @@ export function ReferralDetail() {
           />
         )}
         {activeTab === "referrer-individual" && (
-          <ReferrerIndividualTab referral={referral} />
+          <ReferrerIndividualTab
+            key={referral.id}
+            referral={referral}
+            onUpdate={() =>
+              queryClient.invalidateQueries({ queryKey: ["referral", id] })
+            }
+          />
         )}
         {activeTab === "related" && <AuditHistoryTab />}
       </div>

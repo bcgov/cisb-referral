@@ -114,4 +114,86 @@ export class UpdateReferralDto {
   @IsOptional()
   @IsString()
   referralSummary?: string;
+
+  // Referrer fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerContactName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerEmail?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerPhone?: string;
+
+  // Individual fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualFirstName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualMiddleName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualLastName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualPreferredName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  individualDateOfBirth?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualPhone?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  gainFile?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  secondaryContact?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  bestWayToReach?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  currentlyHomeless?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  losingHousing?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  pendingRelease?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  releaseDate?: string;
 }

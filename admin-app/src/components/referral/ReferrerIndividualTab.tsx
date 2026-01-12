@@ -1,106 +1,199 @@
-import { Section, FieldGrid, Field } from "../ui";
-import { formatDate } from "../../utils";
-import type { Referral } from "../../types";
+import { useState } from "react";
+import { Section, TextInput, DateInput, SelectInput } from "../ui";
+import { apiService } from "../../services";
+import type { Referral, UpdateReferralDto } from "../../types";
 
-const yesNoLabels: Record<string, string> = {
-  YES: "Yes",
-  NO: "No",
-  UNKNOWN: "Unknown",
-};
+const YES_NO_OPTIONS = [
+  { value: "", label: "— Select —" },
+  { value: "YES", label: "Yes" },
+  { value: "NO", label: "No" },
+  { value: "UNKNOWN", label: "Unknown" },
+] as const;
 
 interface ReferrerIndividualTabProps {
   referral: Referral;
+  onUpdate: () => void;
 }
 
 export function ReferrerIndividualTab({
   referral,
+  onUpdate,
 }: ReferrerIndividualTabProps) {
+  const [formData, setFormData] = useState<UpdateReferralDto>({
+    referrerContactName: referral.referrerContactName,
+    referrerEmail: referral.referrerContactEmail,
+    referrerPhone: referral.referrerContactPhone,
+    individualFirstName: referral.individualFirstName,
+    individualMiddleName: referral.individualMiddleName,
+    individualLastName: referral.individualLastName,
+    individualPreferredName: referral.individualPreferredName,
+    individualDateOfBirth: referral.individualDateOfBirth,
+    individualPhone: referral.individualPhone,
+    gainFile: referral.gainFile,
+    secondaryContact: referral.secondaryContact,
+    bestWayToReach: referral.bestWayToReach,
+    currentlyHomeless: referral.currentlyHomeless,
+    losingHousing: referral.losingHousing,
+    pendingRelease: referral.pendingRelease,
+    releaseDate: referral.releaseDate,
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const updateField = <K extends keyof UpdateReferralDto>(
+    field: K,
+    value: UpdateReferralDto[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      await apiService.updateReferral(referral.id, formData);
+      setSaveSuccess(true);
+      onUpdate();
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      console.error("Failed to update referral:", error);
+      setSaveError(
+        error.response?.data?.message || "Failed to update referral"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
+      {saveError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+          {saveError}
+        </div>
+      )}
+      {saveSuccess && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+          Changes saved successfully!
+        </div>
+      )}
+
       <Section title="Referrer Info">
-        <FieldGrid columns={3}>
-          <Field
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TextInput
             label="Referred By: Contact Name"
-            value={referral.referrerContactName}
+            value={formData.referrerContactName}
+            onChange={(v) => updateField("referrerContactName", v || "")}
+            required
           />
-          <Field
+          <TextInput
             label="Referred By: Email"
-            value={referral.referrerContactEmail}
+            type="email"
+            value={formData.referrerEmail}
+            onChange={(v) => updateField("referrerEmail", v || "")}
+            required
           />
-          <Field
+          <TextInput
             label="Referred By: Phone Number"
-            value={referral.referrerContactPhone || "—"}
+            type="tel"
+            value={formData.referrerPhone}
+            onChange={(v) => updateField("referrerPhone", v)}
           />
-        </FieldGrid>
+        </div>
       </Section>
 
       <Section title="Individual's Info">
-        <FieldGrid columns={3}>
-          <Field
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TextInput
             label="Individual's First Name"
-            value={referral.individualFirstName}
+            value={formData.individualFirstName}
+            onChange={(v) => updateField("individualFirstName", v || "")}
+            required
           />
-          <Field label="GAIN File (GA)" value={referral.gainFile || "—"} />
-          <Field
+          <TextInput
+            label="GAIN File (GA)"
+            value={formData.gainFile}
+            onChange={(v) => updateField("gainFile", v)}
+          />
+          <SelectInput
             label="Experiencing Homelessness"
-            value={
-              referral.currentlyHomeless
-                ? yesNoLabels[referral.currentlyHomeless] ||
-                  referral.currentlyHomeless
-                : "—"
-            }
+            value={formData.currentlyHomeless}
+            onChange={(v) => updateField("currentlyHomeless", v)}
+            options={YES_NO_OPTIONS}
           />
-          <Field
+
+          <TextInput
             label="Individual's Middle Name"
-            value={referral.individualMiddleName || "—"}
+            value={formData.individualMiddleName}
+            onChange={(v) => updateField("individualMiddleName", v)}
           />
-          <Field
+          <TextInput
             label="Individual's Phone Number"
-            value={referral.individualPhone || "—"}
+            type="tel"
+            value={formData.individualPhone}
+            onChange={(v) => updateField("individualPhone", v)}
           />
-          <Field
+          <SelectInput
             label="At Risk of Losing Housing"
-            value={
-              referral.losingHousing
-                ? yesNoLabels[referral.losingHousing] || referral.losingHousing
-                : "—"
-            }
+            value={formData.losingHousing}
+            onChange={(v) => updateField("losingHousing", v)}
+            options={YES_NO_OPTIONS}
           />
-          <Field
+
+          <TextInput
             label="Individual's Last Name"
-            value={referral.individualLastName || "—"}
+            value={formData.individualLastName}
+            onChange={(v) => updateField("individualLastName", v)}
           />
-          <Field
+          <TextInput
             label="Secondary Contact"
-            value={referral.secondaryContact || "—"}
+            value={formData.secondaryContact}
+            onChange={(v) => updateField("secondaryContact", v)}
           />
-          <Field
+          <SelectInput
             label="Pending or Recently Released"
-            value={
-              referral.pendingRelease
-                ? yesNoLabels[referral.pendingRelease] ||
-                  referral.pendingRelease
-                : "—"
-            }
+            value={formData.pendingRelease}
+            onChange={(v) => updateField("pendingRelease", v)}
+            options={YES_NO_OPTIONS}
           />
-          <Field
+
+          <TextInput
             label="Individual's Preferred Name"
-            value={referral.individualPreferredName || "—"}
+            value={formData.individualPreferredName}
+            onChange={(v) => updateField("individualPreferredName", v)}
           />
-          <Field
+          <TextInput
             label="Best Way to Reach"
-            value={referral.bestWayToReach || "—"}
+            value={formData.bestWayToReach}
+            onChange={(v) => updateField("bestWayToReach", v)}
           />
-          <Field
+          <DateInput
             label="Release/Discharge Date"
-            value={formatDate(referral.releaseDate)}
+            value={formData.releaseDate}
+            onChange={(v) => updateField("releaseDate", v)}
           />
-          <Field
+
+          <DateInput
             label="Individual's Date of Birth"
-            value={formatDate(referral.individualDateOfBirth)}
+            value={formData.individualDateOfBirth}
+            onChange={(v) => updateField("individualDateOfBirth", v)}
           />
-        </FieldGrid>
+        </div>
       </Section>
+
+      <div className="flex justify-end mt-6 pt-4 border-t border-bcgov-border">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2 bg-bcgov-blue text-white rounded hover:bg-bcgov-blue-dark disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
     </>
   );
 }

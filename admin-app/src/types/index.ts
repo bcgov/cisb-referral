@@ -160,6 +160,24 @@ export interface UpdateReferralDto {
   neededSupports?: string[];
   neededSupportsOther?: string | null;
   referralSummary?: string | null;
+  // Referrer fields
+  referrerContactName?: string;
+  referrerEmail?: string;
+  referrerPhone?: string | null;
+  // Individual fields
+  individualFirstName?: string;
+  individualMiddleName?: string | null;
+  individualLastName?: string | null;
+  individualPreferredName?: string | null;
+  individualDateOfBirth?: string | null;
+  individualPhone?: string | null;
+  gainFile?: string | null;
+  secondaryContact?: string | null;
+  bestWayToReach?: string | null;
+  currentlyHomeless?: string | null;
+  losingHousing?: string | null;
+  pendingRelease?: string | null;
+  releaseDate?: string | null;
 }
 
 export interface PaginatedResponse<T> {
