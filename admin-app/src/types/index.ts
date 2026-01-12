@@ -149,6 +149,13 @@ export interface UpdateReferralDto {
   followUpDate?: string | null;
   dueDate?: string | null;
   completedDate?: string | null;
+  currentlyConnectedSupports?: string[];
+  currentlyConnectedSupportsOther?: string | null;
+  regionId?: string | null;
+  specificCityTown?: string | null;
+  neededSupports?: string[];
+  neededSupportsOther?: string | null;
+  referralSummary?: string | null;
 }
 
 export interface PaginatedResponse<T> {

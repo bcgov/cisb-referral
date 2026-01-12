@@ -4,3 +4,4 @@ export { Section } from "./Section";
 export { FieldGrid, Field } from "./FieldGrid";
 export { Table } from "./Table";
 export { Dialog } from "./Dialog";
+export { MultiSelect } from "./MultiSelect";

@@ -5,7 +5,9 @@ import {
   IsOptional,
   IsDateString,
   IsBoolean,
+  IsArray,
 } from 'class-validator';
+import { SupportType } from '@prisma/client';
 
 export enum ReferralStatus {
   OPEN = 'OPEN',
@@ -77,4 +79,39 @@ export class UpdateReferralDto {
   @IsOptional()
   @IsDateString()
   completedDate?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  currentlyConnectedSupports?: SupportType[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  currentlyConnectedSupportsOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  regionId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  specificCityTown?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  neededSupports?: SupportType[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  neededSupportsOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referralSummary?: string;
 }

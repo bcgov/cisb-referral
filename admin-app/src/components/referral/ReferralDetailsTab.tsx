@@ -1,21 +1,19 @@
 import { useState } from "react";
-import { Section, FieldGrid, Field } from "../ui";
+import { useQuery } from "@tanstack/react-query";
+import { Section, FieldGrid, Field, MultiSelect } from "../ui";
 import { apiService } from "../../services";
 import {
   referredByLabels,
-  yesNoUnknownLabels,
-  releaseFromLabels,
   statusLabels,
   outcomeLabels,
+  supportLabels,
 } from "../../constants";
 import {
-  formatDate,
-  formatSupports,
   formatDateForInput,
   calculateTriageTime,
   calculateContactTime,
 } from "../../utils";
-import type { Referral, User, UpdateReferralDto } from "../../types";
+import type { Referral, User, UpdateReferralDto, Region } from "../../types";
 import { ReferralStatus, ReferralOutcome } from "../../types";
 
 interface ReferralDetailsTabProps {
@@ -37,12 +35,24 @@ export function ReferralDetailsTab({
     flag: referral.flag,
     assignedOn: referral.assignedOn,
     firstContactMadeOn: referral.firstContactMadeOn,
+    currentlyConnectedSupports: referral.currentlyConnectedSupports,
+    currentlyConnectedSupportsOther: referral.currentlyConnectedSupportsOther,
+    regionId: referral.regionId,
+    specificCityTown: referral.specificCityTown,
+    neededSupports: referral.neededSupports,
+    neededSupportsOther: referral.neededSupportsOther,
+    referralSummary: referral.referralSummary,
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions"],
+    queryFn: () => apiService.fetchRegions(),
+  });
 
   const filteredUsers = users.filter(
     (user) =>
@@ -51,6 +61,13 @@ export function ReferralDetailsTab({
   );
 
   const selectedUser = users.find((u) => u.id === formData.assignedToId);
+
+  const supportOptions = Object.entries(supportLabels).map(
+    ([value, label]) => ({
+      value,
+      label,
+    })
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -208,6 +225,7 @@ export function ReferralDetailsTab({
           <Field
             label="Referred By"
             value={referredByLabels[referral.referredBy] || referral.referredBy}
+            fullWidth
           />
           <Field
             label="Name of Ministry"
@@ -317,58 +335,112 @@ export function ReferralDetailsTab({
         </div>
       </Section>
 
-      <Section title="Housing & Release Info">
-        <FieldGrid>
-          <Field
-            label="Homelessness"
-            value={yesNoUnknownLabels[referral.currentlyHomeless || ""] || "—"}
-          />
-          <Field
-            label="At Risk of Losing Housing"
-            value={yesNoUnknownLabels[referral.losingHousing || ""] || "—"}
-          />
-          <Field
-            label="Pending Release From"
-            value={releaseFromLabels[referral.pendingRelease || ""] || "—"}
-          />
-          <Field
-            label="Release Date"
-            value={formatDate(referral.releaseDate)}
-          />
-        </FieldGrid>
-      </Section>
-
       <Section title="Other Details">
-        <FieldGrid>
-          <Field
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <MultiSelect
+            id="currentlyConnectedSupports"
             label="Supports Currently Connected"
-            value={formatSupports(referral.currentlyConnectedSupports)}
-            fullWidth
+            options={supportOptions}
+            value={formData.currentlyConnectedSupports || []}
+            onChange={(values) =>
+              setFormData({ ...formData, currentlyConnectedSupports: values })
+            }
+            placeholder="Search supports..."
           />
-          <Field label="Current Region" value={referral.region?.name || "—"} />
-          <Field
-            label="Other Currently Connected Supports"
-            value={referral.currentlyConnectedSupportsOther || "—"}
-          />
-          <Field
-            label="Specific City/Town"
-            value={referral.specificCityTown || "—"}
-          />
-          <Field
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Current Region
+            </label>
+            <select
+              value={formData.regionId || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, regionId: e.target.value || null })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            >
+              <option value="">— Select Region —</option>
+              {regions.map((region: Region) => (
+                <option key={region.id} value={region.id}>
+                  {region.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Other Currently Connected Supports
+            </label>
+            <input
+              type="text"
+              value={formData.currentlyConnectedSupportsOther || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  currentlyConnectedSupportsOther: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Specific City/Town
+            </label>
+            <input
+              type="text"
+              value={formData.specificCityTown || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  specificCityTown: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
+          <MultiSelect
+            id="neededSupports"
             label="Needed Supports"
-            value={formatSupports(referral.neededSupports)}
-            fullWidth
+            options={supportOptions}
+            value={formData.neededSupports || []}
+            onChange={(values) =>
+              setFormData({ ...formData, neededSupports: values })
+            }
+            placeholder="Search supports..."
           />
-          <Field
-            label="Other Needed Supports"
-            value={referral.neededSupportsOther || "—"}
-          />
-          <Field
-            label="Referral Reason"
-            value={referral.referralSummary || "—"}
-            fullWidth
-          />
-        </FieldGrid>
+          <div>
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Other Needed Supports
+            </label>
+            <input
+              type="text"
+              value={formData.neededSupportsOther || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  neededSupportsOther: e.target.value || null,
+                })
+              }
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+              Referral Reason
+            </label>
+            <textarea
+              value={formData.referralSummary || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  referralSummary: e.target.value || null,
+                })
+              }
+              rows={5}
+              className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue resize-y"
+            />
+          </div>
+        </div>
       </Section>
 
       <div className="flex justify-end mt-6 pt-4 border-t border-bcgov-border">
