@@ -1,16 +1,69 @@
 export interface Region {
   id: string;
   name: string;
+  managerEmail?: string | null;
+  supervisorEmail?: string | null;
+  assistantSupervisorEmail?: string | null;
+  sharedMailboxEmail?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Ministry {
   id: string;
   name: string;
+  code?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
 }
 
 export interface AgencyType {
   id: string;
   name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+}
+
+export interface CreateRegionDto {
+  name: string;
+  managerEmail?: string;
+  supervisorEmail?: string;
+  assistantSupervisorEmail?: string;
+  sharedMailboxEmail?: string;
+}
+
+export interface UpdateRegionDto {
+  name?: string;
+  managerEmail?: string;
+  supervisorEmail?: string;
+  assistantSupervisorEmail?: string;
+  sharedMailboxEmail?: string;
+}
+
+export interface CreateMinistryDto {
+  name: string;
+  code?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateMinistryDto {
+  name?: string;
+  code?: string;
+  isActive?: boolean;
+}
+
+export interface CreateAgencyTypeDto {
+  name: string;
+  isActive?: boolean;
+}
+
+export interface UpdateAgencyTypeDto {
+  name?: string;
+  isActive?: boolean;
 }
 
 export interface Referral {
