@@ -7,6 +7,17 @@ import type {
   AgencyType,
   PaginatedResponse,
   FetchReferralsParams,
+  CreateRegionDto,
+  UpdateRegionDto,
+  CreateMinistryDto,
+  UpdateMinistryDto,
+  CreateAgencyTypeDto,
+  UpdateAgencyTypeDto,
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  UserRole,
+  UpdateReferralDto,
 } from "../types";
 
 class APIService {
@@ -41,8 +52,26 @@ class APIService {
     return response.data;
   }
 
+  async updateReferral(id: string, data: UpdateReferralDto): Promise<Referral> {
+    const response = await this.client.patch<Referral>(
+      `/referrals/${id}`,
+      data
+    );
+    return response.data;
+  }
+
   async fetchRegions(): Promise<Region[]> {
     const response = await this.client.get<Region[]>("/regions");
+    return response.data;
+  }
+
+  async createRegion(data: CreateRegionDto): Promise<Region> {
+    const response = await this.client.post<Region>("/regions", data);
+    return response.data;
+  }
+
+  async updateRegion(id: string, data: UpdateRegionDto): Promise<Region> {
+    const response = await this.client.put<Region>(`/regions/${id}`, data);
     return response.data;
   }
 
@@ -51,8 +80,57 @@ class APIService {
     return response.data;
   }
 
+  async createMinistry(data: CreateMinistryDto): Promise<Ministry> {
+    const response = await this.client.post<Ministry>("/ministries", data);
+    return response.data;
+  }
+
+  async updateMinistry(id: string, data: UpdateMinistryDto): Promise<Ministry> {
+    const response = await this.client.put<Ministry>(`/ministries/${id}`, data);
+    return response.data;
+  }
+
   async fetchAgencyTypes(): Promise<AgencyType[]> {
     const response = await this.client.get<AgencyType[]>("/agency-types");
+    return response.data;
+  }
+
+  async createAgencyType(data: CreateAgencyTypeDto): Promise<AgencyType> {
+    const response = await this.client.post<AgencyType>("/agency-types", data);
+    return response.data;
+  }
+
+  async updateAgencyType(
+    id: string,
+    data: UpdateAgencyTypeDto
+  ): Promise<AgencyType> {
+    const response = await this.client.put<AgencyType>(
+      `/agency-types/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async fetchUsers(role?: UserRole, isActive?: boolean): Promise<User[]> {
+    const params: Record<string, string> = {};
+    if (role) params.role = role;
+    if (isActive !== undefined) params.isActive = String(isActive);
+    const response = await this.client.get<User[]>("/users", { params });
+    return response.data;
+  }
+
+  async createUser(data: CreateUserDto): Promise<User> {
+    const response = await this.client.post<User>("/users", data);
+    return response.data;
+  }
+
+  async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    const response = await this.client.patch<User>(`/users/${id}`, data);
+    return response.data;
+  }
+
+  async deleteUser(id: string): Promise<User> {
+    const response = await this.client.delete<User>(`/users/${id}`);
     return response.data;
   }
 }

@@ -46,9 +46,7 @@ enum SupportType {
 }
 
 enum UserRole {
-  MANAGER
-  ASSISTANT_MANAGER
-  SUPERVISOR
+  USER
   ADMIN
   SYSTEM_ADMINISTRATOR
 }
@@ -92,7 +90,6 @@ model Region {
 model Ministry {
   id          String    @id @default(uuid())
   name        String    @unique
-  code        String?
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

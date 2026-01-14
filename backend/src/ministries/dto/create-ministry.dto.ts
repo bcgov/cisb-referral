@@ -7,12 +7,6 @@ export class CreateMinistryDto {
   @MaxLength(255)
   name: string;
 
-  @ApiPropertyOptional({ description: 'Ministry code/acronym', maxLength: 50 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  code?: string;
-
   @ApiPropertyOptional({
     description: 'Whether the ministry is active',
     default: true,

@@ -59,7 +59,6 @@ async function main() {
       update: {},
       create: {
         name: 'Ministry of Social Development and Poverty Reduction',
-        code: 'SDPR',
         isActive: true,
       },
     }),
@@ -68,7 +67,6 @@ async function main() {
       update: {},
       create: {
         name: 'Ministry of Health',
-        code: 'MOH',
         isActive: true,
       },
     }),
@@ -77,7 +75,6 @@ async function main() {
       update: {},
       create: {
         name: 'Ministry of Children and Family Development',
-        code: 'MCFD',
         isActive: true,
       },
     }),
@@ -86,7 +83,6 @@ async function main() {
       update: {},
       create: {
         name: 'Ministry of Public Safety and Solicitor General',
-        code: 'PSSG',
         isActive: true,
       },
     }),

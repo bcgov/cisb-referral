@@ -64,6 +64,20 @@ export function Layout() {
                 Agency Types
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/users"
+                className={({ isActive }) =>
+                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
+                    isActive
+                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
+                      : ""
+                  }`
+                }
+              >
+                Users
+              </NavLink>
+            </li>
           </ul>
         </nav>
         <main className="flex-1 bg-bcgov-gray-light flex flex-col">

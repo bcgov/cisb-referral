@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  IsBoolean,
+  IsArray,
+} from 'class-validator';
+import { SupportType } from '@prisma/client';
 
 export enum ReferralStatus {
   OPEN = 'OPEN',
@@ -44,6 +52,21 @@ export class UpdateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsBoolean()
+  flag?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  assignedOn?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  firstContactMadeOn?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsDateString()
   followUpDate?: string;
 
@@ -56,4 +79,157 @@ export class UpdateReferralDto {
   @IsOptional()
   @IsDateString()
   completedDate?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  currentlyConnectedSupports?: SupportType[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  currentlyConnectedSupportsOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  regionId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  specificCityTown?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  neededSupports?: SupportType[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  neededSupportsOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referralSummary?: string;
+
+  // Referred By Info fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referredBy?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  ministryId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  ministryNameOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  agencyTypeId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  agencyTypeOther?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  partnerAgencyName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  programArea?: string;
+
+  // Referrer fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerContactName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerEmail?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  referrerPhone?: string;
+
+  // Individual fields
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualFirstName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualMiddleName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualLastName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualPreferredName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  individualDateOfBirth?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  individualPhone?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  gainFile?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  secondaryContact?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  bestWayToReach?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  currentlyHomeless?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  losingHousing?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  pendingRelease?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  releaseDate?: string;
 }

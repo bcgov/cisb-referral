@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class MinistryDto {
   @ApiProperty()
@@ -6,9 +6,6 @@ export class MinistryDto {
 
   @ApiProperty()
   name: string;
-
-  @ApiPropertyOptional()
-  code?: string;
 
   @ApiProperty()
   isActive: boolean;
