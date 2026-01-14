@@ -55,18 +55,22 @@ export function MultiSelect({
             },
             minHeight: "42px",
           }),
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isSelected
-              ? "#003366"
-              : state.isFocused
-              ? "#e5f0ff"
-              : "transparent",
-            color: state.isSelected ? "white" : "#1a1a1a",
-            "&:active": {
-              backgroundColor: "#003366",
-            },
-          }),
+          option: (base, state) => {
+            let backgroundColor = "transparent";
+            if (state.isSelected) {
+              backgroundColor = "#003366";
+            } else if (state.isFocused) {
+              backgroundColor = "#e5f0ff";
+            }
+            return {
+              ...base,
+              backgroundColor,
+              color: state.isSelected ? "white" : "#1a1a1a",
+              "&:active": {
+                backgroundColor: "#003366",
+              },
+            };
+          },
           multiValue: (base) => ({
             ...base,
             backgroundColor: "#e5f0ff",

@@ -28,7 +28,7 @@ interface ReferrerIndividualTabProps {
 export function ReferrerIndividualTab({
   referral,
   onUpdate,
-}: ReferrerIndividualTabProps) {
+}: Readonly<ReferrerIndividualTabProps>) {
   const [formData, setFormData] = useState<UpdateReferralDto>({
     referrerContactName: referral.referrerContactName,
     referrerEmail: referral.referrerContactEmail,

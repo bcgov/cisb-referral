@@ -61,7 +61,7 @@ export function ReferralDetailsTab({
   referral,
   users,
   onUpdate,
-}: ReferralDetailsTabProps) {
+}: Readonly<ReferralDetailsTabProps>) {
   const [formData, setFormData] = useState<UpdateReferralDto>({
     referralStatus: referral.referralStatus as ReferralStatus,
     referralOutcome: referral.referralOutcome as ReferralOutcome | null,
@@ -202,11 +202,15 @@ export function ReferralDetailsTab({
             options={OUTCOME_OPTIONS}
           />
           <div>
-            <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
+            <label
+              htmlFor="assignedTeamMember"
+              className="block text-sm font-medium text-bcgov-gray-dark mb-1"
+            >
               Assigned Team Member
             </label>
             <div className="relative">
               <input
+                id="assignedTeamMember"
                 type="text"
                 value={
                   showUserDropdown ? userSearch : selectedUser?.fullName || ""

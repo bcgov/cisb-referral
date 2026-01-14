@@ -20,7 +20,7 @@ export function Table<T extends { id: string }>({
   onEdit,
   loading = false,
   emptyMessage = "No data available",
-}: TableProps<T>) {
+}: Readonly<TableProps<T>>) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">

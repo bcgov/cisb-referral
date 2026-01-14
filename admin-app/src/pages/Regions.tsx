@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Table, Dialog } from "../components/ui";
 import { apiService } from "../services";
-import type { Region, CreateRegionDto, UpdateRegionDto } from "../types";
+import type { Region, CreateRegionDto } from "../types";
 
 export function Regions() {
   const [regions, setRegions] = useState<Region[]>([]);
