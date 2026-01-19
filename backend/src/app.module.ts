@@ -9,6 +9,7 @@ import { MinistriesModule } from './ministries/ministries.module';
 import { AgencyTypesModule } from './agency-types/agency-types.module';
 import { UsersModule } from './users/users.module';
 import { ReferralsModule } from './referrals/referrals.module';
+import { ContactsModule } from './contacts/contacts.module';
 import { AuthModule } from './auth/auth.module';
 import { HTTPLoggerMiddleware } from './middleware/req.res.logger';
 
@@ -24,6 +25,7 @@ import { HTTPLoggerMiddleware } from './middleware/req.res.logger';
     AgencyTypesModule,
     UsersModule,
     ReferralsModule,
+    ContactsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
