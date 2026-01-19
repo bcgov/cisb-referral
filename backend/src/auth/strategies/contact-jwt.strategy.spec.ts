@@ -28,6 +28,7 @@ describe('ContactJwtStrategy', () => {
     email: 'contact@example.com',
     name: 'Test Contact',
     preferred_username: 'testcontact',
+    jti: 'test-token-id',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 3600,
     iss: 'https://test-referral-issuer.com',

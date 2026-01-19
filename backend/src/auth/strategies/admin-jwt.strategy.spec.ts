@@ -31,6 +31,7 @@ describe('AdminJwtStrategy', () => {
     email: 'admin@example.com',
     name: 'Test Admin',
     preferred_username: 'testadmin',
+    jti: 'test-token-id',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 3600,
     iss: 'https://test-issuer.com',
