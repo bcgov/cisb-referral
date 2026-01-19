@@ -23,7 +23,7 @@ import { RegionDto } from './dto/region.dto';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
 import { Region, UserRole } from '@prisma/client';
-import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('regions')
@@ -33,7 +33,6 @@ export class RegionsController {
   constructor(private readonly regionsService: RegionsService) {}
 
   @Get()
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all regions' })
   @ApiResponse({
     status: 200,
@@ -45,7 +44,6 @@ export class RegionsController {
   }
 
   @Get(':id')
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get region by ID' })
   @ApiResponse({ status: 200, description: 'Region details', type: RegionDto })
   @ApiResponse({ status: 404, description: 'Region not found' })

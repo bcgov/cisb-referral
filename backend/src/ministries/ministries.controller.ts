@@ -25,7 +25,7 @@ import { MinistryDto } from './dto/ministry.dto';
 import { CreateMinistryDto } from './dto/create-ministry.dto';
 import { UpdateMinistryDto } from './dto/update-ministry.dto';
 import { Ministry, UserRole } from '@prisma/client';
-import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('ministries')
@@ -35,7 +35,6 @@ export class MinistriesController {
   constructor(private readonly ministriesService: MinistriesService) {}
 
   @Get()
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all ministries' })
   @ApiQuery({
     name: 'active',
@@ -54,7 +53,6 @@ export class MinistriesController {
   }
 
   @Get(':id')
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get ministry by ID' })
   @ApiResponse({
     status: 200,

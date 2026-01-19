@@ -25,7 +25,7 @@ import { AgencyTypeDto } from './dto/agency-type.dto';
 import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
 import { AgencyType, UserRole } from '@prisma/client';
-import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('agency-types')
@@ -35,7 +35,6 @@ export class AgencyTypesController {
   constructor(private readonly agencyTypesService: AgencyTypesService) {}
 
   @Get()
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all agency types' })
   @ApiQuery({
     name: 'active',
@@ -54,7 +53,6 @@ export class AgencyTypesController {
   }
 
   @Get(':id')
-  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get agency type by ID' })
   @ApiResponse({
     status: 200,
