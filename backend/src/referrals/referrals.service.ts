@@ -145,7 +145,11 @@ export class ReferralsService {
     return this.prisma.referral.update({
       where: { id },
       data: {
-        ...updateReferralDto,
+        referralStatus: updateReferralDto.referralStatus,
+        assignedToId: updateReferralDto.assignedToId,
+        referralOutcome: updateReferralDto.referralOutcome,
+        communityPartnerName: updateReferralDto.communityPartnerName,
+        flag: updateReferralDto.flag,
         modifiedBy: userId,
         followUpDate: updateReferralDto.followUpDate
           ? new Date(updateReferralDto.followUpDate)
