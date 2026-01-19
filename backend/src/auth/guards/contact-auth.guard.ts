@@ -10,7 +10,7 @@ import { IS_PUBLIC_KEY } from '../decorators';
  */
 @Injectable()
 export class ContactAuthGuard extends AuthGuard('contact-jwt') {
-  constructor(private reflector: Reflector) {
+  constructor(private readonly reflector: Reflector) {
     super();
   }
 

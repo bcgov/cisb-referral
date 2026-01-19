@@ -21,7 +21,7 @@ import { AuthenticatedUser } from '../interfaces';
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     // Get required roles from decorator metadata

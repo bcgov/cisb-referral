@@ -17,7 +17,7 @@ import { AuthenticatedContact } from '../interfaces';
  */
 @Injectable()
 export class ProfileCompleteGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     // Check if route is marked as public

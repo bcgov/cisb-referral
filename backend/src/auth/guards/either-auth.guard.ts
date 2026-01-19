@@ -17,10 +17,10 @@ import { IS_PUBLIC_KEY } from '../decorators';
  */
 @Injectable()
 export class EitherAuthGuard implements CanActivate {
-  private adminGuard: CanActivate;
-  private contactGuard: CanActivate;
+  private readonly adminGuard: CanActivate;
+  private readonly contactGuard: CanActivate;
 
-  constructor(private reflector: Reflector) {
+  constructor(private readonly reflector: Reflector) {
     // Create instances of both auth guards
     this.adminGuard = new (AuthGuard('admin-jwt'))();
     this.contactGuard = new (AuthGuard('contact-jwt'))();
