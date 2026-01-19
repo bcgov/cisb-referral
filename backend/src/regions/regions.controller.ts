@@ -23,17 +23,17 @@ import { RegionDto } from './dto/region.dto';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
 import { Region, UserRole } from '@prisma/client';
-import { AdminAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('regions')
 @ApiBearerAuth()
 @Controller({ path: 'regions', version: '1' })
-@UseGuards(AdminAuthGuard, RolesGuard)
 export class RegionsController {
   constructor(private readonly regionsService: RegionsService) {}
 
   @Get()
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all regions' })
   @ApiResponse({
     status: 200,
@@ -45,6 +45,7 @@ export class RegionsController {
   }
 
   @Get(':id')
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get region by ID' })
   @ApiResponse({ status: 200, description: 'Region details', type: RegionDto })
   @ApiResponse({ status: 404, description: 'Region not found' })
@@ -53,6 +54,7 @@ export class RegionsController {
   }
 
   @Post()
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Create a new region' })
   @ApiBody({ type: CreateRegionDto })
@@ -76,6 +78,7 @@ export class RegionsController {
   }
 
   @Put(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Update a region' })
   @ApiBody({ type: UpdateRegionDto })
@@ -102,6 +105,7 @@ export class RegionsController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a region' })

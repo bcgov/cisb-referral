@@ -25,17 +25,17 @@ import { MinistryDto } from './dto/ministry.dto';
 import { CreateMinistryDto } from './dto/create-ministry.dto';
 import { UpdateMinistryDto } from './dto/update-ministry.dto';
 import { Ministry, UserRole } from '@prisma/client';
-import { AdminAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('ministries')
 @ApiBearerAuth()
 @Controller({ path: 'ministries', version: '1' })
-@UseGuards(AdminAuthGuard, RolesGuard)
 export class MinistriesController {
   constructor(private readonly ministriesService: MinistriesService) {}
 
   @Get()
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all ministries' })
   @ApiQuery({
     name: 'active',
@@ -54,6 +54,7 @@ export class MinistriesController {
   }
 
   @Get(':id')
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get ministry by ID' })
   @ApiResponse({
     status: 200,
@@ -66,6 +67,7 @@ export class MinistriesController {
   }
 
   @Post()
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Create a new ministry' })
   @ApiBody({ type: CreateMinistryDto })
@@ -91,6 +93,7 @@ export class MinistriesController {
   }
 
   @Put(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Update a ministry' })
   @ApiBody({ type: UpdateMinistryDto })
@@ -117,6 +120,7 @@ export class MinistriesController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a ministry' })

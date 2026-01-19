@@ -25,17 +25,17 @@ import { AgencyTypeDto } from './dto/agency-type.dto';
 import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
 import { AgencyType, UserRole } from '@prisma/client';
-import { AdminAuthGuard, RolesGuard } from '../auth/guards';
+import { AdminAuthGuard, EitherAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
 @ApiTags('agency-types')
 @ApiBearerAuth()
 @Controller({ path: 'agency-types', version: '1' })
-@UseGuards(AdminAuthGuard, RolesGuard)
 export class AgencyTypesController {
   constructor(private readonly agencyTypesService: AgencyTypesService) {}
 
   @Get()
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get all agency types' })
   @ApiQuery({
     name: 'active',
@@ -54,6 +54,7 @@ export class AgencyTypesController {
   }
 
   @Get(':id')
+  @UseGuards(EitherAuthGuard)
   @ApiOperation({ summary: 'Get agency type by ID' })
   @ApiResponse({
     status: 200,
@@ -66,6 +67,7 @@ export class AgencyTypesController {
   }
 
   @Post()
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Create a new agency type' })
   @ApiBody({ type: CreateAgencyTypeDto })
@@ -91,6 +93,7 @@ export class AgencyTypesController {
   }
 
   @Put(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Update an agency type' })
   @ApiBody({ type: UpdateAgencyTypeDto })
@@ -117,6 +120,7 @@ export class AgencyTypesController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an agency type' })
