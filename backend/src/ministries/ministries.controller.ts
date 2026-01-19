@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,15 +18,20 @@ import {
   ApiResponse,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MinistriesService } from './ministries.service';
 import { MinistryDto } from './dto/ministry.dto';
 import { CreateMinistryDto } from './dto/create-ministry.dto';
 import { UpdateMinistryDto } from './dto/update-ministry.dto';
-import { Ministry } from '@prisma/client';
+import { Ministry, UserRole } from '@prisma/client';
+import { AdminAuthGuard, RolesGuard } from '../auth/guards';
+import { Roles } from '../auth/decorators';
 
 @ApiTags('ministries')
+@ApiBearerAuth()
 @Controller({ path: 'ministries', version: '1' })
+@UseGuards(AdminAuthGuard, RolesGuard)
 export class MinistriesController {
   constructor(private readonly ministriesService: MinistriesService) {}
 
@@ -60,6 +66,7 @@ export class MinistriesController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Create a new ministry' })
   @ApiBody({ type: CreateMinistryDto })
   @ApiResponse({
@@ -68,6 +75,11 @@ export class MinistriesController {
     type: MinistryDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   @ApiResponse({
     status: 409,
     description: 'Ministry with this name already exists',
@@ -79,12 +91,18 @@ export class MinistriesController {
   }
 
   @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Update a ministry' })
   @ApiBody({ type: UpdateMinistryDto })
   @ApiResponse({
     status: 200,
     description: 'Ministry updated successfully',
     type: MinistryDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'Ministry not found' })
   @ApiResponse({
@@ -99,9 +117,15 @@ export class MinistriesController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a ministry' })
   @ApiResponse({ status: 204, description: 'Ministry deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Ministry not found' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.ministriesService.remove(id);

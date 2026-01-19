@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,15 +18,20 @@ import {
   ApiResponse,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AgencyTypesService } from './agency-types.service';
 import { AgencyTypeDto } from './dto/agency-type.dto';
 import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
-import { AgencyType } from '@prisma/client';
+import { AgencyType, UserRole } from '@prisma/client';
+import { AdminAuthGuard, RolesGuard } from '../auth/guards';
+import { Roles } from '../auth/decorators';
 
 @ApiTags('agency-types')
+@ApiBearerAuth()
 @Controller({ path: 'agency-types', version: '1' })
+@UseGuards(AdminAuthGuard, RolesGuard)
 export class AgencyTypesController {
   constructor(private readonly agencyTypesService: AgencyTypesService) {}
 
@@ -60,6 +66,7 @@ export class AgencyTypesController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Create a new agency type' })
   @ApiBody({ type: CreateAgencyTypeDto })
   @ApiResponse({
@@ -68,6 +75,11 @@ export class AgencyTypesController {
     type: AgencyTypeDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   @ApiResponse({
     status: 409,
     description: 'Agency type with this name already exists',
@@ -79,12 +91,18 @@ export class AgencyTypesController {
   }
 
   @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Update an agency type' })
   @ApiBody({ type: UpdateAgencyTypeDto })
   @ApiResponse({
     status: 200,
     description: 'Agency type updated successfully',
     type: AgencyTypeDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'Agency type not found' })
   @ApiResponse({
@@ -99,9 +117,15 @@ export class AgencyTypesController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an agency type' })
   @ApiResponse({ status: 204, description: 'Agency type deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Agency type not found' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.agencyTypesService.remove(id);
