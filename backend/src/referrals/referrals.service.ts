@@ -23,7 +23,10 @@ export class ReferralsService {
     );
   }
 
-  async create(createReferralDto: CreateReferralDto): Promise<Referral> {
+  async create(
+    createReferralDto: CreateReferralDto,
+    contactId: string,
+  ): Promise<Referral> {
     const flag = this.calculateFlag(
       createReferralDto.losingHousing,
       createReferralDto.pendingRelease,
@@ -40,6 +43,7 @@ export class ReferralsService {
           : undefined,
         flag,
         referralStatus: ReferralStatus.OPEN,
+        createdBy: contactId,
       },
       include: {
         region: true,
@@ -123,6 +127,7 @@ export class ReferralsService {
   async update(
     id: string,
     updateReferralDto: UpdateReferralDto,
+    userId?: string,
   ): Promise<Referral> {
     const existingReferral = await this.findOne(id);
 
@@ -136,7 +141,7 @@ export class ReferralsService {
           referralId: id,
           fromStatus: existingReferral.referralStatus,
           toStatus: updateReferralDto.referralStatus,
-          createdBy: undefined, // TODO: Set from authenticated user when Keycloak is integrated
+          createdBy: userId,
         },
       });
     }
@@ -144,7 +149,12 @@ export class ReferralsService {
     return this.prisma.referral.update({
       where: { id },
       data: {
-        ...updateReferralDto,
+        referralStatus: updateReferralDto.referralStatus,
+        assignedToId: updateReferralDto.assignedToId,
+        referralOutcome: updateReferralDto.referralOutcome,
+        communityPartnerName: updateReferralDto.communityPartnerName,
+        flag: updateReferralDto.flag,
+        modifiedBy: userId,
         followUpDate: updateReferralDto.followUpDate
           ? new Date(updateReferralDto.followUpDate)
           : undefined,
@@ -167,6 +177,7 @@ export class ReferralsService {
   async addStatusHistory(
     id: string,
     createStatusHistoryDto: CreateStatusHistoryDto,
+    userId?: string,
   ): Promise<ReferralStatusHistory> {
     const referral = await this.findOne(id);
 
@@ -176,7 +187,7 @@ export class ReferralsService {
         fromStatus: referral.referralStatus,
         toStatus: createStatusHistoryDto.toStatus as ReferralStatus,
         comment: createStatusHistoryDto.comment,
-        createdBy: undefined, // TODO: Set from authenticated user when Keycloak is integrated
+        createdBy: userId,
       },
     });
   }

@@ -7,13 +7,27 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import { Referral, ReferralStatusHistory } from '@prisma/client';
+import type { Referral, ReferralStatusHistory, User } from '@prisma/client';
+import {
+  AdminAuthGuard,
+  ContactAuthGuard,
+  ProfileCompleteGuard,
+} from '../auth/guards';
+import { CurrentUser, CurrentContact } from '../auth/decorators';
+import type { AuthenticatedContact } from '../auth/interfaces';
 
 @ApiTags('referrals')
 @Controller({ path: 'referrals', version: '1' })
@@ -21,16 +35,23 @@ export class ReferralsController {
   constructor(private readonly referralsService: ReferralsService) {}
 
   @Post()
+  @UseGuards(ContactAuthGuard, ProfileCompleteGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new referral' })
   @ApiResponse({ status: 201, description: 'Referral created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Profile incomplete' })
   async create(
+    @CurrentContact() auth: AuthenticatedContact,
     @Body() createReferralDto: CreateReferralDto,
   ): Promise<Referral> {
-    return this.referralsService.create(createReferralDto);
+    return this.referralsService.create(createReferralDto, auth.contact.id);
   }
 
   @Get()
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all referrals with pagination and filtering' })
   @ApiQuery({
     name: 'page',
@@ -63,6 +84,7 @@ export class ReferralsController {
     description: 'Filter by assigned user',
   })
   @ApiResponse({ status: 200, description: 'List of referrals' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -80,33 +102,48 @@ export class ReferralsController {
   }
 
   @Get(':id')
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get referral by ID' })
   @ApiResponse({ status: 200, description: 'Referral details' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Referral> {
     return this.referralsService.findOne(id);
   }
 
   @Patch(':id')
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update referral' })
   @ApiResponse({ status: 200, description: 'Referral updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateReferralDto: UpdateReferralDto,
+    @CurrentUser() user: User,
   ): Promise<Referral> {
-    return this.referralsService.update(id, updateReferralDto);
+    return this.referralsService.update(id, updateReferralDto, user.id);
   }
 
   @Post(':id/status-history')
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Add status history entry' })
   @ApiResponse({ status: 201, description: 'Status history entry created' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async addStatusHistory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() createStatusHistoryDto: CreateStatusHistoryDto,
+    @CurrentUser() user: User,
   ): Promise<ReferralStatusHistory> {
-    return this.referralsService.addStatusHistory(id, createStatusHistoryDto);
+    return this.referralsService.addStatusHistory(
+      id,
+      createStatusHistoryDto,
+      user.id,
+    );
   }
 }

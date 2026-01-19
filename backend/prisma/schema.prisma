@@ -146,14 +146,15 @@ model Contact {
   fullName        String
   companyName     String?
   email           String      @unique
+  phone           String?
   isActive        Boolean     @default(true)
   keycloakId      String?     @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   lastLoginAt     DateTime?
-  
+
   createdReferrals  Referral[]  @relation("CreatedReferrals")
-  
+
   @@index([email])
   @@index([userName])
   @@index([isActive])

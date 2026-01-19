@@ -36,15 +36,32 @@ export async function bootstrap() {
       'API for Community Integration Support Branch (CISB) Referral System',
     )
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter your Keycloak JWT token',
+        in: 'header',
+      },
+      'BearerAuth',
+    )
     .addTag('referrals')
     .addTag('regions')
     .addTag('ministries')
     .addTag('agency-types')
     .addTag('users')
+    .addTag('contacts')
     .addTag('health')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+
+  // Only expose Swagger UI in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
   return app;
 }
