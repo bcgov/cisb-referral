@@ -21,24 +21,32 @@ import { CreateReferralDto } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
 import type { Referral, ReferralStatusHistory, User } from '@prisma/client';
-import { AdminAuthGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import {
+  AdminAuthGuard,
+  ContactAuthGuard,
+  ProfileCompleteGuard,
+} from '../auth/guards';
+import { CurrentUser, CurrentContact } from '../auth/decorators';
+import type { AuthenticatedContact } from '../auth/interfaces';
 
 @ApiTags('referrals')
 @Controller({ path: 'referrals', version: '1' })
 export class ReferralsController {
   constructor(private readonly referralsService: ReferralsService) {}
 
-  // TODO: This endpoint will be protected by ContactAuthGuard in Phase 3
-  // For now, leaving unprotected to allow testing
   @Post()
+  @UseGuards(ContactAuthGuard, ProfileCompleteGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new referral' })
   @ApiResponse({ status: 201, description: 'Referral created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Profile incomplete' })
   async create(
+    @CurrentContact() auth: AuthenticatedContact,
     @Body() createReferralDto: CreateReferralDto,
   ): Promise<Referral> {
-    return this.referralsService.create(createReferralDto);
+    return this.referralsService.create(createReferralDto, auth.contact.id);
   }
 
   @Get()

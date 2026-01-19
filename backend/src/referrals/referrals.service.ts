@@ -23,7 +23,10 @@ export class ReferralsService {
     );
   }
 
-  async create(createReferralDto: CreateReferralDto): Promise<Referral> {
+  async create(
+    createReferralDto: CreateReferralDto,
+    contactId: string,
+  ): Promise<Referral> {
     const flag = this.calculateFlag(
       createReferralDto.losingHousing,
       createReferralDto.pendingRelease,
@@ -40,6 +43,7 @@ export class ReferralsService {
           : undefined,
         flag,
         referralStatus: ReferralStatus.OPEN,
+        createdBy: contactId,
       },
       include: {
         region: true,
