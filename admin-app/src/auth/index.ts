@@ -18,8 +18,8 @@ export const init = (onSuccess: () => void): void => {
         onSuccess();
       }
     })
-    .catch((error) => {
-      console.error("Keycloak init failed:", error);
+    .catch(() => {
+      // Auth failure - user remains on login page
     });
 
   keycloak.onTokenExpired = () => {

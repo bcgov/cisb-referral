@@ -144,26 +144,22 @@ describe("auth module", () => {
       expect(onSuccess).not.toHaveBeenCalled();
     });
 
-    it("should log error when Keycloak init fails", async () => {
+    it("should handle init failure gracefully without logging", async () => {
       // Arrange
       const consoleErrorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      const testError = new Error("Init failed");
-      mockKeycloakInstance.init.mockRejectedValue(testError);
+      mockKeycloakInstance.init.mockRejectedValue(new Error("Init failed"));
       const onSuccess = vi.fn();
 
       // Act
       const { init } = await import("../../auth/index");
       init(onSuccess);
 
-      // Assert
-      await vi.waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          "Keycloak init failed:",
-          testError,
-        );
-      });
+      // Assert - no console logging, no crash
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
