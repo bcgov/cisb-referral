@@ -1,9 +1,9 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
-import { useAuth } from "../auth";
+import { logout, getUser } from "../auth";
 
 export function Layout() {
-  const { user, logout } = useAuth();
+  const user = getUser();
 
   return (
     <div className="flex flex-col min-h-screen">

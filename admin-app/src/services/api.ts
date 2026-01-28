@@ -23,7 +23,9 @@ import type {
   UserRole,
   UpdateReferralDto,
 } from "../types";
-import { keycloak, TOKEN_REFRESH_MIN_VALIDITY } from "../auth";
+import { keycloak } from "../auth";
+
+const TOKEN_MIN_VALIDITY = 30;
 
 class APIService {
   private readonly client: AxiosInstance;
@@ -39,10 +41,8 @@ class APIService {
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
         try {
-          // Proactively refresh token if it expires within the threshold
-          await keycloak.updateToken(TOKEN_REFRESH_MIN_VALIDITY);
+          await keycloak.updateToken(TOKEN_MIN_VALIDITY);
         } catch {
-          // Token refresh failed, redirect to login
           keycloak.logout({ redirectUri: window.location.origin });
           return Promise.reject(new Error("Session expired"));
         }
