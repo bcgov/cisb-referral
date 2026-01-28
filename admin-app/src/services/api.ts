@@ -43,8 +43,8 @@ class APIService {
         try {
           await keycloak.updateToken(TOKEN_MIN_VALIDITY);
         } catch {
-          keycloak.logout({ redirectUri: window.location.origin });
-          return Promise.reject(new Error("Session expired"));
+          keycloak.logout({ redirectUri: globalThis.location.origin });
+          throw new Error("Session expired");
         }
 
         if (keycloak.token) {
@@ -57,7 +57,9 @@ class APIService {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error) => Promise.reject(error),
+      (error) => {
+        throw error;
+      },
     );
   }
 
