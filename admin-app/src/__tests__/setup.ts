@@ -4,8 +4,8 @@ import { vi } from "vitest";
 // Mock browser location for jsdom environment
 Object.defineProperty(globalThis, "location", {
   value: {
-    origin: "http://test.local",
-    href: "http://test.local",
+    origin: "https://test.local",
+    href: "https://test.local",
     pathname: "/",
     search: "",
     hash: "",
