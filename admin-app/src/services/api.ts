@@ -25,7 +25,7 @@ import type {
 } from "../types";
 import { keycloak } from "../auth";
 
-const TOKEN_MIN_VALIDITY = 30;
+export const TOKEN_MIN_VALIDITY = 30;
 
 class APIService {
   private readonly client: AxiosInstance;
