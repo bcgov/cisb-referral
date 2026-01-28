@@ -110,7 +110,7 @@ export function ReferralDetailsTab({
   const filteredUsers = users.filter(
     (user) =>
       user.fullName.toLowerCase().includes(userSearch.toLowerCase()) ||
-      user.email.toLowerCase().includes(userSearch.toLowerCase())
+      user.email.toLowerCase().includes(userSearch.toLowerCase()),
   );
 
   const selectedUser = users.find((u) => u.id === formData.assignedToId);
@@ -119,7 +119,7 @@ export function ReferralDetailsTab({
     ([value, label]) => ({
       value,
       label,
-    })
+    }),
   );
 
   const regionOptions = [
@@ -152,7 +152,7 @@ export function ReferralDetailsTab({
 
   const updateField = <K extends keyof UpdateReferralDto>(
     field: K,
-    value: UpdateReferralDto[K]
+    value: UpdateReferralDto[K],
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -169,9 +169,8 @@ export function ReferralDetailsTab({
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      console.error("Failed to update referral:", error);
       setSaveError(
-        error.response?.data?.message || "Failed to update referral"
+        error.response?.data?.message || "Failed to update referral",
       );
     } finally {
       setSaving(false);
@@ -357,7 +356,7 @@ export function ReferralDetailsTab({
             label="Length of Time to Contact After Triage"
             value={calculateContactTime(
               referral.assignedOn,
-              referral.firstContactMadeOn
+              referral.firstContactMadeOn,
             )}
           />
         </div>

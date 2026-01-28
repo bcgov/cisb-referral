@@ -12,7 +12,7 @@ export function AgencyTypes() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAgencyType, setEditingAgencyType] = useState<AgencyType | null>(
-    null
+    null,
   );
   const [formData, setFormData] = useState<CreateAgencyTypeDto>({
     name: "",
@@ -29,8 +29,7 @@ export function AgencyTypes() {
       setLoading(true);
       const data = await apiService.fetchAgencyTypes();
       setAgencyTypes(data);
-    } catch (err) {
-      console.error("Failed to load agency types:", err);
+    } catch {
       setError("Failed to load agency types");
     } finally {
       setLoading(false);
@@ -70,7 +69,6 @@ export function AgencyTypes() {
       setDialogOpen(false);
       loadAgencyTypes();
     } catch (err: any) {
-      console.error("Failed to save agency type:", err);
       setError(err.response?.data?.message || "Failed to save agency type");
     } finally {
       setSubmitting(false);

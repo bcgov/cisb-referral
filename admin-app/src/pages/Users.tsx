@@ -36,8 +36,7 @@ export function Users() {
       setLoading(true);
       const data = await apiService.fetchUsers();
       setUsers(data);
-    } catch (err) {
-      console.error("Failed to load users:", err);
+    } catch {
       setError("Failed to load users");
     } finally {
       setLoading(false);
@@ -83,7 +82,6 @@ export function Users() {
       setDeletingUser(null);
       loadUsers();
     } catch (err: any) {
-      console.error("Failed to delete user:", err);
       setError(err.response?.data?.message || "Failed to delete user");
     } finally {
       setSubmitting(false);
@@ -114,7 +112,6 @@ export function Users() {
       setDialogOpen(false);
       loadUsers();
     } catch (err: any) {
-      console.error("Failed to save user:", err);
       setError(err.response?.data?.message || "Failed to save user");
     } finally {
       setSubmitting(false);

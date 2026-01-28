@@ -23,8 +23,7 @@ export function Ministries() {
       setLoading(true);
       const data = await apiService.fetchMinistries();
       setMinistries(data);
-    } catch (err) {
-      console.error("Failed to load ministries:", err);
+    } catch {
       setError("Failed to load ministries");
     } finally {
       setLoading(false);
@@ -64,7 +63,6 @@ export function Ministries() {
       setDialogOpen(false);
       loadMinistries();
     } catch (err: any) {
-      console.error("Failed to save ministry:", err);
       setError(err.response?.data?.message || "Failed to save ministry");
     } finally {
       setSubmitting(false);
