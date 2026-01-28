@@ -1,4 +1,8 @@
-import type { AxiosInstance, AxiosResponse } from "axios";
+import type {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import axios from "axios";
 import type {
   Referral,
@@ -19,6 +23,9 @@ import type {
   UserRole,
   UpdateReferralDto,
 } from "../types";
+import { keycloak } from "../auth";
+
+export const TOKEN_MIN_VALIDITY = 30;
 
 class APIService {
   private readonly client: AxiosInstance;
@@ -31,18 +38,37 @@ class APIService {
       },
     });
 
+    this.client.interceptors.request.use(
+      async (config: InternalAxiosRequestConfig) => {
+        try {
+          await keycloak.updateToken(TOKEN_MIN_VALIDITY);
+        } catch {
+          keycloak.logout({ redirectUri: globalThis.location.origin });
+          throw new Error("Session expired");
+        }
+
+        if (keycloak.token) {
+          config.headers.Authorization = `Bearer ${keycloak.token}`;
+        }
+
+        return config;
+      },
+    );
+
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error) => Promise.reject(error)
+      (error) => {
+        throw error;
+      },
     );
   }
 
   async fetchReferrals(
-    params: FetchReferralsParams = {}
+    params: FetchReferralsParams = {},
   ): Promise<PaginatedResponse<Referral>> {
     const response = await this.client.get<PaginatedResponse<Referral>>(
       "/referrals",
-      { params }
+      { params },
     );
     return response.data;
   }
@@ -55,7 +81,7 @@ class APIService {
   async updateReferral(id: string, data: UpdateReferralDto): Promise<Referral> {
     const response = await this.client.patch<Referral>(
       `/referrals/${id}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -102,11 +128,11 @@ class APIService {
 
   async updateAgencyType(
     id: string,
-    data: UpdateAgencyTypeDto
+    data: UpdateAgencyTypeDto,
   ): Promise<AgencyType> {
     const response = await this.client.put<AgencyType>(
       `/agency-types/${id}`,
-      data
+      data,
     );
     return response.data;
   }

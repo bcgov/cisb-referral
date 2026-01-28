@@ -53,7 +53,7 @@ export function ReferrerIndividualTab({
 
   const updateField = <K extends keyof UpdateReferralDto>(
     field: K,
-    value: UpdateReferralDto[K]
+    value: UpdateReferralDto[K],
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -70,9 +70,8 @@ export function ReferrerIndividualTab({
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      console.error("Failed to update referral:", error);
       setSaveError(
-        error.response?.data?.message || "Failed to update referral"
+        error.response?.data?.message || "Failed to update referral",
       );
     } finally {
       setSaving(false);

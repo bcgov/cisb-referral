@@ -27,8 +27,7 @@ export function Regions() {
       setLoading(true);
       const data = await apiService.fetchRegions();
       setRegions(data);
-    } catch (err) {
-      console.error("Failed to load regions:", err);
+    } catch {
       setError("Failed to load regions");
     } finally {
       setLoading(false);
@@ -84,7 +83,6 @@ export function Regions() {
       setDialogOpen(false);
       loadRegions();
     } catch (err: any) {
-      console.error("Failed to save region:", err);
       setError(err.response?.data?.message || "Failed to save region");
     } finally {
       setSubmitting(false);
