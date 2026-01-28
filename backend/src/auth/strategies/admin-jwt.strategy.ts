@@ -40,11 +40,27 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
    */
   async validate(payload: KeycloakTokenPayload): Promise<AuthenticatedUser> {
     const keycloakId = payload.sub;
+    const email = payload.email;
 
-    // Find user by Keycloak ID - must be pre-provisioned by admin
-    const user = await this.prisma.user.findUnique({
+    // Try find by keycloakId first (already linked user)
+    let user = await this.prisma.user.findUnique({
       where: { keycloakId },
     });
+
+    // If not found by keycloakId, try by email and auto-link
+    if (!user && email) {
+      user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (user && !user.keycloakId) {
+        // Auto-link keycloakId on first login
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { keycloakId },
+        });
+      }
+    }
 
     if (!user) {
       throw new UnauthorizedException(
