@@ -24,13 +24,13 @@ export const init = (onSuccess: () => void): void => {
 
   keycloak.onTokenExpired = () => {
     keycloak.updateToken(30).catch(() => {
-      keycloak.logout({ redirectUri: window.location.origin });
+      keycloak.logout({ redirectUri: globalThis.location.origin });
     });
   };
 };
 
 export const logout = (): void => {
-  keycloak.logout({ redirectUri: window.location.origin });
+  keycloak.logout({ redirectUri: globalThis.location.origin });
 };
 
 export const getUser = (): {
