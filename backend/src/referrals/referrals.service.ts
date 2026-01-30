@@ -7,7 +7,7 @@ import {
 } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import { Referral, ReferralStatusHistory } from '@prisma/client';
+import { Referral, ReferralStatusHistory } from '../generated/prisma/client';
 
 @Injectable()
 export class ReferralsService {

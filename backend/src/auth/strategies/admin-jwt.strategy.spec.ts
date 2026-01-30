@@ -4,7 +4,7 @@ import { AdminJwtStrategy } from './admin-jwt.strategy';
 import { KeycloakConfigService } from '../config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KeycloakTokenPayload } from '../interfaces';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../generated/prisma/client';
 
 describe('AdminJwtStrategy', () => {
   let strategy: AdminJwtStrategy;

@@ -24,7 +24,7 @@ import { AgencyTypesService } from './agency-types.service';
 import { AgencyTypeDto } from './dto/agency-type.dto';
 import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
-import { AgencyType, UserRole } from '@prisma/client';
+import { AgencyType, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 

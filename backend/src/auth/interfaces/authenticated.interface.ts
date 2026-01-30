@@ -1,4 +1,4 @@
-import { User, Contact } from '@prisma/client';
+import { User, Contact } from '../../generated/prisma/client';
 
 /**
  * Authenticated admin user attached to request
