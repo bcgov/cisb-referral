@@ -1,7 +1,8 @@
-/// <reference types="node" />
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Starting seed...');

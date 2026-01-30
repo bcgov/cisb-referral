@@ -88,4 +88,3 @@ class PrismaService
 }
 
 export { PrismaService };
-export { PrismaService };
