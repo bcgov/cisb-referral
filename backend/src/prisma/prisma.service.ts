@@ -6,19 +6,23 @@ import { Pool } from 'pg';
 
 /**
  * Database connection configuration
+ *
+ * Local development: Set POSTGRES_* environment variables
+ * OpenShift: Uses Crunchy PostgreSQL secret mounts
+ * Production: Set PGBOUNCER_URL for connection pooling
  */
 const DB_HOST = process.env.POSTGRES_HOST || 'localhost';
 const DB_USER = process.env.POSTGRES_USER || 'postgres';
-const DB_PWD = encodeURIComponent(process.env.POSTGRES_PASSWORD || 'default');
-const DB_PORT = process.env.POSTGRES_PORT || 5432;
-const DB_NAME = process.env.POSTGRES_DATABASE || 'postgres';
-const DB_SCHEMA = process.env.POSTGRES_SCHEMA || 'users';
+const DB_PWD = encodeURIComponent(process.env.POSTGRES_PASSWORD || 'postgres');
+const DB_PORT = process.env.POSTGRES_PORT || '5432';
+const DB_NAME = process.env.POSTGRES_DATABASE || 'cisb_referral';
+const DB_SCHEMA = process.env.POSTGRES_SCHEMA || 'public';
 const PGBOUNCER_URL = process.env.PGBOUNCER_URL;
 
 /**
  * Build connection string based on environment
  * - If PGBOUNCER_URL is set (production), use it with pgbouncer=true flag
- * - Otherwise, build URL from individual components (local development)
+ * - Otherwise, build URL from individual components
  */
 const dataSourceURL = PGBOUNCER_URL
   ? `${PGBOUNCER_URL}?schema=${DB_SCHEMA}&pgbouncer=true`
@@ -28,12 +32,14 @@ const dataSourceURL = PGBOUNCER_URL
  * PrismaService - NestJS injectable database service
  *
  * Key features:
- * - Singleton pattern: Ensures only one PrismaClient instance exists
  * - Connection pooling: Uses pg.Pool for efficient connection management
  * - Lifecycle hooks: Connects on init, disconnects on destroy
  *
  * Prisma 7 requires a driver adapter (PrismaPg) instead of the built-in
  * query engine. This gives us direct control over the connection pool.
+ *
+ * NestJS services are singletons by default, so we don't need manual
+ * singleton management - NestJS handles this through its DI container.
  */
 @Injectable()
 class PrismaService
@@ -42,19 +48,10 @@ class PrismaService
 {
   private logger = new Logger('PRISMA');
 
-  /** Singleton instance - prevents multiple PrismaClient instances */
-  private static instance: PrismaService;
-
   /** Node-postgres connection pool - managed separately for cleanup */
   private pool: Pool;
 
   constructor() {
-    // Return existing instance if already created (singleton pattern)
-    // This prevents connection pool exhaustion from multiple instances
-    if (PrismaService.instance) {
-      return PrismaService.instance;
-    }
-
     // Create node-postgres connection pool
     // Pool manages multiple connections and handles reconnection automatically
     const pool = new Pool({ connectionString: dataSourceURL });
@@ -67,7 +64,6 @@ class PrismaService
     super({ adapter });
 
     this.pool = pool;
-    PrismaService.instance = this;
   }
 
   /**
