@@ -7,7 +7,7 @@ import {
   IsBoolean,
   IsArray,
 } from 'class-validator';
-import { SupportType } from '@prisma/client';
+import { SupportType } from '../../generated/prisma/client';
 
 export enum ReferralStatus {
   OPEN = 'OPEN',

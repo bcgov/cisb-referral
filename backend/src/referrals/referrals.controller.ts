@@ -20,7 +20,11 @@ import { ReferralsService } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import type { Referral, ReferralStatusHistory, User } from '@prisma/client';
+import type {
+  Referral,
+  ReferralStatusHistory,
+  User,
+} from '../generated/prisma/client';
 import {
   AdminAuthGuard,
   ContactAuthGuard,

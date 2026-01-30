@@ -22,7 +22,7 @@ import { RegionsService } from './regions.service';
 import { RegionDto } from './dto/region.dto';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
-import { Region, UserRole } from '@prisma/client';
+import { Region, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 

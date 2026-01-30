@@ -21,7 +21,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto, UserRole } from './dto/user.dto';
-import { User, UserRole as PrismaUserRole } from '@prisma/client';
+import { User, UserRole as PrismaUserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 

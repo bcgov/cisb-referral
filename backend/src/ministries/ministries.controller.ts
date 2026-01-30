@@ -24,7 +24,7 @@ import { MinistriesService } from './ministries.service';
 import { MinistryDto } from './dto/ministry.dto';
 import { CreateMinistryDto } from './dto/create-ministry.dto';
 import { UpdateMinistryDto } from './dto/update-ministry.dto';
-import { Ministry, UserRole } from '@prisma/client';
+import { Ministry, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 
