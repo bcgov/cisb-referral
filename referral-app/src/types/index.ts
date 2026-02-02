@@ -29,6 +29,18 @@ export interface ReferralResponse {
   agencyType?: AgencyType;
 }
 
+export interface Contact {
+  id: string;
+  keycloakId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  telephone: string | null;
+  isProfileComplete: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SelectOption {
   readonly id: string;
   readonly name: string;
