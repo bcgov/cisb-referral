@@ -50,8 +50,7 @@ export const Profile = (): React.JSX.Element => {
 
       {!isProfileComplete && (
         <div className="profile-alert">
-          Please complete your profile to continue. A telephone number is
-          required before you can submit referrals.
+          Please complete your profile to continue.
         </div>
       )}
 
