@@ -54,7 +54,7 @@ class APIService {
     return response.data;
   }
 
-  async updateProfile(data: { telephone: string }): Promise<Contact> {
+  async updateProfile(data: { phone: string }): Promise<Contact> {
     const response = await this.client.patch<Contact>("/contacts/me", data);
     return response.data;
   }

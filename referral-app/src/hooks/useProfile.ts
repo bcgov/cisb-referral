@@ -10,7 +10,7 @@ export const useProfile = () => {
   });
 
   return {
-    profile: query.data ?? null,
+    profile: query.data?.contact ?? null,
     isProfileComplete: query.data?.isProfileComplete ?? false,
     isLoading: query.isLoading,
     error: query.error ? "Failed to load profile" : null,
@@ -21,7 +21,7 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { telephone: string }) => apiService.updateProfile(data),
+    mutationFn: (data: { phone: string }) => apiService.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
     },

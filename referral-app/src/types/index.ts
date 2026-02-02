@@ -30,15 +30,14 @@ export interface ReferralResponse {
 }
 
 export interface Contact {
-  id: string;
-  keycloakId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  telephone: string | null;
+  contact: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string | null;
+    userName: string;
+  };
   isProfileComplete: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface SelectOption {

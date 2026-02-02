@@ -5,7 +5,7 @@ import { useProfile, useUpdateProfile } from "../hooks";
 import "./Profile.css";
 
 interface ProfileFormData {
-  telephone: string;
+  phone: string;
 }
 
 export const Profile = (): React.JSX.Element => {
@@ -19,13 +19,13 @@ export const Profile = (): React.JSX.Element => {
     formState: { errors },
   } = useForm<ProfileFormData>({
     values: {
-      telephone: profile?.telephone ?? "",
+      phone: profile?.phone ?? "",
     },
   });
 
   const onSubmit = (data: ProfileFormData): void => {
     updateProfile.mutate(
-      { telephone: data.telephone.trim() },
+      { phone: data.phone.trim() },
       {
         onSuccess: () => {
           if (!isProfileComplete) {
@@ -64,7 +64,7 @@ export const Profile = (): React.JSX.Element => {
           <input
             id="name"
             type="text"
-            value={`${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim()}
+            value={profile?.fullName ?? ""}
             disabled
           />
         </div>
@@ -80,18 +80,18 @@ export const Profile = (): React.JSX.Element => {
         </div>
 
         <div className="profile-field">
-          <label htmlFor="telephone">
-            Telephone <span className="required">*</span>
+          <label htmlFor="phone">
+            Phone <span className="required">*</span>
           </label>
           <input
-            id="telephone"
+            id="phone"
             type="tel"
-            placeholder="Enter your telephone number"
-            aria-invalid={errors.telephone ? "true" : "false"}
-            {...register("telephone", { required: "Telephone is required" })}
+            placeholder="Enter your phone number"
+            aria-invalid={errors.phone ? "true" : "false"}
+            {...register("phone", { required: "Phone is required" })}
           />
-          {errors.telephone && (
-            <span className="field-error">{errors.telephone.message}</span>
+          {errors.phone && (
+            <span className="field-error">{errors.phone.message}</span>
           )}
         </div>
 
