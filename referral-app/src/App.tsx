@@ -3,6 +3,7 @@ import { ReferralForm } from "./components/ReferralForm";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Home, Profile, ReferralSuccess } from "./pages";
+import "./App.css";
 
 function App() {
   return (
