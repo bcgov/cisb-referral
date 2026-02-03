@@ -29,6 +29,17 @@ export interface ReferralResponse {
   agencyType?: AgencyType;
 }
 
+export interface ProfileResponse {
+  contact: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string | null;
+    userName: string;
+  };
+  isProfileComplete: boolean;
+}
+
 export interface SelectOption {
   readonly id: string;
   readonly name: string;

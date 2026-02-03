@@ -1,0 +1,75 @@
+.profile-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.profile-container h1 {
+  margin-bottom: 1.5rem;
+  color: #313132;
+}
+
+.profile-alert {
+  background-color: #f5a623;
+  color: #313132;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.profile-error {
+  background-color: #d8292f;
+  color: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-field label {
+  font-weight: 600;
+  color: #313132;
+}
+
+.profile-field .required {
+  color: #d8292f;
+}
+
+.profile-field input {
+  padding: 0.75rem;
+  border: 1px solid #606060;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.profile-field input:disabled {
+  background-color: #f2f2f2;
+  color: #606060;
+  cursor: not-allowed;
+}
+
+.profile-field input[aria-invalid="true"] {
+  border-color: #d8292f;
+}
+
+.field-error {
+  color: #d8292f;
+  font-size: 0.875rem;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
