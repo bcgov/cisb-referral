@@ -3,7 +3,7 @@ import { Header, Footer, Button } from "@bcgov/design-system-react-components";
 import { logout } from "../auth";
 import "./Layout.css";
 
-export const Layout = (): React.JSX.Element => {
+export const Layout = () => {
   return (
     <div className="app-layout">
       <Header title="CISB Referral" />
