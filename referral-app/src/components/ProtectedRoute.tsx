@@ -1,13 +1,12 @@
+import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useProfile } from "../hooks";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const ProtectedRoute = ({
-  children,
-}: ProtectedRouteProps): React.JSX.Element => {
+export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isProfileComplete, isLoading } = useProfile();
 
   if (isLoading) {
