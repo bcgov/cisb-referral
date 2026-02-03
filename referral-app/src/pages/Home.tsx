@@ -7,19 +7,19 @@ export const Home = () => {
 
   return (
     <div className="home-container">
-      <h1>Welcome to CISB Referral</h1>
-      <p className="home-description">
-        Use this portal to submit referrals or manage your profile.
-      </p>
+      <div className="home-header">
+        <h1>CISB Referral</h1>
+      </div>
+      <div className="home-content">
+        <div className="home-actions">
+          <Button variant="primary" onPress={() => navigate("/referrals")}>
+            Referral Form
+          </Button>
 
-      <div className="home-actions">
-        <Button variant="primary" onPress={() => navigate("/referrals")}>
-          Submit a Referral
-        </Button>
-
-        <Button variant="secondary" onPress={() => navigate("/profile")}>
-          My Profile
-        </Button>
+          <Button variant="primary" onPress={() => navigate("/profile")}>
+            Profile
+          </Button>
+        </div>
       </div>
     </div>
   );
