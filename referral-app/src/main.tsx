@@ -23,13 +23,59 @@ if (!rootElement) {
   throw new Error("Root element not found");
 }
 
-// Initialize Keycloak before rendering - ensures auth is ready
-init(() => {
-  createRoot(rootElement).render(
+const root = createRoot(rootElement);
+
+const renderApp = () => {
+  root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
     </StrictMode>,
   );
-});
+};
+
+const renderError = (message: string) => {
+  root.render(
+    <StrictMode>
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        <h1>Authentication Error</h1>
+        <p>{message}</p>
+        <button
+          onClick={() => globalThis.location.reload()}
+          style={{
+            padding: "0.5rem 1rem",
+            fontSize: "1rem",
+            cursor: "pointer",
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    </StrictMode>,
+  );
+};
+
+const renderLoading = () => {
+  root.render(
+    <StrictMode>
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        <p>Initializing...</p>
+      </div>
+    </StrictMode>,
+  );
+};
+
+const bootstrap = async () => {
+  renderLoading();
+  try {
+    await init();
+    renderApp();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    renderError(message);
+  }
+};
+
+bootstrap();

@@ -6,21 +6,16 @@ export const keycloak = new Keycloak({
   clientId: import.meta.env.VITE_KC_CLIENT_ID,
 });
 
-export const init = (onSuccess: () => void): void => {
-  keycloak
-    .init({
-      onLoad: "login-required",
-      checkLoginIframe: false,
-      pkceMethod: "S256",
-    })
-    .then((authenticated) => {
-      if (authenticated) {
-        onSuccess();
-      }
-    })
-    .catch(() => {
-      // Auth failure - user remains on login page
-    });
+export const init = async (): Promise<void> => {
+  const authenticated = await keycloak.init({
+    onLoad: "login-required",
+    checkLoginIframe: false,
+    pkceMethod: "S256",
+  });
+
+  if (!authenticated) {
+    throw new Error("Authentication failed");
+  }
 
   keycloak.onTokenExpired = () => {
     keycloak.updateToken(30).catch(() => {
