@@ -175,7 +175,7 @@ describe("auth module", () => {
 
       // Assert
       expect(mockKeycloakInstance.updateToken).toHaveBeenCalledWith(
-        TOKEN_REFRESH_BUFFER_SECONDS
+        TOKEN_REFRESH_BUFFER_SECONDS,
       );
     });
 
@@ -183,7 +183,7 @@ describe("auth module", () => {
       // Arrange
       mockKeycloakInstance.init.mockResolvedValue(true);
       mockKeycloakInstance.updateToken.mockRejectedValue(
-        new Error("Refresh failed")
+        new Error("Refresh failed"),
       );
 
       // Act

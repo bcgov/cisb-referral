@@ -47,7 +47,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Protected Content</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert
@@ -60,7 +60,12 @@ describe("ProtectedRoute", () => {
     it("should not render children when profile is incomplete", () => {
       // Arrange
       mockUseProfile.mockReturnValue({
-        profile: { id: "1", fullName: "Test", email: "test@test.com", phone: null },
+        profile: {
+          id: "1",
+          fullName: "Test",
+          email: "test@test.com",
+          phone: null,
+        },
         isProfileComplete: false,
         isLoading: false,
         error: null,
@@ -71,7 +76,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Protected Content</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert - children should not be rendered
@@ -81,7 +86,12 @@ describe("ProtectedRoute", () => {
     it("should redirect to /profile when profile is incomplete", () => {
       // Arrange
       mockUseProfile.mockReturnValue({
-        profile: { id: "1", fullName: "Test", email: "test@test.com", phone: null },
+        profile: {
+          id: "1",
+          fullName: "Test",
+          email: "test@test.com",
+          phone: null,
+        },
         isProfileComplete: false,
         isLoading: false,
         error: null,
@@ -92,7 +102,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Protected Content</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert - Navigate component should have been rendered (redirecting)
@@ -121,7 +131,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Protected Content</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert
@@ -147,7 +157,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div data-testid="referral-form">Referral Form</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert
@@ -170,7 +180,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Sensitive Data</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert - sensitive content must not be shown during loading
@@ -196,7 +206,7 @@ describe("ProtectedRoute", () => {
         <ProtectedRoute>
           <div>Referral Form</div>
         </ProtectedRoute>,
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Assert - must complete profile first

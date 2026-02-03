@@ -158,7 +158,7 @@ describe("APIService", () => {
 
       // Act & Assert
       await expect(requestInterceptorFn(mockConfig)).rejects.toThrow(
-        "Session expired"
+        "Session expired",
       );
       expect(mockKeycloak.logout).toHaveBeenCalledWith({
         redirectUri: globalThis.location.origin,
