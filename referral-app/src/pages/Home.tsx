@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@bcgov/design-system-react-components";
 import "./Home.css";
 
-export const Home = (): React.JSX.Element => {
+export const Home = () => {
   const navigate = useNavigate();
 
   return (

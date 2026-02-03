@@ -13,12 +13,43 @@ export const Profile = () => {
   const { profile, isProfileComplete, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
 
+  if (isLoading) {
+    return (
+      <div className="profile-container">
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
+
+  return (
+    <ProfileForm
+      profile={profile}
+      isProfileComplete={isProfileComplete}
+      updateProfile={updateProfile}
+      navigate={navigate}
+    />
+  );
+};
+
+interface ProfileFormProps {
+  profile: { fullName: string; email: string; phone: string | null } | null;
+  isProfileComplete: boolean;
+  updateProfile: ReturnType<typeof useUpdateProfile>;
+  navigate: ReturnType<typeof useNavigate>;
+}
+
+const ProfileForm = ({
+  profile,
+  isProfileComplete,
+  updateProfile,
+  navigate,
+}: ProfileFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ProfileFormData>({
-    values: {
+    defaultValues: {
       phone: profile?.phone ?? "",
     },
   });
@@ -35,14 +66,6 @@ export const Profile = () => {
       },
     );
   };
-
-  if (isLoading) {
-    return (
-      <div className="profile-container">
-        <p>Loading profile...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="profile-container">
