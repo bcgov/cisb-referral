@@ -8,7 +8,7 @@ interface ProfileFormData {
   phone: string;
 }
 
-export const Profile = (): React.JSX.Element => {
+export const Profile = () => {
   const navigate = useNavigate();
   const { profile, isProfileComplete, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
