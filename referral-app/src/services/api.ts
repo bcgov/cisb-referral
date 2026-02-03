@@ -9,7 +9,7 @@ import type {
   Ministry,
   AgencyType,
   ReferralResponse,
-  Contact,
+  ProfileResponse,
 } from "../types";
 import { keycloak } from "../auth";
 
@@ -49,13 +49,16 @@ class APIService {
     );
   }
 
-  async getProfile(): Promise<Contact> {
-    const response = await this.client.get<Contact>("/contacts/me");
+  async getProfile(): Promise<ProfileResponse> {
+    const response = await this.client.get<ProfileResponse>("/contacts/me");
     return response.data;
   }
 
-  async updateProfile(data: { phone: string }): Promise<Contact> {
-    const response = await this.client.patch<Contact>("/contacts/me", data);
+  async updateProfile(data: { phone: string }): Promise<ProfileResponse> {
+    const response = await this.client.patch<ProfileResponse>(
+      "/contacts/me",
+      data,
+    );
     return response.data;
   }
 

@@ -29,7 +29,7 @@ export interface ReferralResponse {
   agencyType?: AgencyType;
 }
 
-export interface Contact {
+export interface ProfileResponse {
   contact: {
     id: string;
     fullName: string;
