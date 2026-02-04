@@ -97,8 +97,8 @@ export class ReferralsController {
     @Query('assignedToId') assignedToId?: string,
   ) {
     return this.referralsService.findAll({
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      page: page ? Number.parseInt(page, 10) : undefined,
+      limit: limit ? Number.parseInt(limit, 10) : undefined,
       status,
       regionId,
       assignedToId,
