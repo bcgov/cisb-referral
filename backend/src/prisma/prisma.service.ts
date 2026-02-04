@@ -46,10 +46,10 @@ class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private logger = new Logger('PRISMA');
+  private readonly logger = new Logger('PRISMA');
 
   /** Node-postgres connection pool - managed separately for cleanup */
-  private pool: Pool;
+  private readonly pool: Pool;
 
   constructor() {
     // Create node-postgres connection pool
