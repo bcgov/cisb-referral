@@ -1,7 +1,9 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { bootstrap } from './app';
 import { Logger } from '@nestjs/common';
+
 const logger = new Logger('NestApplication');
+
 bootstrap()
   .then(async (app: NestExpressApplication) => {
     await app.listen(3000);

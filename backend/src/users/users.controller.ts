@@ -69,8 +69,12 @@ export class UsersController {
     @Query('role') role?: UserRole,
     @Query('isActive') isActive?: string,
   ): Promise<User[]> {
-    const active =
-      isActive === 'true' ? true : isActive === 'false' ? false : undefined;
+    let active: boolean | undefined;
+    if (isActive === 'true') {
+      active = true;
+    } else if (isActive === 'false') {
+      active = false;
+    }
     return this.usersService.findAll(role, active);
   }
 

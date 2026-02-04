@@ -28,7 +28,10 @@ export function ReferralDetail() {
     error,
   } = useQuery({
     queryKey: ["referral", id],
-    queryFn: () => apiService.fetchReferral(id!),
+    queryFn: () => {
+      if (!id) throw new Error("Referral ID is required");
+      return apiService.fetchReferral(id);
+    },
     enabled: !!id,
   });
 
