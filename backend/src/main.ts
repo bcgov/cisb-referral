@@ -1,13 +1,17 @@
-import type { NestExpressApplication } from '@nestjs/platform-express';
 import { bootstrap } from './app';
 import { Logger } from '@nestjs/common';
+
 const logger = new Logger('NestApplication');
-bootstrap()
-  .then(async (app: NestExpressApplication) => {
+
+async function main() {
+  try {
+    const app = await bootstrap();
     await app.listen(3000);
     logger.log(`Listening on ${await app.getUrl()}`);
     logger.log(`Process start up took ${process.uptime()} seconds`);
-  })
-  .catch((err) => {
+  } catch (err) {
     logger.error(err);
-  });
+  }
+}
+
+main();
