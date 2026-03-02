@@ -114,6 +114,9 @@ export function Regions() {
         },
       });
       setEditingId(null);
+    } catch {
+      // Mutation error is surfaced via updateMutation.isError;
+      // keep row in editing state so the user can retry.
     } finally {
       setIsSaving(false);
     }
@@ -253,27 +256,34 @@ export function Regions() {
       header: "Actions",
       render: (region: Region) =>
         editingId === region.id ? (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleSaveRow}
-              disabled={isSaving || !editValues.name.trim()}
-              className="px-3 py-1 text-sm font-medium text-white bg-bcgov-blue
-                rounded hover:bg-bcgov-blue-dark
-                transition-colors duration-150 disabled:opacity-50"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancelEdit}
-              disabled={isSaving}
-              className="px-3 py-1 text-sm font-medium text-bcgov-gray-dark
-                border border-bcgov-border rounded hover:bg-gray-100
-                transition-colors duration-150 disabled:opacity-50"
-            >
-              Cancel
-            </button>
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSaveRow}
+                disabled={isSaving || !editValues.name.trim()}
+                className="px-3 py-1 text-sm font-medium text-white bg-bcgov-blue
+                  rounded hover:bg-bcgov-blue-dark
+                  transition-colors duration-150 disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="px-3 py-1 text-sm font-medium text-bcgov-gray-dark
+                  border border-bcgov-border rounded hover:bg-gray-100
+                  transition-colors duration-150 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+            {updateMutation.isError && (
+              <span className="text-red-600 text-sm">
+                Failed to save changes
+              </span>
+            )}
           </div>
         ) : (
           <div className="flex gap-2">
