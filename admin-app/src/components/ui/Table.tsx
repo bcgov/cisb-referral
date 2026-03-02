@@ -15,6 +15,10 @@ interface TableProps<T> {
   emptyMessage?: string;
 }
 
+/**
+ * Scrollable data table. Horizontally scrolls on smaller
+ * viewports to keep the standard table layout intact.
+ */
 export function Table<T extends { id: string }>({
   data,
   columns,
@@ -49,16 +53,18 @@ export function Table<T extends { id: string }>({
             {columns.map((column) => (
               <th
                 key={column.key}
-                className="px-6 py-3 text-left text-xs font-medium text-bcgov-gray-dark
-                  uppercase tracking-wider border-b border-bcgov-border"
+                className="px-4 py-3 text-left text-xs font-medium
+                  text-bcgov-gray-dark uppercase tracking-wider
+                  border-b border-bcgov-border whitespace-nowrap"
               >
                 {column.header}
               </th>
             ))}
             {hasActions && (
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-bcgov-gray-dark
-                uppercase tracking-wider border-b border-bcgov-border"
+                className="px-4 py-3 text-left text-xs font-medium
+                  text-bcgov-gray-dark uppercase tracking-wider
+                  border-b border-bcgov-border whitespace-nowrap"
               >
                 Actions
               </th>
@@ -71,7 +77,7 @@ export function Table<T extends { id: string }>({
               {columns.map((column) => (
                 <td
                   key={column.key}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-bcgov-gray-dark"
+                  className="px-4 py-4 text-sm text-bcgov-gray-dark"
                 >
                   {column.render
                     ? column.render(item)
@@ -79,7 +85,7 @@ export function Table<T extends { id: string }>({
                 </td>
               ))}
               {hasActions && (
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-4 py-4 whitespace-nowrap text-sm">
                   <div className="flex gap-3">
                     {onEdit && (
                       <button

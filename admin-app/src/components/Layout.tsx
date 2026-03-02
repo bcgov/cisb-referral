@@ -1,86 +1,91 @@
+import { useState, useCallback } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
 import { logout, getUser } from "../auth";
 
+/** Navigation links displayed in sidebar */
+const NAV_ITEMS = [
+  { to: "/referrals", label: "Referrals" },
+  { to: "/regions", label: "Regions" },
+  { to: "/ministries", label: "Ministries" },
+  { to: "/agency-types", label: "Agency Types" },
+  { to: "/users", label: "Users" },
+] as const;
+
+/**
+ * Root layout with a collapsible sidebar.
+ * Sidebar is always visible on md+ screens and toggles
+ * via a hamburger button on smaller viewports.
+ */
 export function Layout() {
   const user = getUser();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = useCallback(() => setSidebarOpen((o) => !o), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="CISB Admin" />
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={
+            sidebarOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+          aria-expanded={sidebarOpen}
+          aria-controls="sidebar-nav"
+          className="md:hidden p-3 text-white bg-bcgov-blue hover:bg-bcgov-blue-dark
+            focus:outline-none focus:ring-2 focus:ring-bcgov-gold"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+        <div className="flex-1">
+          <Header title="CISB Admin" />
+        </div>
+      </div>
+
       <div className="flex flex-1">
-        <nav className="w-55 bg-bcgov-blue-light shrink-0 py-4 flex flex-col">
+        {/* Sidebar navigation */}
+        <nav
+          id="sidebar-nav"
+          aria-label="Main navigation"
+          className={`
+            w-55 shrink-0 bg-bcgov-blue-light py-4 flex flex-col
+            ${sidebarOpen ? "flex" : "hidden"} md:flex
+          `}
+        >
           <ul className="list-none m-0 p-0 flex-1">
-            <li>
-              <NavLink
-                to="/referrals"
-                className={({ isActive }) =>
-                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
-                    isActive
-                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
-                      : ""
-                  }`
-                }
-              >
-                Referrals
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/regions"
-                className={({ isActive }) =>
-                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
-                    isActive
-                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
-                      : ""
-                  }`
-                }
-              >
-                Regions
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/ministries"
-                className={({ isActive }) =>
-                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
-                    isActive
-                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
-                      : ""
-                  }`
-                }
-              >
-                Ministries
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/agency-types"
-                className={({ isActive }) =>
-                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
-                    isActive
-                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
-                      : ""
-                  }`
-                }
-              >
-                Agency Types
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/users"
-                className={({ isActive }) =>
-                  `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
-                    isActive
-                      ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
-                      : ""
-                  }`
-                }
-              >
-                Users
-              </NavLink>
-            </li>
+            {NAV_ITEMS.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  onClick={closeSidebar}
+                  className={({ isActive }) =>
+                    `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
+                      isActive
+                        ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
+                        : ""
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
           </ul>
           <div className="border-t border-bcgov-blue-dark mt-4 pt-4 px-4">
             {user && (
@@ -92,13 +97,17 @@ export function Layout() {
               type="button"
               onClick={logout}
               aria-label="Logout of application"
-              className="w-full py-2 px-4 bg-bcgov-blue-dark text-white rounded font-medium hover:bg-bcgov-blue-hover focus:outline-none focus:ring-2 focus:ring-bcgov-gold focus:ring-offset-2 focus:ring-offset-bcgov-blue-light transition-colors"
+              className="w-full py-2 px-4 bg-bcgov-blue-dark text-white rounded
+                font-medium hover:bg-bcgov-blue-hover focus:outline-none
+                focus:ring-2 focus:ring-bcgov-gold focus:ring-offset-2
+                focus:ring-offset-bcgov-blue-light transition-colors"
             >
               Logout
             </button>
           </div>
         </nav>
-        <main className="flex-1 bg-bcgov-gray-light flex flex-col">
+
+        <main className="flex-1 bg-bcgov-gray-light flex flex-col min-w-0">
           <Outlet />
         </main>
       </div>

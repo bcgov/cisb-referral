@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Table, EditableCell } from "../components/ui";
+import { Table } from "../components/ui";
 import { apiService } from "../services";
 import type { Region, CreateRegionDto, UpdateRegionDto } from "../types";
 
+/** Fields that can be edited on a region row */
+type RegionEditValues = {
+  name: string;
+  managerEmail: string;
+  supervisorEmail: string;
+  assistantSupervisorEmail: string;
+  sharedMailboxEmail: string;
+};
+
+const INPUT_CLASS =
+  "flex-1 min-w-0 px-2 py-1 border border-bcgov-blue rounded text-sm " +
+  "focus:outline-none focus:ring-2 focus:ring-bcgov-blue";
+
 /**
- * Regions management page with inline cell editing,
+ * Regions management page with row-level inline editing,
  * inline add row, and delete support.
  *
  * @returns Regions admin page component
@@ -20,6 +33,18 @@ export function Regions() {
     assistantSupervisorEmail: "",
     sharedMailboxEmail: "",
   });
+
+  /** ID of the row currently being edited (null = none) */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  /** Pending field values for the row being edited */
+  const [editValues, setEditValues] = useState<RegionEditValues>({
+    name: "",
+    managerEmail: "",
+    supervisorEmail: "",
+    assistantSupervisorEmail: "",
+    sharedMailboxEmail: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: regions = [], isLoading } = useQuery({
     queryKey: ["regions"],
@@ -52,6 +77,48 @@ export function Regions() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["regions"] }),
   });
 
+  /** Enter edit mode for a row, pre-populating current values */
+  const handleEdit = (region: Region) => {
+    setEditingId(region.id);
+    setEditValues({
+      name: region.name,
+      managerEmail: region.managerEmail || "",
+      supervisorEmail: region.supervisorEmail || "",
+      assistantSupervisorEmail: region.assistantSupervisorEmail || "",
+      sharedMailboxEmail: region.sharedMailboxEmail || "",
+    });
+  };
+
+  /** Cancel editing and discard pending changes */
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
+
+  /** Save all pending changes for the row being edited */
+  const handleSaveRow = async () => {
+    if (!editingId) return;
+    const trimmedName = editValues.name.trim();
+    if (!trimmedName) return;
+
+    setIsSaving(true);
+    try {
+      await updateMutation.mutateAsync({
+        id: editingId,
+        data: {
+          name: trimmedName,
+          managerEmail: editValues.managerEmail.trim() || undefined,
+          supervisorEmail: editValues.supervisorEmail.trim() || undefined,
+          assistantSupervisorEmail:
+            editValues.assistantSupervisorEmail.trim() || undefined,
+          sharedMailboxEmail: editValues.sharedMailboxEmail.trim() || undefined,
+        },
+      });
+      setEditingId(null);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCreate = () => {
     const name = newRegion.name.trim();
     if (name) {
@@ -72,109 +139,187 @@ export function Regions() {
     }
   };
 
+  /**
+   * Update a single field in the edit values.
+   *
+   * @param field - The field key to update
+   * @param value - The new value for the field
+   */
+  const updateField = (field: keyof RegionEditValues, value: string) => {
+    setEditValues((prev) => ({ ...prev, [field]: value }));
+  };
+
   const columns = [
     {
       key: "name",
       header: "Name",
-      render: (region: Region) => (
-        <EditableCell
-          value={region.name}
-          onSave={async (name) => {
-            if (!name) return;
-            await updateMutation.mutateAsync({ id: region.id, data: { name } });
-          }}
-        />
-      ),
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <input
+            type="text"
+            autoFocus
+            value={editValues.name}
+            onChange={(e) => updateField("name", e.target.value)}
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">{region.name}</span>
+        ),
     },
     {
       key: "managerEmail",
       header: "Manager Email",
-      render: (region: Region) => (
-        <EditableCell
-          value={region.managerEmail || ""}
-          type="email"
-          placeholder="Click to add"
-          onSave={async (managerEmail) => {
-            await updateMutation.mutateAsync({
-              id: region.id,
-              data: { managerEmail: managerEmail || undefined },
-            });
-          }}
-        />
-      ),
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <input
+            type="email"
+            value={editValues.managerEmail}
+            onChange={(e) => updateField("managerEmail", e.target.value)}
+            placeholder="Manager email"
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">
+            {region.managerEmail || (
+              <span className="text-bcgov-gray italic">-</span>
+            )}
+          </span>
+        ),
     },
     {
       key: "supervisorEmail",
       header: "Supervisor Email",
-      render: (region: Region) => (
-        <EditableCell
-          value={region.supervisorEmail || ""}
-          type="email"
-          placeholder="Click to add"
-          onSave={async (supervisorEmail) => {
-            await updateMutation.mutateAsync({
-              id: region.id,
-              data: { supervisorEmail: supervisorEmail || undefined },
-            });
-          }}
-        />
-      ),
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <input
+            type="email"
+            value={editValues.supervisorEmail}
+            onChange={(e) => updateField("supervisorEmail", e.target.value)}
+            placeholder="Supervisor email"
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">
+            {region.supervisorEmail || (
+              <span className="text-bcgov-gray italic">-</span>
+            )}
+          </span>
+        ),
     },
     {
       key: "assistantSupervisorEmail",
       header: "Asst. Supervisor Email",
-      render: (region: Region) => (
-        <EditableCell
-          value={region.assistantSupervisorEmail || ""}
-          type="email"
-          placeholder="Click to add"
-          onSave={async (assistantSupervisorEmail) => {
-            await updateMutation.mutateAsync({
-              id: region.id,
-              data: {
-                assistantSupervisorEmail: assistantSupervisorEmail || undefined,
-              },
-            });
-          }}
-        />
-      ),
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <input
+            type="email"
+            value={editValues.assistantSupervisorEmail}
+            onChange={(e) =>
+              updateField("assistantSupervisorEmail", e.target.value)
+            }
+            placeholder="Asst. supervisor email"
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">
+            {region.assistantSupervisorEmail || (
+              <span className="text-bcgov-gray italic">-</span>
+            )}
+          </span>
+        ),
     },
     {
       key: "sharedMailboxEmail",
       header: "Shared Mailbox Email",
-      render: (region: Region) => (
-        <EditableCell
-          value={region.sharedMailboxEmail || ""}
-          type="email"
-          placeholder="Click to add"
-          onSave={async (sharedMailboxEmail) => {
-            await updateMutation.mutateAsync({
-              id: region.id,
-              data: { sharedMailboxEmail: sharedMailboxEmail || undefined },
-            });
-          }}
-        />
-      ),
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <input
+            type="email"
+            value={editValues.sharedMailboxEmail}
+            onChange={(e) => updateField("sharedMailboxEmail", e.target.value)}
+            placeholder="Shared mailbox email"
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">
+            {region.sharedMailboxEmail || (
+              <span className="text-bcgov-gray italic">-</span>
+            )}
+          </span>
+        ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (region: Region) =>
+        editingId === region.id ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleSaveRow}
+              disabled={isSaving || !editValues.name.trim()}
+              className="px-3 py-1 text-sm font-medium text-white bg-bcgov-blue
+                rounded hover:bg-bcgov-blue-dark
+                transition-colors duration-150 disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="px-3 py-1 text-sm font-medium text-bcgov-gray-dark
+                border border-bcgov-border rounded hover:bg-gray-100
+                transition-colors duration-150 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleEdit(region)}
+              className="px-3 py-1 text-sm font-medium text-bcgov-blue
+                border border-bcgov-border rounded hover:bg-blue-50
+                hover:border-bcgov-blue transition-colors duration-150"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(region);
+              }}
+              className="px-3 py-1 text-sm font-medium text-red-600
+                border border-bcgov-border rounded hover:bg-red-50
+                hover:border-red-400 transition-colors duration-150"
+            >
+              Delete
+            </button>
+          </div>
+        ),
     },
   ];
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">Regions</h1>
         <button
           onClick={() => setIsAdding(true)}
           disabled={isAdding}
           className="px-4 py-2 bg-bcgov-blue text-white rounded
-            hover:bg-bcgov-blue-dark disabled:opacity-50"
+            hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
         >
           Add Region
         </button>
       </div>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {isAdding && (
           <div className="mb-4 p-4 bg-white border border-bcgov-border rounded space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <input
                 type="text"
                 autoFocus
@@ -275,7 +420,6 @@ export function Regions() {
         <Table
           data={regions}
           columns={columns}
-          onDelete={handleDelete}
           loading={isLoading}
           emptyMessage="No regions found"
         />

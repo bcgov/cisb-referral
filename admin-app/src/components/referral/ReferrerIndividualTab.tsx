@@ -92,7 +92,7 @@ export function ReferrerIndividualTab({
       )}
 
       <Section title="Referrer Info">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <TextInput
             label="Referred By: Contact Name"
             value={formData.referrerContactName}
@@ -116,7 +116,7 @@ export function ReferrerIndividualTab({
       </Section>
 
       <Section title="Individual's Info">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <TextInput
             label="Individual's First Name"
             value={formData.individualFirstName}

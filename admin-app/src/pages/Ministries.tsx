@@ -73,7 +73,7 @@ export function Ministries() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
           Ministries
         </h1>
@@ -81,14 +81,14 @@ export function Ministries() {
           onClick={() => setIsAdding(true)}
           disabled={isAdding}
           className="px-4 py-2 bg-bcgov-blue text-white rounded
-            hover:bg-bcgov-blue-dark disabled:opacity-50"
+            hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
         >
           Add Ministry
         </button>
       </div>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {isAdding && (
-          <div className="mb-4 flex items-center gap-3 p-4 bg-white border border-bcgov-border rounded">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-white border border-bcgov-border rounded">
             <input
               type="text"
               autoFocus
