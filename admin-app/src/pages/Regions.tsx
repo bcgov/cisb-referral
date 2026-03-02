@@ -163,6 +163,7 @@ export function Regions() {
             autoFocus
             value={editValues.name}
             onChange={(e) => updateField("name", e.target.value)}
+            aria-label="Name"
             className={INPUT_CLASS}
           />
         ) : (
@@ -179,6 +180,7 @@ export function Regions() {
             value={editValues.managerEmail}
             onChange={(e) => updateField("managerEmail", e.target.value)}
             placeholder="Manager email"
+            aria-label="Manager Email"
             className={INPUT_CLASS}
           />
         ) : (
@@ -199,6 +201,7 @@ export function Regions() {
             value={editValues.supervisorEmail}
             onChange={(e) => updateField("supervisorEmail", e.target.value)}
             placeholder="Supervisor email"
+            aria-label="Supervisor Email"
             className={INPUT_CLASS}
           />
         ) : (
@@ -221,6 +224,7 @@ export function Regions() {
               updateField("assistantSupervisorEmail", e.target.value)
             }
             placeholder="Asst. supervisor email"
+            aria-label="Assistant Supervisor Email"
             className={INPUT_CLASS}
           />
         ) : (
@@ -241,6 +245,7 @@ export function Regions() {
             value={editValues.sharedMailboxEmail}
             onChange={(e) => updateField("sharedMailboxEmail", e.target.value)}
             placeholder="Shared mailbox email"
+            aria-label="Shared Mailbox Email"
             className={INPUT_CLASS}
           />
         ) : (
@@ -338,6 +343,7 @@ export function Regions() {
                   setNewRegion({ ...newRegion, name: e.target.value })
                 }
                 placeholder="Region name *"
+                aria-label="Region name"
                 className="px-3 py-2 border border-bcgov-border rounded text-sm
                   focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               />
@@ -348,6 +354,7 @@ export function Regions() {
                   setNewRegion({ ...newRegion, managerEmail: e.target.value })
                 }
                 placeholder="Manager email"
+                aria-label="Manager email"
                 className="px-3 py-2 border border-bcgov-border rounded text-sm
                   focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               />
@@ -361,6 +368,7 @@ export function Regions() {
                   })
                 }
                 placeholder="Supervisor email"
+                aria-label="Supervisor email"
                 className="px-3 py-2 border border-bcgov-border rounded text-sm
                   focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               />
@@ -374,6 +382,7 @@ export function Regions() {
                   })
                 }
                 placeholder="Asst. supervisor email"
+                aria-label="Assistant supervisor email"
                 className="px-3 py-2 border border-bcgov-border rounded text-sm
                   focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               />
@@ -387,6 +396,7 @@ export function Regions() {
                   })
                 }
                 placeholder="Shared mailbox email"
+                aria-label="Shared mailbox email"
                 className="px-3 py-2 border border-bcgov-border rounded text-sm
                   focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               />

@@ -15,7 +15,7 @@ interface TabsProps {
 export function Tabs({ tabs, activeTab, onTabChange }: Readonly<TabsProps>) {
   return (
     <div
-      className="flex bg-white border-b border-bcgov-border overflow-x-auto -webkit-overflow-scrolling-touch"
+      className="flex bg-white border-b border-bcgov-border overflow-x-auto [&]:[-webkit-overflow-scrolling:touch]"
       role="tablist"
     >
       {tabs.map((tab) => (

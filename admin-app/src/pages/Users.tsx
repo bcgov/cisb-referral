@@ -143,17 +143,34 @@ export function Users() {
     },
     {
       key: "actions",
-      header: "",
+      header: "Actions",
       render: (user: User) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteClick(user);
-          }}
-          className="text-red-600 hover:text-red-800 font-medium"
-        >
-          Delete
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(user);
+            }}
+            className="px-3 py-1 text-sm font-medium text-bcgov-blue
+              border border-bcgov-border rounded hover:bg-blue-50
+              hover:border-bcgov-blue transition-colors duration-150"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(user);
+            }}
+            className="px-3 py-1 text-sm font-medium text-red-600
+              border border-bcgov-border rounded hover:bg-red-50
+              hover:border-red-400 transition-colors duration-150"
+          >
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
@@ -173,7 +190,6 @@ export function Users() {
         <Table
           data={users}
           columns={columns}
-          onEdit={handleEdit}
           loading={isLoading}
           emptyMessage="No users found"
         />
