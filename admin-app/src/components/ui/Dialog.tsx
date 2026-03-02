@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useCallback } from "react";
 
 interface DialogProps {
   open: boolean;
@@ -8,16 +8,6 @@ interface DialogProps {
   size?: "sm" | "md" | "lg";
 }
 
-function showAsModal(node: HTMLDialogElement | null) {
-  if (!node) return;
-  node.showModal();
-  document.body.style.overflow = "hidden";
-  return () => {
-    node.close();
-    document.body.style.overflow = "unset";
-  };
-}
-
 export function Dialog({
   open,
   onClose,
@@ -25,6 +15,16 @@ export function Dialog({
   children,
   size = "md",
 }: Readonly<DialogProps>) {
+  const dialogRef = useCallback((node: HTMLDialogElement | null) => {
+    if (!node) return;
+    node.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      node.close();
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
     onClose();
@@ -40,7 +40,7 @@ export function Dialog({
 
   return (
     <dialog
-      ref={showAsModal}
+      ref={dialogRef}
       className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]}
         w-[calc(100%-2rem)] sm:w-full mx-auto my-auto p-0
         backdrop:bg-black backdrop:bg-opacity-50
