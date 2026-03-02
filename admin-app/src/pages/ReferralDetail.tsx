@@ -60,15 +60,15 @@ export function ReferralDetail() {
 
   return (
     <div className="flex flex-col flex-1">
-      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
-        <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-center p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
+        <div className="flex flex-col gap-2 min-w-0">
           <Link
             to="/referrals"
             className="text-bcgov-link no-underline text-sm hover:underline"
           >
             ← Back to Referrals
           </Link>
-          <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
+          <h1 className="text-lg sm:text-xl font-bold text-bcgov-gray-dark m-0 truncate">
             Referral #{id?.substring(0, 8)}
           </h1>
         </div>
@@ -80,7 +80,7 @@ export function ReferralDetail() {
         onTabChange={(tab) => setActiveTab(tab as TabType)}
       />
 
-      <div className="p-6 bg-gray-100 flex-1">
+      <div className="p-4 sm:p-6 bg-gray-100 flex-1">
         {activeTab === "details" && (
           <ReferralDetailsTab
             key={referral.id}

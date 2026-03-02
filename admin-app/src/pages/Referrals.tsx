@@ -11,6 +11,9 @@ const statusStyles: Record<string, string> = {
   closed: "bg-gray-100 text-bcgov-gray",
 };
 
+/**
+ * Formats an ISO date string for display.
+ */
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-CA", {
@@ -22,6 +25,7 @@ function formatDate(dateString: string): string {
   });
 }
 
+/** Referrals list page with a scrollable data table. */
 export function Referrals() {
   const navigate = useNavigate();
 
@@ -52,7 +56,7 @@ export function Referrals() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 sm:px-6 bg-white border-b border-bcgov-border">
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
           Referrals
         </h1>
@@ -60,48 +64,51 @@ export function Referrals() {
           <input
             type="text"
             placeholder="Filter by keyword"
-            className="py-2 px-3 border border-bcgov-border rounded text-sm w-50 focus:outline-none focus:border-bcgov-blue focus:ring-2 focus:ring-bcgov-blue/20"
+            className="py-2 px-3 border border-bcgov-border rounded text-sm
+              w-full sm:w-50 focus:outline-none focus:border-bcgov-blue
+              focus:ring-2 focus:ring-bcgov-blue/20"
           />
         </div>
       </div>
+
       <div className="flex-1 overflow-auto bg-white">
-        <table className="w-full border-collapse text-sm table-fixed">
+        <table className="w-full border-collapse text-sm table-fixed min-w-[900px]">
           <thead>
             <tr>
               <th className="w-10 text-center p-3 border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10">
-                <input type="checkbox" />
+                <input type="checkbox" aria-label="Select all referrals" />
               </th>
-              <th className="w-[70px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[70px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Urgent
               </th>
-              <th className="w-[130px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[130px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Created On
               </th>
               <th className="w-40 p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
                 Referred By: Contact Name
               </th>
-              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Referred By
               </th>
-              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Referral Status
               </th>
-              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Referral Outcome
               </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 First Name
               </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Last Name
               </th>
-              <th className="w-[140px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[140px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Current Region
               </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 City/Town
               </th>
-              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
+              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
                 Team Member
               </th>
             </tr>
@@ -128,7 +135,10 @@ export function Referrals() {
                     className="w-10 text-center p-3 border-b border-gray-200"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      aria-label={`Select referral ${referral.id}`}
+                    />
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.flag ? "Yes" : "No"}
@@ -166,7 +176,7 @@ export function Referrals() {
                     {referral.region?.name || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.city || "—"}
+                    {referral.specificCityTown || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.assignedToId || "—"}

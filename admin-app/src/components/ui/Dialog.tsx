@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useCallback } from "react";
 
 interface DialogProps {
   open: boolean;
@@ -15,24 +15,15 @@ export function Dialog({
   children,
   size = "md",
 }: Readonly<DialogProps>) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open) {
-      dialog.showModal();
-      document.body.style.overflow = "hidden";
-    } else {
-      dialog.close();
-      document.body.style.overflow = "unset";
-    }
-
+  const dialogRef = useCallback((node: HTMLDialogElement | null) => {
+    if (!node) return;
+    node.showModal();
+    document.body.style.overflow = "hidden";
     return () => {
+      node.close();
       document.body.style.overflow = "unset";
     };
-  }, [open]);
+  }, []);
 
   const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -45,17 +36,22 @@ export function Dialog({
     lg: "max-w-2xl",
   };
 
+  if (!open) return null;
+
   return (
     <dialog
       ref={dialogRef}
-      className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full mx-4 p-0 backdrop:bg-black backdrop:bg-opacity-50`}
+      className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]}
+        w-[calc(100%-2rem)] sm:w-full mx-auto my-auto p-0
+        backdrop:bg-black backdrop:bg-opacity-50
+        max-h-[calc(100vh-2rem)] overflow-y-auto`}
       aria-labelledby="dialog-title"
       onCancel={handleCancel}
     >
-      <div className="flex items-center justify-between p-6 border-b border-bcgov-border">
+      <div className="flex items-center justify-between p-4 sm:p-6 border-b border-bcgov-border">
         <h2
           id="dialog-title"
-          className="text-xl font-bold text-bcgov-gray-dark m-0"
+          className="text-lg sm:text-xl font-bold text-bcgov-gray-dark m-0"
         >
           {title}
         </h2>
@@ -79,7 +75,7 @@ export function Dialog({
           </svg>
         </button>
       </div>
-      <div className="p-6">{children}</div>
+      <div className="p-4 sm:p-6">{children}</div>
     </dialog>
   );
 }

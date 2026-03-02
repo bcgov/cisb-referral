@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Table, Dialog } from "../components/ui";
 import { apiService } from "../services";
 import type { User, CreateUserDto, UpdateUserDto } from "../types";
@@ -11,8 +12,7 @@ const USER_ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export function Users() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -24,24 +24,55 @@ export function Users() {
     email: "",
     role: UserRole.USER,
   });
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiService.fetchUsers(),
+  });
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await apiService.fetchUsers();
-      setUsers(data);
-    } catch {
-      setError("Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const saveMutation = useMutation({
+    mutationFn: async (data: {
+      editing: User | null;
+      formData: CreateUserDto & Partial<UpdateUserDto>;
+    }) => {
+      if (data.editing) {
+        const updateData: UpdateUserDto = {
+          fullName: data.formData.fullName,
+          email: data.formData.email,
+          role: data.formData.role,
+        };
+        return apiService.updateUser(data.editing.id, updateData);
+      }
+      const createData: CreateUserDto = {
+        fullName: data.formData.fullName,
+        email: data.formData.email,
+        role: data.formData.role,
+      };
+      return apiService.createUser(createData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDialogOpen(false);
+      setError(null);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.message || "Failed to save user");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiService.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDeleteDialogOpen(false);
+      setDeletingUser(null);
+      setError(null);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.message || "Failed to delete user");
+    },
+  });
 
   const handleAdd = () => {
     setEditingUser(null);
@@ -67,55 +98,18 @@ export function Users() {
 
   const handleDeleteClick = (user: User) => {
     setDeletingUser(user);
+    setError(null);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deletingUser) return;
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      await apiService.deleteUser(deletingUser.id);
-      setDeleteDialogOpen(false);
-      setDeletingUser(null);
-      loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete user");
-    } finally {
-      setSubmitting(false);
-    }
+    deleteMutation.mutate(deletingUser.id);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      if (editingUser) {
-        const updateData: UpdateUserDto = {
-          fullName: formData.fullName,
-          email: formData.email,
-          role: formData.role,
-        };
-        await apiService.updateUser(editingUser.id, updateData);
-      } else {
-        const createData: CreateUserDto = {
-          fullName: formData.fullName,
-          email: formData.email,
-          role: formData.role,
-        };
-        await apiService.createUser(createData);
-      }
-      setDialogOpen(false);
-      loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save user");
-    } finally {
-      setSubmitting(false);
-    }
+    saveMutation.mutate({ editing: editingUser, formData });
   };
 
   const columns = [
@@ -149,38 +143,54 @@ export function Users() {
     },
     {
       key: "actions",
-      header: "",
+      header: "Actions",
       render: (user: User) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteClick(user);
-          }}
-          className="text-red-600 hover:text-red-800 font-medium"
-        >
-          Delete
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(user);
+            }}
+            className="px-3 py-1 text-sm font-medium text-bcgov-blue
+              border border-bcgov-border rounded hover:bg-blue-50
+              hover:border-bcgov-blue transition-colors duration-150"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(user);
+            }}
+            className="px-3 py-1 text-sm font-medium text-red-600
+              border border-bcgov-border rounded hover:bg-red-50
+              hover:border-red-400 transition-colors duration-150"
+          >
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-bcgov-border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">Users</h1>
         <button
           onClick={handleAdd}
-          className="px-4 py-2 bg-bcgov-blue text-white rounded hover:bg-bcgov-blue-dark"
+          className="px-4 py-2 bg-bcgov-blue text-white rounded hover:bg-bcgov-blue-dark self-start sm:self-auto"
         >
           Add User
         </button>
       </div>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Table
           data={users}
           columns={columns}
-          onEdit={handleEdit}
-          loading={loading}
+          loading={isLoading}
           emptyMessage="No users found"
         />
       </div>
@@ -262,16 +272,16 @@ export function Users() {
               type="button"
               onClick={() => setDialogOpen(false)}
               className="px-4 py-2 border border-bcgov-border rounded hover:bg-gray-50"
-              disabled={submitting}
+              disabled={saveMutation.isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-bcgov-blue text-white rounded hover:bg-bcgov-blue-dark disabled:opacity-50"
-              disabled={submitting}
+              disabled={saveMutation.isPending}
             >
-              {submitting ? "Saving..." : "Save"}
+              {saveMutation.isPending ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
@@ -300,7 +310,7 @@ export function Users() {
               type="button"
               onClick={() => setDeleteDialogOpen(false)}
               className="px-4 py-2 border border-bcgov-border rounded hover:bg-gray-50"
-              disabled={submitting}
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </button>
@@ -308,9 +318,9 @@ export function Users() {
               type="button"
               onClick={handleDeleteConfirm}
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-              disabled={submitting}
+              disabled={deleteMutation.isPending}
             >
-              {submitting ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

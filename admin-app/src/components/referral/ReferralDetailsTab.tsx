@@ -191,7 +191,7 @@ export function ReferralDetailsTab({
       )}
 
       <Section title="Referral Outcome and Assignment">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <SelectInput
             label="Referral Outcome"
             value={formData.referralOutcome}
@@ -280,8 +280,8 @@ export function ReferralDetailsTab({
       </Section>
 
       <Section title="Referred By Info">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="sm:col-span-2">
             <SelectInput
               label="Referred By"
               value={formData.referredBy}
@@ -325,7 +325,7 @@ export function ReferralDetailsTab({
       </Section>
 
       <Section title="Progress and Status">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <SelectInput
             label="Referral Status"
             value={formData.referralStatus}
@@ -363,7 +363,7 @@ export function ReferralDetailsTab({
       </Section>
 
       <Section title="Other Details">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <MultiSelect
             id="currentlyConnectedSupports"
             label="Supports Currently Connected"

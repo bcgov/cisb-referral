@@ -119,7 +119,7 @@ export function TextAreaInput({
   fullWidth = false,
 }: Readonly<TextAreaInputProps>) {
   return (
-    <div className={fullWidth ? "md:col-span-2" : ""}>
+    <div className={fullWidth ? "sm:col-span-2" : ""}>
       <label className="block text-sm font-medium text-bcgov-gray-dark mb-1">
         {label}
       </label>

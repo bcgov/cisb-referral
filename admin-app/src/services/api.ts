@@ -137,6 +137,18 @@ class APIService {
     return response.data;
   }
 
+  async deleteRegion(id: string): Promise<void> {
+    await this.client.delete(`/regions/${id}`);
+  }
+
+  async deleteMinistry(id: string): Promise<void> {
+    await this.client.delete(`/ministries/${id}`);
+  }
+
+  async deleteAgencyType(id: string): Promise<void> {
+    await this.client.delete(`/agency-types/${id}`);
+  }
+
   async fetchUsers(role?: UserRole, isActive?: boolean): Promise<User[]> {
     const params: Record<string, string> = {};
     if (role) params.role = role;

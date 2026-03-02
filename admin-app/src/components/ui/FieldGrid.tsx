@@ -5,7 +5,9 @@ interface FieldGridProps {
 
 export function FieldGrid({ children, columns = 2 }: Readonly<FieldGridProps>) {
   const gridCols =
-    columns === 3 ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2";
+    columns === 3
+      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+      : "grid-cols-1 sm:grid-cols-2";
 
   return <div className={`grid ${gridCols} gap-4 gap-x-8`}>{children}</div>;
 }
@@ -22,7 +24,7 @@ export function Field({
   fullWidth = false,
 }: Readonly<FieldProps>) {
   return (
-    <div className={`flex flex-col gap-1 ${fullWidth ? "md:col-span-2" : ""}`}>
+    <div className={`flex flex-col gap-1 ${fullWidth ? "sm:col-span-2" : ""}`}>
       <label className="text-xs font-medium text-bcgov-gray uppercase tracking-wide">
         {label}
       </label>

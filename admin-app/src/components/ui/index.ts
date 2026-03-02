@@ -3,6 +3,8 @@ export type { Tab } from "./Tabs";
 export { Section } from "./Section";
 export { FieldGrid, Field } from "./FieldGrid";
 export { Table } from "./Table";
+export type { Column } from "./Table";
+export { EditableCell } from "./EditableCell";
 export { Dialog } from "./Dialog";
 export { MultiSelect } from "./MultiSelect";
 export {
