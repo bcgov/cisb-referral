@@ -21,9 +21,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto, UserRole } from './dto/user.dto';
-import { User, UserRole as PrismaUserRole } from '../generated/prisma/client';
+import { UserRole as PrismaUserRole } from '../generated/prisma/client';
+import type { User } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { CurrentUser, Roles } from '../auth/decorators';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -31,6 +32,18 @@ import { Roles } from '../auth/decorators';
 @UseGuards(AdminAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user details',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMe(@CurrentUser() user: User): Promise<User> {
+    return user;
+  }
 
   @Post()
   @Roles(PrismaUserRole.ADMIN, PrismaUserRole.SYSTEM_ADMINISTRATOR)

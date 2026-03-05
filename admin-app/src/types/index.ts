@@ -240,3 +240,23 @@ export interface UpdateUserDto {
   role?: UserRole;
   isActive?: boolean;
 }
+
+export const AuditAction = {
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+} as const;
+
+export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
+
+export interface AuditLogEntry {
+  id: string;
+  referralId: string;
+  action: AuditAction;
+  fieldChanged: string;
+  oldValue: string | null;
+  newValue: string | null;
+  comment: string | null;
+  changedBy: string | null;
+  changedByUser: { id: string; fullName: string } | null;
+  changedAt: string;
+}

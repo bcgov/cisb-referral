@@ -132,7 +132,7 @@ model User {
   lastLoginAt     DateTime?
   
   assignedReferrals         Referral[]   @relation("AssignedReferrals")
-  statusHistoryEntries      ReferralStatusHistory[]
+  auditLogEntries           ReferralAuditLog[]
 
   @@index([email])
   @@index([role])
@@ -221,7 +221,7 @@ model Referral {
   createdBy             String?
   createdByContact      Contact?  @relation("CreatedReferrals", fields: [createdBy], references: [id])
   
-  statusHistory         ReferralStatusHistory[]
+  auditLogs             ReferralAuditLog[]
   
   @@index([referredBy])
   @@index([regionId])
@@ -235,18 +235,24 @@ model Referral {
   @@map("referrals")
 }
 
-model ReferralStatusHistory {
-  id            String          @id @default(uuid())
+enum AuditAction {
+  CREATE
+  UPDATE
+}
+
+model ReferralAuditLog {
+  id            String       @id @default(uuid())
   referralId    String
-  referral      Referral        @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  fromStatus    ReferralStatus?
-  toStatus      ReferralStatus
-  comment       String?         @db.Text
-  createdAt     DateTime        @default(now())
-  createdBy     String?
-  author        User?           @relation(fields: [createdBy], references: [id])
-  
-  @@index([referralId])
-  @@index([createdAt])
-  @@map("referral_status_history")
+  referral      Referral     @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  action        AuditAction
+  fieldChanged  String
+  oldValue      String?      @db.Text
+  newValue      String?      @db.Text
+  comment       String?      @db.Text
+  changedBy     String?
+  changedByUser User?        @relation(fields: [changedBy], references: [id])
+  changedAt     DateTime     @default(now())
+
+  @@index([referralId, changedAt])
+  @@map("referral_audit_log")
 }

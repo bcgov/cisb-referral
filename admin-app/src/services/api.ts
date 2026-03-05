@@ -22,6 +22,7 @@ import type {
   UpdateUserDto,
   UserRole,
   UpdateReferralDto,
+  AuditLogEntry,
 } from "../types";
 import { keycloak } from "../auth";
 
@@ -169,6 +170,28 @@ class APIService {
 
   async deleteUser(id: string): Promise<User> {
     const response = await this.client.delete<User>(`/users/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Fetch the currently authenticated user's profile (including role)
+   */
+  async fetchCurrentUser(): Promise<User> {
+    const response = await this.client.get<User>("/users/me");
+    return response.data;
+  }
+
+  /**
+   * Fetch paginated audit log entries for a referral
+   */
+  async fetchAuditLog(
+    referralId: string,
+    params: { page?: number; limit?: number } = {},
+  ): Promise<PaginatedResponse<AuditLogEntry>> {
+    const response = await this.client.get<PaginatedResponse<AuditLogEntry>>(
+      `/referrals/${referralId}/audit-log`,
+      { params },
+    );
     return response.data;
   }
 }

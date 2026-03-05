@@ -6,12 +6,62 @@ import {
   ReleaseFromType,
 } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
-import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import { Referral, ReferralStatusHistory } from '../generated/prisma/client';
+import { Referral, AuditAction } from '../generated/prisma/client';
+import { ReferralAuditService, AuditChange } from './referral-audit.service';
+
+/**
+ * Fields that are stored as Date objects in the DB but arrive as strings
+ * in the DTO. These need special comparison logic.
+ */
+const DATE_FIELDS = new Set([
+  'followUpDate',
+  'dueDate',
+  'completedDate',
+  'individualDateOfBirth',
+  'releaseDate',
+  'assignedOn',
+  'firstContactMadeOn',
+]);
+
+/**
+ * Fields that are arrays in the DB. These need deep comparison.
+ */
+const ARRAY_FIELDS = new Set(['currentlyConnectedSupports', 'neededSupports']);
+
+/**
+ * Fields to exclude from audit diff comparison
+ * (internal/computed fields that should not appear in audit logs)
+ */
+const EXCLUDED_FIELDS = new Set(['modifiedBy']);
+
+/**
+ * Foreign-key fields that should be resolved to human-readable names
+ * in audit log entries. Maps the FK field to its relation and display field.
+ */
+const RELATION_FIELDS: Record<
+  string,
+  { relation: string; displayField: string; model: string }
+> = {
+  ministryId: { relation: 'ministry', displayField: 'name', model: 'ministry' },
+  regionId: { relation: 'region', displayField: 'name', model: 'region' },
+  agencyTypeId: {
+    relation: 'agencyType',
+    displayField: 'name',
+    model: 'agencyType',
+  },
+  assignedToId: {
+    relation: 'assignedTo',
+    displayField: 'fullName',
+    model: 'user',
+  },
+};
 
 @Injectable()
 export class ReferralsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly referralAuditService: ReferralAuditService,
+  ) {}
 
   private calculateFlag(
     losingHousing?: YesNoUnknown,
@@ -109,11 +159,6 @@ export class ReferralsService {
         ministry: true,
         agencyType: true,
         assignedTo: true,
-        statusHistory: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
       },
     });
 
@@ -131,40 +176,13 @@ export class ReferralsService {
   ): Promise<Referral> {
     const existingReferral = await this.findOne(id);
 
-    // Create status history entry if status is changing
-    if (
-      updateReferralDto.referralStatus &&
-      updateReferralDto.referralStatus !== existingReferral.referralStatus
-    ) {
-      await this.prisma.referralStatusHistory.create({
-        data: {
-          referralId: id,
-          fromStatus: existingReferral.referralStatus,
-          toStatus: updateReferralDto.referralStatus,
-          createdBy: userId,
-        },
-      });
-    }
+    const changes = this.buildChanges(existingReferral, updateReferralDto);
 
-    return this.prisma.referral.update({
+    const updateData = this.buildUpdateData(updateReferralDto, userId);
+
+    const updatedReferral = await this.prisma.referral.update({
       where: { id },
-      data: {
-        referralStatus: updateReferralDto.referralStatus,
-        assignedToId: updateReferralDto.assignedToId,
-        referralOutcome: updateReferralDto.referralOutcome,
-        communityPartnerName: updateReferralDto.communityPartnerName,
-        flag: updateReferralDto.flag,
-        modifiedBy: userId,
-        followUpDate: updateReferralDto.followUpDate
-          ? new Date(updateReferralDto.followUpDate)
-          : undefined,
-        dueDate: updateReferralDto.dueDate
-          ? new Date(updateReferralDto.dueDate)
-          : undefined,
-        completedDate: updateReferralDto.completedDate
-          ? new Date(updateReferralDto.completedDate)
-          : undefined,
-      },
+      data: updateData,
       include: {
         region: true,
         ministry: true,
@@ -172,23 +190,182 @@ export class ReferralsService {
         assignedTo: true,
       },
     });
+
+    if (changes.length > 0 && userId != null) {
+      const resolvedChanges = await this.resolveRelationNames(
+        changes,
+        existingReferral,
+      );
+      await this.referralAuditService.createAuditEntries(
+        id,
+        AuditAction.UPDATE,
+        resolvedChanges,
+        userId,
+      );
+    }
+
+    return updatedReferral;
   }
 
-  async addStatusHistory(
-    id: string,
-    createStatusHistoryDto: CreateStatusHistoryDto,
-    userId?: string,
-  ): Promise<ReferralStatusHistory> {
-    const referral = await this.findOne(id);
+  /**
+   * Compare existing referral fields against the incoming DTO
+   * and return an array of field-level changes for audit logging.
+   */
+  buildChanges(existing: Referral, dto: UpdateReferralDto): AuditChange[] {
+    const changes: AuditChange[] = [];
 
-    return this.prisma.referralStatusHistory.create({
-      data: {
-        referralId: id,
-        fromStatus: referral.referralStatus,
-        toStatus: createStatusHistoryDto.toStatus as ReferralStatus,
-        comment: createStatusHistoryDto.comment,
-        createdBy: userId,
-      },
+    for (const [key, newValue] of Object.entries(dto)) {
+      if (newValue === undefined || EXCLUDED_FIELDS.has(key)) {
+        continue;
+      }
+
+      const existingValue = (existing as Record<string, unknown>)[key];
+
+      if (DATE_FIELDS.has(key)) {
+        const existingStr =
+          existingValue instanceof Date
+            ? existingValue.toISOString().split('T')[0]
+            : existingValue != null
+              ? String(existingValue)
+              : null;
+        const newStr = newValue != null ? String(newValue) : null;
+
+        if (existingStr !== newStr) {
+          changes.push({
+            field: key,
+            oldValue: existingStr,
+            newValue: newStr,
+          });
+        }
+      } else if (ARRAY_FIELDS.has(key)) {
+        const existingArr = Array.isArray(existingValue)
+          ? [...existingValue].sort()
+          : [];
+        const newArr = Array.isArray(newValue) ? [...newValue].sort() : [];
+
+        if (JSON.stringify(existingArr) !== JSON.stringify(newArr)) {
+          changes.push({
+            field: key,
+            oldValue: existingArr.join(', '),
+            newValue: newArr.join(', '),
+          });
+        }
+      } else {
+        const existingStr =
+          existingValue != null ? String(existingValue) : null;
+        const newStr = newValue != null ? String(newValue) : null;
+
+        if (existingStr !== newStr) {
+          changes.push({
+            field: key,
+            oldValue: existingStr,
+            newValue: newStr,
+          });
+        }
+      }
+    }
+
+    return changes;
+  }
+
+  /**
+   * Resolve foreign-key ID values in audit changes to human-readable names.
+   * Uses the existing referral's included relations for old values and
+   * queries the database for new values.
+   */
+  private async resolveRelationNames(
+    changes: AuditChange[],
+    existingReferral: Referral,
+  ): Promise<AuditChange[]> {
+    const resolvePromises = changes.map(async (change) => {
+      const rel = RELATION_FIELDS[change.field];
+      if (!rel) {
+        return change;
+      }
+
+      const existingRelation = (
+        existingReferral as unknown as Record<string, Record<string, unknown>>
+      )[rel.relation];
+      const oldName = (existingRelation?.[rel.displayField] as string) ?? null;
+
+      let newName: string | null = null;
+      if (change.newValue) {
+        const record = await (
+          this.prisma[rel.model as keyof PrismaService] as unknown as {
+            findUnique: (args: {
+              where: { id: string };
+              select: Record<string, boolean>;
+            }) => Promise<Record<string, unknown> | null>;
+          }
+        ).findUnique({
+          where: { id: change.newValue },
+          select: { [rel.displayField]: true },
+        });
+        newName = (record?.[rel.displayField] as string) ?? change.newValue;
+      }
+
+      return {
+        field: rel.relation,
+        oldValue: oldName,
+        newValue: newName,
+      };
     });
+
+    return Promise.all(resolvePromises);
+  }
+
+  /**
+   * Build the Prisma update data object from the DTO,
+   * converting date strings to Date objects where needed.
+   */
+  private buildUpdateData(
+    dto: UpdateReferralDto,
+    userId?: string,
+  ): Record<string, unknown> {
+    return {
+      referralStatus: dto.referralStatus,
+      assignedToId: dto.assignedToId,
+      referralOutcome: dto.referralOutcome,
+      communityPartnerName: dto.communityPartnerName,
+      flag: dto.flag,
+      modifiedBy: userId,
+      regionId: dto.regionId,
+      specificCityTown: dto.specificCityTown,
+      currentlyConnectedSupports: dto.currentlyConnectedSupports,
+      currentlyConnectedSupportsOther: dto.currentlyConnectedSupportsOther,
+      neededSupports: dto.neededSupports,
+      neededSupportsOther: dto.neededSupportsOther,
+      referralSummary: dto.referralSummary,
+      referredBy: dto.referredBy,
+      ministryId: dto.ministryId,
+      ministryNameOther: dto.ministryNameOther,
+      agencyTypeId: dto.agencyTypeId,
+      agencyTypeOther: dto.agencyTypeOther,
+      partnerAgencyName: dto.partnerAgencyName,
+      programArea: dto.programArea,
+      referrerContactName: dto.referrerContactName,
+      referrerEmail: dto.referrerEmail,
+      referrerPhone: dto.referrerPhone,
+      individualFirstName: dto.individualFirstName,
+      individualMiddleName: dto.individualMiddleName,
+      individualLastName: dto.individualLastName,
+      individualPreferredName: dto.individualPreferredName,
+      gainFile: dto.gainFile,
+      secondaryContact: dto.secondaryContact,
+      bestWayToReach: dto.bestWayToReach,
+      currentlyHomeless: dto.currentlyHomeless,
+      losingHousing: dto.losingHousing,
+      pendingRelease: dto.pendingRelease,
+      followUpDate: dto.followUpDate ? new Date(dto.followUpDate) : undefined,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      completedDate: dto.completedDate
+        ? new Date(dto.completedDate)
+        : undefined,
+      individualDateOfBirth: dto.individualDateOfBirth
+        ? new Date(dto.individualDateOfBirth)
+        : undefined,
+      releaseDate: dto.releaseDate ? new Date(dto.releaseDate) : undefined,
+      individualPhone: dto.individualPhone,
+    };
   }
 }

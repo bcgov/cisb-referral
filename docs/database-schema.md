@@ -10,7 +10,7 @@ This document describes the database structure based on the Power Platform ERD a
 - **User** - System users (managers, supervisors, admins)
 - **Contact** - Portal users who submit referrals
 - **Referral** - Main referral records
-- **ReferralStatusHistory** - Audit trail of status changes
+- **ReferralAuditLog** - Audit trail of all field-level changes to referrals
 
 ---
 
@@ -107,7 +107,7 @@ System users who manage referrals (internal staff). All fields are system-manage
 
 - Can be assigned to multiple Regions (manager, supervisor, assistant supervisor, team member)
 - Has many assigned Referrals
-- Has many ReferralStatusHistory entries
+- Has many ReferralAuditLog entries
 
 ---
 
@@ -260,28 +260,30 @@ Main table storing referral submissions.
 - Belongs to AgencyType (optional)
 - Belongs to User (assignedTo, optional)
 - Belongs to Contact (createdBy, optional)
-- Has many ReferralStatusHistory entries
+- Has many ReferralAuditLog entries
 
 ---
 
-## ReferralStatusHistory Table
+## ReferralAuditLog Table
 
-Audit trail tracking all status changes on referrals.
+Audit trail tracking all field-level changes to referrals.
 
-| Field      | Type           | Required | Notes                                     |
-| ---------- | -------------- | -------- | ----------------------------------------- |
-| id         | UUID           | Yes      | Primary key                               |
-| referralId | UUID           | Yes      | Foreign key to Referral                   |
-| fromStatus | ReferralStatus | No       | Previous status (null for initial status) |
-| toStatus   | ReferralStatus | Yes      | New status                                |
-| comment    | Text           | No       | Reason for status change                  |
-| createdAt  | DateTime       | Yes      | Timestamp of change                       |
-| createdBy  | String         | Yes      | User ID who changed status                |
+| Field        | Type        | Required | Notes                                      |
+| ------------ | ----------- | -------- | ------------------------------------------ |
+| id           | UUID        | Yes      | Primary key                                |
+| referralId   | UUID        | Yes      | Foreign key to Referral                    |
+| action       | AuditAction | Yes      | CREATE or UPDATE                           |
+| fieldChanged | String      | Yes      | Name of the field that was changed         |
+| oldValue     | Text        | No       | Previous value (null for initial creation) |
+| newValue     | Text        | No       | New value                                  |
+| comment      | Text        | No       | Optional comment about the change          |
+| changedBy    | UUID        | Yes      | Foreign key to User who made the change    |
+| changedAt    | DateTime    | Yes      | Timestamp of change (defaults to now)      |
 
 **Relationships:**
 
 - Belongs to Referral (cascade delete)
-- Belongs to User (author)
+- Belongs to User (changedBy)
 
 ---
 
@@ -315,6 +317,11 @@ Audit trail tracking all status changes on referrals.
 - SUPERVISOR
 - ADMIN
 - SYSTEM_ADMINISTRATOR
+
+### AuditAction
+
+- CREATE
+- UPDATE
 
 ### ReferralStatus
 
@@ -373,10 +380,11 @@ Performance indexes on frequently queried fields:
 - createdAt
 - flag
 
-**ReferralStatusHistory:**
+**ReferralAuditLog:**
 
 - referralId
-- createdAt
+- changedAt
+- action
 
 ---
 

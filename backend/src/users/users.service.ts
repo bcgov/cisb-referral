@@ -20,6 +20,7 @@ export class UsersService {
 
     return this.prisma.user.create({
       data: {
+        id: crypto.randomUUID(),
         fullName: createUserDto.fullName,
         email: createUserDto.email,
         role: createUserDto.role,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "../components/ui";
@@ -8,19 +8,30 @@ import {
   AuditHistoryTab,
 } from "../components/referral";
 import { apiService } from "../services";
+import { useCurrentUser } from "../hooks";
+import { UserRole } from "../types";
 
 type TabType = "details" | "referrer-individual" | "related";
 
-const TABS = [
+const BASE_TABS = [
   { id: "details", label: "Referral Details" },
   { id: "referrer-individual", label: "Referrer & Individual Info" },
-  { id: "related", label: "Audit History" },
 ] as const;
+
+const AUDIT_TAB = { id: "related", label: "Audit History" } as const;
 
 export function ReferralDetail() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const queryClient = useQueryClient();
+  const { currentUser } = useCurrentUser();
+
+  const isSystemAdmin = currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR;
+
+  const tabs = useMemo(
+    () => (isSystemAdmin ? [...BASE_TABS, AUDIT_TAB] : [...BASE_TABS]),
+    [isSystemAdmin],
+  );
 
   const {
     data: referral,
@@ -75,7 +86,7 @@ export function ReferralDetail() {
       </div>
 
       <Tabs
-        tabs={TABS}
+        tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as TabType)}
       />
@@ -86,21 +97,25 @@ export function ReferralDetail() {
             key={referral.id}
             referral={referral}
             users={users}
-            onUpdate={() =>
-              queryClient.invalidateQueries({ queryKey: ["referral", id] })
-            }
+            onUpdate={() => {
+              queryClient.invalidateQueries({ queryKey: ["referral", id] });
+              queryClient.invalidateQueries({ queryKey: ["auditLog", id] });
+            }}
           />
         )}
         {activeTab === "referrer-individual" && (
           <ReferrerIndividualTab
             key={referral.id}
             referral={referral}
-            onUpdate={() =>
-              queryClient.invalidateQueries({ queryKey: ["referral", id] })
-            }
+            onUpdate={() => {
+              queryClient.invalidateQueries({ queryKey: ["referral", id] });
+              queryClient.invalidateQueries({ queryKey: ["auditLog", id] });
+            }}
           />
         )}
-        {activeTab === "related" && <AuditHistoryTab />}
+        {activeTab === "related" && isSystemAdmin && (
+          <AuditHistoryTab referralId={referral.id} />
+        )}
       </div>
     </div>
   );

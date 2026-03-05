@@ -17,26 +17,27 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
+import { ReferralAuditService } from './referral-audit.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
-import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import type {
-  Referral,
-  ReferralStatusHistory,
-  User,
-} from '../generated/prisma/client';
+import type { Referral, User } from '../generated/prisma/client';
+import { UserRole as PrismaUserRole } from '../generated/prisma/client';
 import {
   AdminAuthGuard,
   ContactAuthGuard,
   ProfileCompleteGuard,
+  RolesGuard,
 } from '../auth/guards';
-import { CurrentUser, CurrentContact } from '../auth/decorators';
+import { CurrentUser, CurrentContact, Roles } from '../auth/decorators';
 import type { AuthenticatedContact } from '../auth/interfaces';
 
 @ApiTags('referrals')
 @Controller({ path: 'referrals', version: '1' })
 export class ReferralsController {
-  constructor(private readonly referralsService: ReferralsService) {}
+  constructor(
+    private readonly referralsService: ReferralsService,
+    private readonly referralAuditService: ReferralAuditService,
+  ) {}
 
   @Post()
   @UseGuards(ContactAuthGuard, ProfileCompleteGuard)
@@ -105,6 +106,43 @@ export class ReferralsController {
     });
   }
 
+  @Get(':id/audit-log')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles(PrismaUserRole.SYSTEM_ADMINISTRATOR)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get audit log for a referral' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 50)',
+  })
+  @ApiResponse({ status: 200, description: 'Audit log entries' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - System Administrator only',
+  })
+  @ApiResponse({ status: 404, description: 'Referral not found' })
+  async getAuditLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    await this.referralsService.findOne(id);
+    return this.referralAuditService.findByReferralId(
+      id,
+      page ? Number.parseInt(page, 10) : undefined,
+      limit ? Number.parseInt(limit, 10) : undefined,
+    );
+  }
+
   @Get(':id')
   @UseGuards(AdminAuthGuard)
   @ApiBearerAuth()
@@ -130,24 +168,5 @@ export class ReferralsController {
     @CurrentUser() user: User,
   ): Promise<Referral> {
     return this.referralsService.update(id, updateReferralDto, user.id);
-  }
-
-  @Post(':id/status-history')
-  @UseGuards(AdminAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Add status history entry' })
-  @ApiResponse({ status: 201, description: 'Status history entry created' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Referral not found' })
-  async addStatusHistory(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() createStatusHistoryDto: CreateStatusHistoryDto,
-    @CurrentUser() user: User,
-  ): Promise<ReferralStatusHistory> {
-    return this.referralsService.addStatusHistory(
-      id,
-      createStatusHistoryDto,
-      user.id,
-    );
   }
 }
