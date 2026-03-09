@@ -24,7 +24,7 @@ const fieldLabelOverrides: Record<string, string> = {
  */
 function camelCaseToLabel(field: string): string {
   return field
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replaceAll(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/^./, (c) => c.toUpperCase());
 }
 
@@ -63,7 +63,9 @@ interface AuditHistoryTabProps {
   referralId: string;
 }
 
-export function AuditHistoryTab({ referralId }: AuditHistoryTabProps) {
+export function AuditHistoryTab({
+  referralId,
+}: Readonly<AuditHistoryTabProps>) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["auditLog", referralId],
     queryFn: () => apiService.fetchAuditLog(referralId),
