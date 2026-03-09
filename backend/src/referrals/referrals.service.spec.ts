@@ -373,6 +373,7 @@ describe('ReferralsService', () => {
       // Arrange
       const referralId = crypto.randomUUID();
       const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
       const existing = createTestReferral({
         id: referralId,
         referralStatus: PrismaReferralStatus.OPEN,
@@ -387,7 +388,7 @@ describe('ReferralsService', () => {
       mockPrismaService.referral.update.mockResolvedValue(updated);
 
       // Act
-      const result = await service.update(referralId, dto, userId);
+      const result = await service.update(referralId, dto, userId, userEmail);
 
       // Assert
       expect(result).toEqual(updated);
@@ -395,7 +396,7 @@ describe('ReferralsService', () => {
         referralId,
         AuditAction.UPDATE,
         [{ field: 'referralStatus', oldValue: 'OPEN', newValue: 'ASSIGNED' }],
-        userId,
+        userEmail,
       );
     });
 
@@ -403,6 +404,7 @@ describe('ReferralsService', () => {
       // Arrange
       const referralId = crypto.randomUUID();
       const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
       const existing = createTestReferral({
         id: referralId,
         referralStatus: PrismaReferralStatus.OPEN,
@@ -414,7 +416,7 @@ describe('ReferralsService', () => {
       mockPrismaService.referral.update.mockResolvedValue(existing);
 
       // Act
-      await service.update(referralId, dto, userId);
+      await service.update(referralId, dto, userId, userEmail);
 
       // Assert
       expect(mockAuditService.createAuditEntries).not.toHaveBeenCalled();
@@ -424,6 +426,7 @@ describe('ReferralsService', () => {
       // Arrange
       const referralId = crypto.randomUUID();
       const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
       const oldMinistryId = crypto.randomUUID();
       const newMinistryId = crypto.randomUUID();
       const existing = createTestReferral({
@@ -448,7 +451,7 @@ describe('ReferralsService', () => {
       });
 
       // Act
-      await service.update(referralId, dto, userId);
+      await service.update(referralId, dto, userId, userEmail);
 
       // Assert
       expect(mockAuditService.createAuditEntries).toHaveBeenCalledWith(
@@ -461,7 +464,7 @@ describe('ReferralsService', () => {
             newValue: 'New Ministry',
           },
         ],
-        userId,
+        userEmail,
       );
       expect(mockPrismaService.ministry.findUnique).toHaveBeenCalledWith({
         where: { id: newMinistryId },
@@ -478,6 +481,34 @@ describe('ReferralsService', () => {
       await expect(
         service.update(id, { referralStatus: ReferralStatus.CLOSED }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should still return updated referral when audit logging fails', async () => {
+      // Arrange
+      const referralId = crypto.randomUUID();
+      const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
+      const existing = createTestReferral({
+        id: referralId,
+        referralStatus: PrismaReferralStatus.OPEN,
+      });
+      const updated = createTestReferral({
+        id: referralId,
+        referralStatus: PrismaReferralStatus.ASSIGNED,
+      });
+      const dto = { referralStatus: ReferralStatus.ASSIGNED };
+
+      mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+      mockPrismaService.referral.update.mockResolvedValue(updated);
+      mockAuditService.createAuditEntries.mockRejectedValue(
+        new Error('DB write failed'),
+      );
+
+      // Act
+      const result = await service.update(referralId, dto, userId, userEmail);
+
+      // Assert - update succeeds despite audit failure
+      expect(result).toEqual(updated);
     });
   });
 });

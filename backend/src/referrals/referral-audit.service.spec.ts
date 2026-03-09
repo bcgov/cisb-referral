@@ -17,8 +17,7 @@ describe('ReferralAuditService', () => {
     oldValue: 'OPEN',
     newValue: 'ASSIGNED',
     comment: null,
-    changedBy: crypto.randomUUID(),
-    changedByUser: { id: crypto.randomUUID(), fullName: 'Test User' },
+    changedBy: 'test@gov.bc.ca',
     changedAt: new Date(),
     ...overrides,
   });
@@ -82,7 +81,7 @@ describe('ReferralAuditService', () => {
     it('should bulk-insert entries for each change', async () => {
       // Arrange
       const referralId = crypto.randomUUID();
-      const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
       const changes: AuditChange[] = [
         createTestChange({
           field: 'referralStatus',
@@ -104,7 +103,7 @@ describe('ReferralAuditService', () => {
         referralId,
         AuditAction.UPDATE,
         changes,
-        userId,
+        userEmail,
       );
 
       // Assert
@@ -118,7 +117,7 @@ describe('ReferralAuditService', () => {
             fieldChanged: 'referralStatus',
             oldValue: 'OPEN',
             newValue: 'ASSIGNED',
-            changedBy: userId,
+            changedBy: userEmail,
           },
           {
             referralId,
@@ -126,7 +125,7 @@ describe('ReferralAuditService', () => {
             fieldChanged: 'assignedToId',
             oldValue: null,
             newValue: changes[1].newValue,
-            changedBy: userId,
+            changedBy: userEmail,
           },
         ],
       });
@@ -135,7 +134,7 @@ describe('ReferralAuditService', () => {
     it('should support CREATE action for new referrals', async () => {
       // Arrange
       const referralId = crypto.randomUUID();
-      const userId = crypto.randomUUID();
+      const userEmail = 'admin@gov.bc.ca';
       const changes: AuditChange[] = [
         createTestChange({
           field: 'referralStatus',
@@ -152,7 +151,7 @@ describe('ReferralAuditService', () => {
         referralId,
         AuditAction.CREATE,
         changes,
-        userId,
+        userEmail,
       );
 
       // Assert
@@ -170,7 +169,7 @@ describe('ReferralAuditService', () => {
       });
     });
 
-    it('should handle entries without a userId', async () => {
+    it('should handle entries without a userEmail by defaulting to system', async () => {
       // Arrange
       const referralId = crypto.randomUUID();
       const changes: AuditChange[] = [createTestChange()];
@@ -185,7 +184,7 @@ describe('ReferralAuditService', () => {
       expect(
         mockPrismaService.referralAuditLog.createMany,
       ).toHaveBeenCalledWith({
-        data: [expect.objectContaining({ changedBy: undefined })],
+        data: [expect.objectContaining({ changedBy: 'system' })],
       });
     });
   });
@@ -217,9 +216,6 @@ describe('ReferralAuditService', () => {
         skip: 0,
         take: 50,
         orderBy: { changedAt: 'desc' },
-        include: {
-          changedByUser: { select: { id: true, fullName: true } },
-        },
       });
     });
 
@@ -244,6 +240,38 @@ describe('ReferralAuditService', () => {
       );
     });
 
+    it('should clamp limit to MAX_PAGE_LIMIT', async () => {
+      // Arrange
+      const referralId = crypto.randomUUID();
+      mockPrismaService.referralAuditLog.findMany.mockResolvedValue([]);
+      mockPrismaService.referralAuditLog.count.mockResolvedValue(200);
+
+      // Act
+      const result = await service.findByReferralId(referralId, 1, 500);
+
+      // Assert
+      expect(result.meta.limit).toBe(100);
+      expect(mockPrismaService.referralAuditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 100 }),
+      );
+    });
+
+    it('should clamp page to minimum of 1', async () => {
+      // Arrange
+      const referralId = crypto.randomUUID();
+      mockPrismaService.referralAuditLog.findMany.mockResolvedValue([]);
+      mockPrismaService.referralAuditLog.count.mockResolvedValue(10);
+
+      // Act
+      const result = await service.findByReferralId(referralId, -1, 10);
+
+      // Assert
+      expect(result.meta.page).toBe(1);
+      expect(mockPrismaService.referralAuditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0 }),
+      );
+    });
+
     it('should return empty data when no audit entries exist', async () => {
       // Arrange
       const referralId = crypto.randomUUID();
@@ -257,6 +285,26 @@ describe('ReferralAuditService', () => {
       expect(result.data).toEqual([]);
       expect(result.meta.total).toBe(0);
       expect(result.meta.totalPages).toBe(0);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should re-throw and log when createMany fails', async () => {
+      // Arrange
+      const referralId = crypto.randomUUID();
+      const changes: AuditChange[] = [createTestChange()];
+      const dbError = new Error('DB connection lost');
+      mockPrismaService.referralAuditLog.createMany.mockRejectedValue(dbError);
+
+      // Act & Assert
+      await expect(
+        service.createAuditEntries(
+          referralId,
+          AuditAction.UPDATE,
+          changes,
+          'test@gov.bc.ca',
+        ),
+      ).rejects.toThrow('DB connection lost');
     });
   });
 });

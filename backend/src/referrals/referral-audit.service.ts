@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditAction } from '../generated/prisma/client';
+
+/** Maximum number of audit entries that can be returned per page */
+const MAX_PAGE_LIMIT = 100;
+
+/** Minimum valid page number */
+const MIN_PAGE = 1;
 
 /**
  * Describes a single field-level change on a referral
@@ -17,6 +23,8 @@ export interface AuditChange {
  */
 @Injectable()
 export class ReferralAuditService {
+  private readonly logger = new Logger(ReferralAuditService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -24,28 +32,40 @@ export class ReferralAuditService {
    * @param referralId - The referral being changed
    * @param action - CREATE or UPDATE
    * @param changes - Array of field-level changes to record
-   * @param userId - The user who made the changes
+   * @param userEmail - Email of the user who made the changes
    */
   async createAuditEntries(
     referralId: string,
     action: AuditAction,
     changes: AuditChange[],
-    userId?: string,
+    userEmail?: string,
   ): Promise<void> {
     if (changes.length === 0) {
       return;
     }
 
-    await this.prisma.referralAuditLog.createMany({
-      data: changes.map((change) => ({
-        referralId,
-        action,
-        fieldChanged: change.field,
-        oldValue: change.oldValue,
-        newValue: change.newValue,
-        changedBy: userId,
-      })),
-    });
+    try {
+      await this.prisma.referralAuditLog.createMany({
+        data: changes.map((change) => ({
+          referralId,
+          action,
+          fieldChanged: change.field,
+          oldValue: change.oldValue,
+          newValue: change.newValue,
+          changedBy: userEmail ?? 'system',
+        })),
+      });
+
+      this.logger.log(
+        `Created ${changes.length} audit entries for referral ${referralId} [${action}]`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to create audit entries for referral ${referralId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 
   /**
@@ -68,24 +88,20 @@ export class ReferralAuditService {
       newValue: string | null;
       comment: string | null;
       changedBy: string | null;
-      changedByUser: { id: string; fullName: string } | null;
       changedAt: Date;
     }>;
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
-    const skip = (page - 1) * limit;
+    const safePage = Math.max(MIN_PAGE, page);
+    const safeLimit = Math.min(Math.max(1, limit), MAX_PAGE_LIMIT);
+    const skip = (safePage - 1) * safeLimit;
 
     const [data, total] = await Promise.all([
       this.prisma.referralAuditLog.findMany({
         where: { referralId },
         skip,
-        take: limit,
+        take: safeLimit,
         orderBy: { changedAt: 'desc' },
-        include: {
-          changedByUser: {
-            select: { id: true, fullName: true },
-          },
-        },
       }),
       this.prisma.referralAuditLog.count({ where: { referralId } }),
     ]);
@@ -94,9 +110,9 @@ export class ReferralAuditService {
       data,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.ceil(total / safeLimit),
       },
     };
   }

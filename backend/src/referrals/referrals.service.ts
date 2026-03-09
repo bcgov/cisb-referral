@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateReferralDto,
@@ -58,6 +58,8 @@ const RELATION_FIELDS: Record<
 
 @Injectable()
 export class ReferralsService {
+  private readonly logger = new Logger(ReferralsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly referralAuditService: ReferralAuditService,
@@ -173,6 +175,7 @@ export class ReferralsService {
     id: string,
     updateReferralDto: UpdateReferralDto,
     userId?: string,
+    userEmail?: string,
   ): Promise<Referral> {
     const existingReferral = await this.findOne(id);
 
@@ -192,16 +195,23 @@ export class ReferralsService {
     });
 
     if (changes.length > 0 && userId != null) {
-      const resolvedChanges = await this.resolveRelationNames(
-        changes,
-        existingReferral,
-      );
-      await this.referralAuditService.createAuditEntries(
-        id,
-        AuditAction.UPDATE,
-        resolvedChanges,
-        userId,
-      );
+      try {
+        const resolvedChanges = await this.resolveRelationNames(
+          changes,
+          existingReferral,
+        );
+        await this.referralAuditService.createAuditEntries(
+          id,
+          AuditAction.UPDATE,
+          resolvedChanges,
+          userEmail,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Audit logging failed for referral ${id}, update was still applied: ${(error as Error).message}`,
+          (error as Error).stack,
+        );
+      }
     }
 
     return updatedReferral;

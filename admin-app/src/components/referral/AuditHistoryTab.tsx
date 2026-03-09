@@ -141,7 +141,7 @@ export function AuditHistoryTab({
                   {formatValue(entry.newValue)}
                 </td>
                 <td className="p-3 border-b border-gray-200">
-                  {entry.changedByUser?.fullName ?? "—"}
+                  {entry.changedBy || "—"}
                 </td>
               </tr>
             ))}

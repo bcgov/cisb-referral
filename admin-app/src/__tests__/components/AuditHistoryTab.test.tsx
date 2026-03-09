@@ -33,8 +33,7 @@ const createTestAuditEntry = (
   oldValue: "OPEN",
   newValue: "ASSIGNED",
   comment: null,
-  changedBy: crypto.randomUUID(),
-  changedByUser: { id: crypto.randomUUID(), fullName: "Test Admin" },
+  changedBy: "admin@gov.bc.ca",
   changedAt: "2025-06-15T14:30:00.000Z",
   ...overrides,
 });
@@ -104,13 +103,13 @@ describe("AuditHistoryTab", () => {
         fieldChanged: "referralStatus",
         oldValue: "OPEN",
         newValue: "ASSIGNED",
-        changedByUser: { id: crypto.randomUUID(), fullName: "Jane Smith" },
+        changedBy: "jane.smith@gov.bc.ca",
       }),
       createTestAuditEntry({
         fieldChanged: "specificCityTown",
         oldValue: "Victoria",
         newValue: "Vancouver",
-        changedByUser: { id: crypto.randomUUID(), fullName: "Bob Lee" },
+        changedBy: "bob.lee@gov.bc.ca",
       }),
     ];
     mockFetchAuditLog.mockResolvedValue({
@@ -125,8 +124,8 @@ describe("AuditHistoryTab", () => {
     await waitFor(() => {
       expect(screen.getByText("Status")).toBeInTheDocument();
       expect(screen.getByText("City/Town")).toBeInTheDocument();
-      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-      expect(screen.getByText("Bob Lee")).toBeInTheDocument();
+      expect(screen.getByText("jane.smith@gov.bc.ca")).toBeInTheDocument();
+      expect(screen.getByText("bob.lee@gov.bc.ca")).toBeInTheDocument();
     });
   });
 
@@ -168,6 +167,29 @@ describe("AuditHistoryTab", () => {
       expect(
         screen.getByText("Failed to load audit history."),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("should show em dash when changedBy is empty", async () => {
+    // Arrange
+    const entries = [
+      createTestAuditEntry({
+        changedBy: "",
+      }),
+    ];
+    mockFetchAuditLog.mockResolvedValue({
+      data: entries,
+      meta: { total: 1, page: 1, limit: 50, totalPages: 1 },
+    });
+
+    // Act
+    renderWithQuery(<AuditHistoryTab referralId={crypto.randomUUID()} />);
+
+    // Assert
+    await waitFor(() => {
+      const cells = screen.getAllByRole("cell");
+      const changedByCell = cells[5];
+      expect(changedByCell.textContent).toBe("—");
     });
   });
 

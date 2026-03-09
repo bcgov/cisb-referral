@@ -6,6 +6,7 @@ import {
   IsDateString,
   IsBoolean,
   IsArray,
+  IsUUID,
 } from 'class-validator';
 import { SupportType } from '../../generated/prisma/client';
 
@@ -37,7 +38,7 @@ export class UpdateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   assignedToId?: string;
 
   @ApiProperty({ enum: ReferralOutcome, required: false })
@@ -92,7 +93,7 @@ export class UpdateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   regionId?: string;
 
   @ApiProperty({ required: false })
@@ -123,7 +124,7 @@ export class UpdateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   ministryId?: string;
 
   @ApiProperty({ required: false })
@@ -133,7 +134,7 @@ export class UpdateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   agencyTypeId?: string;
 
   @ApiProperty({ required: false })

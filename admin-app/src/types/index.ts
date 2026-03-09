@@ -257,6 +257,5 @@ export interface AuditLogEntry {
   newValue: string | null;
   comment: string | null;
   changedBy: string | null;
-  changedByUser: { id: string; fullName: string } | null;
   changedAt: string;
 }

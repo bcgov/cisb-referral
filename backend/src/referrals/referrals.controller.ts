@@ -136,10 +136,12 @@ export class ReferralsController {
     @Query('limit') limit?: string,
   ) {
     await this.referralsService.findOne(id);
+    const parsedPage = page ? Number.parseInt(page, 10) : undefined;
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
     return this.referralAuditService.findByReferralId(
       id,
-      page ? Number.parseInt(page, 10) : undefined,
-      limit ? Number.parseInt(limit, 10) : undefined,
+      Number.isFinite(parsedPage) ? parsedPage : undefined,
+      Number.isFinite(parsedLimit) ? parsedLimit : undefined,
     );
   }
 
@@ -167,6 +169,11 @@ export class ReferralsController {
     @Body() updateReferralDto: UpdateReferralDto,
     @CurrentUser() user: User,
   ): Promise<Referral> {
-    return this.referralsService.update(id, updateReferralDto, user.id);
+    return this.referralsService.update(
+      id,
+      updateReferralDto,
+      user.id,
+      user.email,
+    );
   }
 }

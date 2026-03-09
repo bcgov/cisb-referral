@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsUUID,
   IsDate,
+  IsNotEmpty,
 } from 'class-validator';
 
 export enum UserRole {
@@ -22,6 +23,7 @@ export class UserDto {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   fullName: string;
 
   @ApiProperty()
