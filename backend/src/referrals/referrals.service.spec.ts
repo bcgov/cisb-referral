@@ -104,7 +104,7 @@ describe('ReferralsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('buildChanges', () => {
+  describe('detectChanges', () => {
     it('should detect a single scalar field change', () => {
       // Arrange
       const existing = createTestReferral({
@@ -113,7 +113,7 @@ describe('ReferralsService', () => {
       const dto = { referralStatus: ReferralStatus.ASSIGNED };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -135,7 +135,7 @@ describe('ReferralsService', () => {
       };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toHaveLength(3);
@@ -164,7 +164,7 @@ describe('ReferralsService', () => {
       };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([]);
@@ -181,7 +181,7 @@ describe('ReferralsService', () => {
       };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -198,7 +198,7 @@ describe('ReferralsService', () => {
       >;
 
       // Act
-      const changes = service.buildChanges(existing, dto as never);
+      const changes = service.detectChanges(existing, dto as never);
 
       // Assert
       expect(changes).toEqual([]);
@@ -212,7 +212,7 @@ describe('ReferralsService', () => {
       const dto = { followUpDate: '2025-07-01' };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -232,7 +232,7 @@ describe('ReferralsService', () => {
       const dto = { dueDate: '2025-08-01' };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([]);
@@ -244,7 +244,7 @@ describe('ReferralsService', () => {
       const dto = { completedDate: '2025-09-15' };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -269,7 +269,7 @@ describe('ReferralsService', () => {
       };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -297,7 +297,7 @@ describe('ReferralsService', () => {
       };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([]);
@@ -309,7 +309,7 @@ describe('ReferralsService', () => {
       const dto = { communityPartnerName: 'Partner Org' };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
@@ -327,7 +327,7 @@ describe('ReferralsService', () => {
       const dto = { flag: true };
 
       // Act
-      const changes = service.buildChanges(existing, dto);
+      const changes = service.detectChanges(existing, dto);
 
       // Assert
       expect(changes).toEqual([
