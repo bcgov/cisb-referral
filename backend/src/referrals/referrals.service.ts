@@ -230,9 +230,11 @@ export class ReferralsService {
       }
 
       const existingValue = (existing as Record<string, unknown>)[fieldName];
-      const change = this.detectFieldChange(fieldName, existingValue, newValue);
-      if (change) {
-        changes.push(change);
+      const oldStr = this.toAuditString(fieldName, existingValue);
+      const newStr = this.toAuditString(fieldName, newValue);
+
+      if (oldStr !== newStr) {
+        changes.push({ field: fieldName, oldValue: oldStr, newValue: newStr });
       }
     }
 
@@ -240,94 +242,20 @@ export class ReferralsService {
   }
 
   /**
-   * Compare a single field's existing value against the new value,
-   * dispatching to the appropriate comparison strategy.
+   * Convert a field value to its audit-log string representation.
+   * Dates are normalized to YYYY-MM-DD; arrays are sorted and comma-joined.
    */
-  private detectFieldChange(
-    fieldName: string,
-    existingValue: unknown,
-    newValue: unknown,
-  ): AuditChange | null {
-    if (DATE_FIELDS.has(fieldName)) {
-      return this.compareDateField(fieldName, existingValue, newValue);
-    }
-    if (ARRAY_FIELDS.has(fieldName)) {
-      return this.compareArrayField(fieldName, existingValue, newValue);
-    }
-    return this.compareScalarField(fieldName, existingValue, newValue);
-  }
-
-  /**
-   * Compare date fields by normalizing both sides to YYYY-MM-DD strings.
-   */
-  private compareDateField(
-    fieldName: string,
-    existingValue: unknown,
-    newValue: unknown,
-  ): AuditChange | null {
-    const existingStr =
-      existingValue instanceof Date
-        ? existingValue.toISOString().split('T')[0]
-        : this.toNullableString(existingValue);
-    const newStr = this.toNullableString(newValue);
-
-    if (existingStr === newStr) {
-      return null;
-    }
-    return { field: fieldName, oldValue: existingStr, newValue: newStr };
-  }
-
-  /**
-   * Compare array fields by sorting and serializing for deep equality.
-   */
-  private compareArrayField(
-    fieldName: string,
-    existingValue: unknown,
-    newValue: unknown,
-  ): AuditChange | null {
-    const compare = (a: unknown, b: unknown) =>
-      String(a).localeCompare(String(b));
-    const existingArr = Array.isArray(existingValue)
-      ? [...existingValue].sort(compare)
-      : [];
-    const newArr = Array.isArray(newValue) ? [...newValue].sort(compare) : [];
-
-    if (JSON.stringify(existingArr) === JSON.stringify(newArr)) {
-      return null;
-    }
-    return {
-      field: fieldName,
-      oldValue: existingArr.join(', '),
-      newValue: newArr.join(', '),
-    };
-  }
-
-  /**
-   * Compare scalar fields as nullable strings.
-   */
-  private compareScalarField(
-    fieldName: string,
-    existingValue: unknown,
-    newValue: unknown,
-  ): AuditChange | null {
-    const existingStr = this.toNullableString(existingValue);
-    const newStr = this.toNullableString(newValue);
-
-    if (existingStr === newStr) {
-      return null;
-    }
-    return { field: fieldName, oldValue: existingStr, newValue: newStr };
-  }
-
-  /**
-   * Convert a value to its string representation, or null if nil.
-   */
-  private toNullableString(value: unknown): string | null {
+  private toAuditString(fieldName: string, value: unknown): string | null {
     if (value == null) {
       return null;
     }
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
+    if (DATE_FIELDS.has(fieldName) && value instanceof Date) {
+      return value.toISOString().split('T')[0];
+    }
+    if (ARRAY_FIELDS.has(fieldName) && Array.isArray(value)) {
+      return [...value]
+        .sort((a, b) => String(a).localeCompare(String(b)))
+        .join(', ');
     }
     return String(value);
   }
