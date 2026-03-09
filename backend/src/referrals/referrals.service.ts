@@ -275,10 +275,12 @@ export class ReferralsService {
     existingValue: unknown,
     newValue: unknown,
   ): AuditChange | null {
+    const compare = (a: unknown, b: unknown) =>
+      String(a).localeCompare(String(b));
     const existingArr = Array.isArray(existingValue)
-      ? [...existingValue].sort()
+      ? [...existingValue].sort(compare)
       : [];
-    const newArr = Array.isArray(newValue) ? [...newValue].sort() : [];
+    const newArr = Array.isArray(newValue) ? [...newValue].sort(compare) : [];
 
     if (JSON.stringify(existingArr) === JSON.stringify(newArr)) {
       return null;
@@ -311,7 +313,13 @@ export class ReferralsService {
    * Convert a value to its string representation, or null if nil.
    */
   private toNullableString(value: unknown): string | null {
-    return value != null ? String(value) : null;
+    if (value == null) {
+      return null;
+    }
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    return String(value);
   }
 
   /**
