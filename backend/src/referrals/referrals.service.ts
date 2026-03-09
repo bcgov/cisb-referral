@@ -257,6 +257,9 @@ export class ReferralsService {
         .sort((a, b) => String(a).localeCompare(String(b)))
         .join(', ');
     }
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
     return String(value);
   }
 
