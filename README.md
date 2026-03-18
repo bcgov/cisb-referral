@@ -1,5 +1,12 @@
-# CISB Referral Application
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=bugs)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=bcgov_cisb-referral&metric=coverage)](https://sonarcloud.io/summary/new_code?id=bcgov_cisb-referral)
 
+# CISB Referral Application
 
 ## Tech Stack
 
