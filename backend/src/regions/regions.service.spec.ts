@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { RegionsService } from './regions.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
@@ -99,9 +96,9 @@ describe('RegionsService', () => {
         new Error('unexpected'),
       );
 
-      await expect(
-        service.create({ name: 'Test Region' }),
-      ).rejects.toThrow('unexpected');
+      await expect(service.create({ name: 'Test Region' })).rejects.toThrow(
+        'unexpected',
+      );
     });
   });
 

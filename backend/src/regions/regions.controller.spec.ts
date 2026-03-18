@@ -21,9 +21,7 @@ describe('RegionsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RegionsController],
-      providers: [
-        { provide: RegionsService, useValue: mockRegionsService },
-      ],
+      providers: [{ provide: RegionsService, useValue: mockRegionsService }],
     }).compile();
 
     controller = module.get<RegionsController>(RegionsController);
