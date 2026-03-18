@@ -14,13 +14,27 @@ export class ReferralsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private calculateFlag(
-    losingHousing?: YesNoUnknown,
+    experiencingHomelessnessResponse?: YesNoUnknown,
+    losingHousingResponse?: YesNoUnknown,
     pendingRelease?: ReleaseFromType,
+    releaseDate?: string,
   ): boolean {
-    return (
-      losingHousing === YesNoUnknown.YES ||
-      (pendingRelease !== undefined && pendingRelease !== ReleaseFromType.NO)
-    );
+    const experiencingHomelessness =
+      experiencingHomelessnessResponse === YesNoUnknown.YES;
+    const losingHousing = losingHousingResponse === YesNoUnknown.YES;
+    const hasUrgentReleaseWindow =
+      pendingRelease !== undefined &&
+      pendingRelease !== ReleaseFromType.NO &&
+      this.isReleaseDateWithinDays(releaseDate, 4);
+
+    return experiencingHomelessness || losingHousing || hasUrgentReleaseWindow;
+  }
+
+  private isReleaseDateWithinDays(releaseDate?: string, maxDays = 4): boolean {
+    if (!releaseDate) return false;
+    const diffDays =
+      (new Date(releaseDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= maxDays;
   }
 
   async create(
@@ -28,8 +42,10 @@ export class ReferralsService {
     contactId: string,
   ): Promise<Referral> {
     const flag = this.calculateFlag(
+      createReferralDto.currentlyHomeless,
       createReferralDto.losingHousing,
       createReferralDto.pendingRelease,
+      createReferralDto.releaseDate,
     );
 
     return this.prisma.referral.create({
