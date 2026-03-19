@@ -11,16 +11,60 @@ import { Referral, ReferralStatusHistory } from '../generated/prisma/client';
 
 @Injectable()
 export class ReferralsService {
+  private static readonly URGENT_RELEASE_WINDOW_DAYS = 4;
+  private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+
   constructor(private readonly prisma: PrismaService) {}
 
   private calculateFlag(
-    losingHousing?: YesNoUnknown,
+    experiencingHomelessnessResponse?: YesNoUnknown,
+    losingHousingResponse?: YesNoUnknown,
     pendingRelease?: ReleaseFromType,
+    releaseDate?: string,
   ): boolean {
-    return (
-      losingHousing === YesNoUnknown.YES ||
-      (pendingRelease !== undefined && pendingRelease !== ReleaseFromType.NO)
+    const hasHousingUrgency =
+      experiencingHomelessnessResponse === YesNoUnknown.YES ||
+      losingHousingResponse === YesNoUnknown.YES;
+    const hasReleaseUrgency =
+      pendingRelease !== undefined &&
+      pendingRelease !== ReleaseFromType.NO &&
+      this.isReleaseDateWithinDays(
+        releaseDate,
+        ReferralsService.URGENT_RELEASE_WINDOW_DAYS,
+      );
+
+    return hasHousingUrgency || hasReleaseUrgency;
+  }
+
+  private isReleaseDateWithinDays(releaseDate?: string, maxDays = 4): boolean {
+    if (!releaseDate) {
+      return false;
+    }
+
+    const parsed = new Date(releaseDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return false;
+    }
+
+    const releaseDateUtcMs = Date.UTC(
+      parsed.getUTCFullYear(),
+      parsed.getUTCMonth(),
+      parsed.getUTCDate(),
     );
+
+    const now = new Date();
+    const currentDateUtcMs = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    );
+
+    const diffDays = Math.round(
+      (releaseDateUtcMs - currentDateUtcMs) /
+        ReferralsService.MILLISECONDS_PER_DAY,
+    );
+
+    return diffDays >= 0 && diffDays <= maxDays;
   }
 
   async create(
@@ -28,8 +72,10 @@ export class ReferralsService {
     contactId: string,
   ): Promise<Referral> {
     const flag = this.calculateFlag(
+      createReferralDto.currentlyHomeless,
       createReferralDto.losingHousing,
       createReferralDto.pendingRelease,
+      createReferralDto.releaseDate,
     );
 
     return this.prisma.referral.create({
