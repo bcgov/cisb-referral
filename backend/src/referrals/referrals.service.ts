@@ -11,6 +11,9 @@ import { Referral, ReferralStatusHistory } from '../generated/prisma/client';
 
 @Injectable()
 export class ReferralsService {
+  private static readonly URGENT_RELEASE_WINDOW_DAYS = 4;
+  private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+
   constructor(private readonly prisma: PrismaService) {}
 
   private calculateFlag(
@@ -19,21 +22,41 @@ export class ReferralsService {
     pendingRelease?: ReleaseFromType,
     releaseDate?: string,
   ): boolean {
-    const experiencingHomelessness =
-      experiencingHomelessnessResponse === YesNoUnknown.YES;
-    const losingHousing = losingHousingResponse === YesNoUnknown.YES;
-    const hasUrgentReleaseWindow =
+    const hasHousingUrgency =
+      experiencingHomelessnessResponse === YesNoUnknown.YES ||
+      losingHousingResponse === YesNoUnknown.YES;
+    const hasReleaseUrgency =
       pendingRelease !== undefined &&
       pendingRelease !== ReleaseFromType.NO &&
-      this.isReleaseDateWithinDays(releaseDate, 4);
+      this.isReleaseDateWithinDays(
+        releaseDate,
+        ReferralsService.URGENT_RELEASE_WINDOW_DAYS,
+      );
 
-    return experiencingHomelessness || losingHousing || hasUrgentReleaseWindow;
+    return hasHousingUrgency || hasReleaseUrgency;
   }
 
   private isReleaseDateWithinDays(releaseDate?: string, maxDays = 4): boolean {
-    if (!releaseDate) return false;
-    const diffDays =
-      (new Date(releaseDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    if (!releaseDate) {
+      return false;
+    }
+
+    const parts = releaseDate.split('-').map(Number);
+    if (parts.length < 3 || parts.some(Number.isNaN)) {
+      return false;
+    }
+
+    const [year, month, day] = parts;
+    const normalizedReleaseDate = new Date(year, month - 1, day);
+
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round(
+      (normalizedReleaseDate.getTime() - currentDate.getTime()) /
+        ReferralsService.MILLISECONDS_PER_DAY,
+    );
+
     return diffDays >= 0 && diffDays <= maxDays;
   }
 

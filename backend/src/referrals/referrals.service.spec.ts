@@ -12,6 +12,7 @@ import { ReferralStatus, UpdateReferralDto } from './dto/update-referral.dto';
 
 describe('ReferralsService', () => {
   let service: ReferralsService;
+  const fixedNow = new Date(2026, 2, 19, 9, 0, 0, 0);
 
   const createReferralDto = (
     overrides: Partial<CreateReferralDto> = {},
@@ -49,6 +50,36 @@ describe('ReferralsService', () => {
     ...overrides,
   });
 
+  const toLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getReleaseDateFromFixedNow = (daysFromNow: number): string => {
+    const date = new Date(fixedNow);
+    date.setDate(date.getDate() + daysFromNow);
+    return toLocalDateString(date);
+  };
+
+  const expectCreatedReferralFlag = async (
+    dto: CreateReferralDto,
+    expectedFlag: boolean,
+  ): Promise<void> => {
+    mockPrismaService.referral.create.mockResolvedValue(
+      createMockReferral({ flag: expectedFlag }),
+    );
+
+    await service.create(dto, 'contact-uuid-1');
+
+    expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ flag: expectedFlag }),
+      }),
+    );
+  };
+
   const mockPrismaService = {
     referral: {
       create: jest.fn(),
@@ -80,126 +111,68 @@ describe('ReferralsService', () => {
   });
 
   describe('urgent referral flag calculation', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(fixedNow);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should flag as urgent when currentlyHomeless is YES', async () => {
       const dto = createReferralDto({
         currentlyHomeless: YesNoUnknown.YES,
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: true }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: true }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, true);
     });
 
     it('should not flag as urgent when currentlyHomeless is NO', async () => {
       const dto = createReferralDto({
         currentlyHomeless: YesNoUnknown.NO,
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when currentlyHomeless is UNKNOWN', async () => {
       const dto = createReferralDto({
         currentlyHomeless: YesNoUnknown.UNKNOWN,
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should flag as urgent when losingHousing is YES', async () => {
       const dto = createReferralDto({ losingHousing: YesNoUnknown.YES });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: true }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: true }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, true);
     });
 
     it('should not flag as urgent when losingHousing is NO', async () => {
       const dto = createReferralDto({ losingHousing: YesNoUnknown.NO });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when losingHousing is UNKNOWN', async () => {
       const dto = createReferralDto({ losingHousing: YesNoUnknown.UNKNOWN });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should flag as urgent when pendingRelease is not NO and releaseDate is within 4 days', async () => {
-      const inThreeDays = new Date();
-      inThreeDays.setDate(inThreeDays.getDate() + 3);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.CORRECTIONS,
-        releaseDate: inThreeDays.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(3),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: true }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: true }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, true);
     });
 
     it('should flag as urgent for each release type except NO when releaseDate is within 4 days', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const releaseDateStr = tomorrow.toISOString().split('T')[0];
+      const releaseDateStr = getReleaseDateFromFixedNow(1);
 
       const urgentReleaseTypes = [
         ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
@@ -215,58 +188,27 @@ describe('ReferralsService', () => {
           pendingRelease: releaseType,
           releaseDate: releaseDateStr,
         });
-        mockPrismaService.referral.create.mockResolvedValue(
-          createMockReferral({ flag: true }),
-        );
 
-        await service.create(dto, 'contact-uuid-1');
-
-        expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({ flag: true }),
-          }),
-        );
+        await expectCreatedReferralFlag(dto, true);
       }
     });
 
     it('should not flag as urgent when pendingRelease is not NO but releaseDate is more than 4 days away', async () => {
-      const inTenDays = new Date();
-      inTenDays.setDate(inTenDays.getDate() + 10);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.CORRECTIONS,
-        releaseDate: inTenDays.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(10),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when pendingRelease is not NO but releaseDate is in the past', async () => {
-      const fiveDaysAgo = new Date();
-      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.CORRECTIONS,
-        releaseDate: fiveDaysAgo.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(-5),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when pendingRelease is not NO but releaseDate is missing', async () => {
@@ -274,37 +216,17 @@ describe('ReferralsService', () => {
         pendingRelease: ReleaseFromType.CORRECTIONS,
         releaseDate: undefined,
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when pendingRelease is NO even with releaseDate within 4 days', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.NO,
-        releaseDate: tomorrow.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(1),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should not flag as urgent when no urgency conditions are met', async () => {
@@ -313,79 +235,64 @@ describe('ReferralsService', () => {
         losingHousing: YesNoUnknown.NO,
         pendingRelease: undefined,
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, false);
     });
 
     it('should flag as urgent when multiple urgency conditions are met', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
       const dto = createReferralDto({
         currentlyHomeless: YesNoUnknown.YES,
         losingHousing: YesNoUnknown.YES,
         pendingRelease: ReleaseFromType.CORRECTIONS,
-        releaseDate: tomorrow.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(1),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: true }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: true }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, true);
     });
 
     it('should flag as urgent on releaseDate boundary of exactly 4 days', async () => {
-      const inFourDays = new Date();
-      inFourDays.setDate(inFourDays.getDate() + 4);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
-        releaseDate: inFourDays.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(4),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: true }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
-
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: true }),
-        }),
-      );
+      await expectCreatedReferralFlag(dto, true);
     });
 
     it('should not flag as urgent when releaseDate is exactly 5 days away', async () => {
-      const inFiveDays = new Date();
-      inFiveDays.setDate(inFiveDays.getDate() + 5);
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
-        releaseDate: inFiveDays.toISOString().split('T')[0],
+        releaseDate: getReleaseDateFromFixedNow(5),
       });
-      mockPrismaService.referral.create.mockResolvedValue(
-        createMockReferral({ flag: false }),
-      );
 
-      await service.create(dto, 'contact-uuid-1');
+      await expectCreatedReferralFlag(dto, false);
+    });
 
-      expect(mockPrismaService.referral.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ flag: false }),
-        }),
-      );
+    it('should flag as urgent when releaseDate is today and pendingRelease is not NO', async () => {
+      const dto = createReferralDto({
+        pendingRelease: ReleaseFromType.CORRECTIONS,
+        releaseDate: getReleaseDateFromFixedNow(0),
+      });
+
+      await expectCreatedReferralFlag(dto, true);
+    });
+
+    it('should not flag as urgent when pendingRelease is not NO but releaseDate is yesterday', async () => {
+      const dto = createReferralDto({
+        pendingRelease: ReleaseFromType.CORRECTIONS,
+        releaseDate: getReleaseDateFromFixedNow(-1),
+      });
+
+      await expectCreatedReferralFlag(dto, false);
+    });
+
+    it('should not flag as urgent when releaseDate is invalid', async () => {
+      const dto = createReferralDto({
+        pendingRelease: ReleaseFromType.CORRECTIONS,
+        releaseDate: 'not-a-date',
+      });
+
+      await expectCreatedReferralFlag(dto, false);
     });
   });
 
