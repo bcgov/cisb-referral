@@ -41,19 +41,26 @@ export class ReferralsService {
       return false;
     }
 
-    const parts = releaseDate.split('-').map(Number);
-    if (parts.length < 3 || parts.some(Number.isNaN)) {
+    const parsed = new Date(releaseDate);
+    if (Number.isNaN(parsed.getTime())) {
       return false;
     }
 
-    const [year, month, day] = parts;
-    const normalizedReleaseDate = new Date(year, month - 1, day);
+    const releaseDateUtcMs = Date.UTC(
+      parsed.getUTCFullYear(),
+      parsed.getUTCMonth(),
+      parsed.getUTCDate(),
+    );
 
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const currentDateUtcMs = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    );
 
     const diffDays = Math.round(
-      (normalizedReleaseDate.getTime() - currentDate.getTime()) /
+      (releaseDateUtcMs - currentDateUtcMs) /
         ReferralsService.MILLISECONDS_PER_DAY,
     );
 

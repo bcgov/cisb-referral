@@ -12,7 +12,7 @@ import { ReferralStatus, UpdateReferralDto } from './dto/update-referral.dto';
 
 describe('ReferralsService', () => {
   let service: ReferralsService;
-  const fixedNow = new Date(2026, 2, 19, 9, 0, 0, 0);
+  const fixedNow = new Date(Date.UTC(2026, 2, 19, 9, 0, 0, 0));
 
   const createReferralDto = (
     overrides: Partial<CreateReferralDto> = {},
@@ -50,17 +50,16 @@ describe('ReferralsService', () => {
     ...overrides,
   });
 
-  const toLocalDateString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+  const toUtcDateString = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
 
   const getReleaseDateFromFixedNow = (daysFromNow: number): string => {
-    const date = new Date(fixedNow);
-    date.setDate(date.getDate() + daysFromNow);
-    return toLocalDateString(date);
+    const ms = fixedNow.getTime() + daysFromNow * 86400000;
+    return toUtcDateString(new Date(ms));
   };
 
   const expectCreatedReferralFlag = async (
@@ -290,6 +289,26 @@ describe('ReferralsService', () => {
       const dto = createReferralDto({
         pendingRelease: ReleaseFromType.CORRECTIONS,
         releaseDate: 'not-a-date',
+      });
+
+      await expectCreatedReferralFlag(dto, false);
+    });
+
+    it('should flag as urgent when releaseDate is a full ISO date-time string within 4 days', async () => {
+      const isoDate = getReleaseDateFromFixedNow(2) + 'T00:00:00Z';
+      const dto = createReferralDto({
+        pendingRelease: ReleaseFromType.CORRECTIONS,
+        releaseDate: isoDate,
+      });
+
+      await expectCreatedReferralFlag(dto, true);
+    });
+
+    it('should not flag as urgent when releaseDate is a full ISO date-time string more than 4 days away', async () => {
+      const isoDate = getReleaseDateFromFixedNow(10) + 'T12:30:00.000Z';
+      const dto = createReferralDto({
+        pendingRelease: ReleaseFromType.CORRECTIONS,
+        releaseDate: isoDate,
       });
 
       await expectCreatedReferralFlag(dto, false);
