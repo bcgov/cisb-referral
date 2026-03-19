@@ -124,9 +124,9 @@ describe('ContactsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should return isProfileComplete false when phone set to null', async () => {
+    it('should return isProfileComplete false when contact has no phone', async () => {
       const contactNoPhone = { ...mockContact, phone: null };
-      mockPrismaService.contact.findUnique.mockResolvedValue(mockContact);
+      mockPrismaService.contact.findUnique.mockResolvedValue(contactNoPhone);
       mockPrismaService.contact.update.mockResolvedValue(contactNoPhone);
 
       const result = await service.updateProfile('contact-1', {});
