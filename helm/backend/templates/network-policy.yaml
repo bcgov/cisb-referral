@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cisb-referral-backend-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cisb-referral-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow health probes from kubelet (host network)
+    - ports:
+        - protocol: TCP
+          port: 3000
+    # Allow traffic from referral-app pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cisb-referral-referral-app
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow traffic from admin-app pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cisb-referral-admin-app
+      ports:
+        - protocol: TCP
+          port: 3000

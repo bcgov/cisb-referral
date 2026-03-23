@@ -1,0 +1,2 @@
+# Helm templates contain Go-template delimiters that Prettier rewrites incorrectly.
+helm/**/templates/*.yaml

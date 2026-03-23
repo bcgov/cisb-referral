@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cisb-referral-backend
+  labels:
+    app.kubernetes.io/name: cisb-referral-backend
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cisb-referral-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cisb-referral-backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: github-docker-registry
+      containers:
+        - name: cisb-referral-backend
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_PORT
+                  optional: true
+            - name: POSTGRES_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_DATABASE
+                  optional: true
+            - name: POSTGRES_SCHEMA
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: POSTGRES_SCHEMA
+                  optional: true
+            - name: ADMIN_KC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: ADMIN_KC_ISSUER_URL
+            - name: ADMIN_KC_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: ADMIN_KC_AUDIENCE
+            - name: REFERRAL_KC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: REFERRAL_KC_ISSUER_URL
+            - name: REFERRAL_KC_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: REFERRAL_KC_AUDIENCE
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+      restartPolicy: Always

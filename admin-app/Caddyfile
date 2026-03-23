@@ -1,0 +1,43 @@
+{
+	auto_https off
+	admin off
+}
+:3000 {
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+	root * /srv
+	encode zstd gzip
+	file_server
+	@spa_router {
+		not path /api*
+		file {
+			try_files {path} /index.html
+		}
+	}
+	rewrite @spa_router {http.matchers.file.relative}
+	reverse_proxy /api* {$BACKEND_URL} {
+		header_up Host {http.reverse_proxy.upstream.hostport}
+		header_up X-Real-IP {remote_host}
+	}
+	header {
+		-Server
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1;mode=block"
+		Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
+		X-Content-Type-Options "nosniff"
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-ancestors 'none'; form-action 'self'; connect-src 'self' {$KC_URL};"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "fullscreen=(self), camera=(), microphone=()"
+		Cross-Origin-Resource-Policy "cross-origin"
+		Cross-Origin-Opener-Policy "same-origin"
+	}
+}
+:3001 {
+	handle /health {
+		respond "OK"
+	}
+}
