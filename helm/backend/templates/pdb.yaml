@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cisb-referral-backend
+  labels:
+    app.kubernetes.io/name: cisb-referral-backend
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cisb-referral-backend
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}

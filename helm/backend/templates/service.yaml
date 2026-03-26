@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cisb-referral-backend
+  labels:
+    app.kubernetes.io/name: cisb-referral-backend
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: cisb-referral-backend
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}

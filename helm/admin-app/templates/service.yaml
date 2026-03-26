@@ -1,0 +1,19 @@
+{{- if .Values.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: cisb-referral-admin-app
+  labels:
+    app.kubernetes.io/name: cisb-referral-admin-app
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: cisb-referral-admin-app
+  ports:
+    {{- range .Values.service.ports }}
+    - name: {{ .name }}
+      protocol: {{ .protocol }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+    {{- end }}
+{{- end }}

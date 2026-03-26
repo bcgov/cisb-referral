@@ -1,0 +1,32 @@
+{{- if .Values.route.host }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: cisb-referral-referral-app
+  labels:
+    app.kubernetes.io/name: cisb-referral-referral-app
+spec:
+  host: {{ .Values.route.host }}
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    {{- if .Values.route.tls.certificate }}
+    certificate: |
+      {{ .Values.route.tls.certificate | nindent 6 }}
+    {{- end }}
+    {{- if .Values.route.tls.key }}
+    key: |
+      {{ .Values.route.tls.key | nindent 6 }}
+    {{- end }}
+    {{- if .Values.route.tls.caCertificate }}
+    caCertificate: |
+      {{ .Values.route.tls.caCertificate | nindent 6 }}
+    {{- end }}
+  to:
+    kind: Service
+    name: cisb-referral-referral-app
+    weight: 100
+  wildcardPolicy: None
+{{- end }}
