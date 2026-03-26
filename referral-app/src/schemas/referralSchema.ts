@@ -16,7 +16,7 @@ export const ReferredByTypeLabels: Record<string, string> = {
 };
 
 export const ReferredByTypeOptions = Object.entries(ReferredByTypeLabels).map(
-  ([id, name]) => ({ id, name })
+  ([id, name]) => ({ id, name }),
 );
 
 export const YesNoUnknown = {
@@ -32,7 +32,7 @@ export const YesNoUnknownLabels: Record<string, string> = {
 };
 
 export const YesNoUnknownOptions = Object.entries(YesNoUnknownLabels).map(
-  ([id, name]) => ({ id, name })
+  ([id, name]) => ({ id, name }),
 );
 
 export const ReleaseFromType = {
@@ -54,7 +54,7 @@ export const ReleaseFromTypeLabels: Record<string, string> = {
 };
 
 export const ReleaseFromTypeOptions = Object.entries(ReleaseFromTypeLabels).map(
-  ([id, name]) => ({ id, name })
+  ([id, name]) => ({ id, name }),
 );
 
 export const SupportType = {
@@ -90,7 +90,7 @@ export const SupportTypeLabels: Record<string, string> = {
 };
 
 export const SupportTypeOptions = Object.entries(SupportTypeLabels).map(
-  ([id, name]) => ({ id, name })
+  ([id, name]) => ({ id, name }),
 );
 
 // Zod enums using backend values
@@ -136,13 +136,13 @@ const baseSchema = z.object({
   referredBy: ReferredByEnum,
 
   // Conditional fields for Partner Ministry (now using ID reference)
-  ministryId: z.string().uuid().optional(),
+  ministryId: z.uuid().optional(),
   ministryNameOther: z.string().optional(),
   programArea: z.string().optional(),
 
   // Conditional fields for Partner Agency
   partnerAgencyName: z.string().optional(),
-  agencyTypeId: z.string().uuid().optional(),
+  agencyTypeId: z.uuid().optional(),
   agencyTypeOther: z.string().optional(),
 
   // SDPR Internal
@@ -161,7 +161,7 @@ const baseSchema = z.object({
   gainFile: z.string().optional(),
   individualPhone: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
-  regionId: z.string().uuid("Please select a region"),
+  regionId: z.uuid({ message: "Please select a region" }),
   specificCityTown: z.string().min(1, "Current city is required"),
   secondaryContact: z.string().max(100).optional(),
   bestWayToReach: z.string().max(500).optional(),
@@ -173,9 +173,9 @@ const baseSchema = z.object({
   releaseDate: z.string().optional(),
 
   // Section 4: Support Services
-  currentlyConnectedSupports: z.array(SupportTypeEnum).default([]),
+  currentlyConnectedSupports: z.array(SupportTypeEnum),
   currentlyConnectedSupportsOther: z.string().optional(),
-  neededSupports: z.array(SupportTypeEnum).default([]),
+  neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
   referralSummary: z.string().max(5000).optional(),
 });
@@ -186,7 +186,7 @@ type BaseSchemaData = z.infer<typeof baseSchema>;
 // Validation helper functions to reduce cognitive complexity
 function validatePartnerMinistry(
   data: BaseSchemaData,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
 ): void {
   if (data.referredBy !== ReferredByType.PARTNER_MINISTRY) {
     return;
@@ -203,7 +203,7 @@ function validatePartnerMinistry(
 
 function validatePartnerAgency(
   data: BaseSchemaData,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
 ): void {
   if (data.referredBy !== ReferredByType.PARTNER_AGENCY) {
     return;
@@ -221,7 +221,7 @@ function validatePartnerAgency(
 
 function validateHousingStatus(
   data: BaseSchemaData,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
 ): void {
   const requiresLosingHousingField =
     data.currentlyHomeless === YesNoUnknown.NO ||
@@ -238,7 +238,7 @@ function validateHousingStatus(
 
 function validateSupportServices(
   data: BaseSchemaData,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
 ): void {
   if (
     data.currentlyConnectedSupports.includes(SupportType.OTHERS) &&

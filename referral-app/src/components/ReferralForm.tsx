@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { z } from "zod";
 import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
@@ -17,11 +16,6 @@ import {
 import { useLookupData } from "../hooks";
 import { apiService } from "../services";
 
-const defaultValues: Partial<z.infer<typeof referralSchema>> = {
-  currentlyConnectedSupports: [],
-  neededSupports: [],
-};
-
 export function ReferralForm() {
   const navigate = useNavigate();
   const { regions, ministries, agencyTypes, isLoading, error } =
@@ -34,7 +28,10 @@ export function ReferralForm() {
 
   const form = useForm<ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
-    defaultValues,
+    defaultValues: {
+      currentlyConnectedSupports: [],
+      neededSupports: [],
+    },
   });
 
   const onSubmit = async (data: ReferralFormData) => {
