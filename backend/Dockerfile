@@ -2,10 +2,9 @@ FROM node:24-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --prefer-offline --no-audit
-
 COPY prisma ./prisma/
-RUN npx prisma generate
+COPY prisma.config.ts ./
+RUN npm ci --prefer-offline --no-audit
 
 COPY . .
 RUN npm run build
