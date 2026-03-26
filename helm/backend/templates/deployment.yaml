@@ -39,35 +39,33 @@ spec:
             - name: POSTGRES_HOST
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_HOST
+                  name: {{ .Values.crunchySecret }}
+                  key: pgbouncer-host
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_USER
+                  name: {{ .Values.crunchySecret }}
+                  key: user
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_PASSWORD
+                  name: {{ .Values.crunchySecret }}
+                  key: password
             - name: POSTGRES_PORT
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_PORT
-                  optional: true
+                  name: {{ .Values.crunchySecret }}
+                  key: pgbouncer-port
             - name: POSTGRES_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_DATABASE
-                  optional: true
-            - name: POSTGRES_SCHEMA
+                  name: {{ .Values.crunchySecret }}
+                  key: dbname
+            - name: PGBOUNCER_URL
               valueFrom:
                 secretKeyRef:
-                  name: cisb-referral-backend-secrets
-                  key: POSTGRES_SCHEMA
+                  name: {{ .Values.crunchySecret }}
+                  key: pgbouncer-uri
                   optional: true
             - name: ADMIN_KC_ISSUER_URL
               valueFrom:
