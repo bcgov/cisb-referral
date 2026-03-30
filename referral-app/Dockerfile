@@ -1,6 +1,10 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 
+ARG VITE_KC_URL
+ARG VITE_KC_REALM
+ARG VITE_KC_CLIENT_ID
+
 COPY package*.json ./
 RUN npm ci --prefer-offline --no-audit
 
