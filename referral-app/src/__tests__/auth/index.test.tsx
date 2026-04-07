@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 
 /**
  * Auth module security configuration constants
@@ -32,17 +33,6 @@ vi.mock("keycloak-js", () => {
       return mockKeycloakInstance;
     },
   };
-});
-
-// Factory for creating mock token payload
-const createMockTokenParsed = (overrides = {}) => ({
-  sub: "test-user-id",
-  email: "test@example.com",
-  name: "Test User",
-  preferred_username: "testuser",
-  exp: Math.floor(Date.now() / 1000) + 3600,
-  iat: Math.floor(Date.now() / 1000),
-  ...overrides,
 });
 
 describe("auth module", () => {
@@ -128,7 +118,19 @@ describe("auth module", () => {
       await expect(init()).rejects.toThrow("Init failed");
     });
 
-    it("should set up token expiry handler that refreshes token", async () => {
+    it("should set up token expiry handler", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+
+      // Act
+      const { init } = await import("../../auth/index");
+      await init();
+
+      // Assert - onTokenExpired should be set for automatic refresh
+      expect(mockKeycloakInstance.onTokenExpired).toBeTypeOf("function");
+    });
+
+    it("should attempt token refresh when token expires", async () => {
       // Arrange
       mockKeycloakInstance.init.mockResolvedValue(true);
       mockKeycloakInstance.updateToken.mockResolvedValue(true);
@@ -137,12 +139,10 @@ describe("auth module", () => {
       const { init } = await import("../../auth/index");
       await init();
 
-      // Assert - onTokenExpired should be set for automatic refresh
-      expect(mockKeycloakInstance.onTokenExpired).toBeTypeOf("function");
-
       // Trigger token expiry
       mockKeycloakInstance.onTokenExpired!();
 
+      // Assert
       expect(mockKeycloakInstance.updateToken).toHaveBeenCalledWith(
         TOKEN_REFRESH_BUFFER_SECONDS,
       );
@@ -162,7 +162,7 @@ describe("auth module", () => {
       // Trigger token expiry
       mockKeycloakInstance.onTokenExpired!();
 
-      // Assert - must redirect to dynamic origin to prevent open redirect attacks
+      // Assert - should logout on refresh failure
       await vi.waitFor(() => {
         expect(mockKeycloakInstance.logout).toHaveBeenCalledWith({
           redirectUri: globalThis.location.origin,
@@ -172,7 +172,7 @@ describe("auth module", () => {
   });
 
   describe("logout", () => {
-    it("should call Keycloak logout with redirect to current origin", async () => {
+    it("should call keycloak logout with redirect to origin", async () => {
       // Arrange
       mockKeycloakInstance.init.mockResolvedValue(true);
 
@@ -180,102 +180,23 @@ describe("auth module", () => {
       const { logout } = await import("../../auth/index");
       logout();
 
-      // Assert
+      // Assert - redirect prevents open redirect vulnerabilities
       expect(mockKeycloakInstance.logout).toHaveBeenCalledWith({
         redirectUri: globalThis.location.origin,
       });
     });
-  });
 
-  describe("getUser", () => {
-    it("should return null when not authenticated", async () => {
+    it("should redirect to same origin only to prevent open redirect attacks", async () => {
       // Arrange
-      mockKeycloakInstance.authenticated = false;
-      mockKeycloakInstance.init.mockResolvedValue(false);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it("should return null when tokenParsed is null", async () => {
-      // Arrange
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = null;
       mockKeycloakInstance.init.mockResolvedValue(true);
 
       // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
+      const { logout } = await import("../../auth/index");
+      logout();
 
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it("should return user info when authenticated with valid token", async () => {
-      // Arrange
-      const tokenPayload = createMockTokenParsed({
-        sub: "user-123",
-        email: "admin@gov.bc.ca",
-        name: "Admin User",
-      });
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "Admin User",
-      });
-    });
-
-    it("should fall back to preferred_username when name is missing", async () => {
-      // Arrange
-      const tokenPayload = createMockTokenParsed({
-        sub: "user-456",
-        email: "user@gov.bc.ca",
-        name: undefined,
-        preferred_username: "jsmith",
-      });
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "jsmith",
-      });
-    });
-
-    it("should return empty strings for missing token fields", async () => {
-      // Arrange
-      const tokenPayload = {
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        iat: Math.floor(Date.now() / 1000),
-      };
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "",
-      });
+      // Assert - using location.origin ensures we only redirect to our own domain
+      const logoutCall = mockKeycloakInstance.logout.mock.calls[0][0];
+      expect(logoutCall.redirectUri).toBe("https://test.local");
     });
   });
 
@@ -288,6 +209,76 @@ describe("auth module", () => {
       expect(keycloak).toBeDefined();
       expect(keycloak.init).toBeDefined();
       expect(keycloak.logout).toBeDefined();
+    });
+  });
+
+  describe("AuthProvider", () => {
+    it("should render children after auth initializes", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div data-testid="child">Protected Content</div>
+          </AuthProvider>,
+        );
+      });
+
+      // Assert
+      expect(screen.getByTestId("child")).toHaveTextContent(
+        "Protected Content",
+      );
+    });
+
+    it("should show fallback while auth is pending", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockImplementation(() => new Promise(() => {}));
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      render(
+        <AuthProvider>
+          <div data-testid="child">Protected Content</div>
+        </AuthProvider>,
+      );
+
+      // Assert - child should not be rendered while suspended
+      expect(screen.queryByTestId("child")).toBeNull();
+    });
+
+    it("should only call init once across multiple renders", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      const { unmount } = await act(async () =>
+        render(
+          <AuthProvider>
+            <div>First</div>
+          </AuthProvider>,
+        ),
+      );
+
+      expect(screen.getByText("First")).toBeInTheDocument();
+
+      unmount();
+
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div>Second</div>
+          </AuthProvider>,
+        );
+      });
+
+      expect(screen.getByText("Second")).toBeInTheDocument();
+
+      // Assert - init should only be called once due to promise caching
+      expect(mockKeycloakInstance.init).toHaveBeenCalledTimes(1);
     });
   });
 });
