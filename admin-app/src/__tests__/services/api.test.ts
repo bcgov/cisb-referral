@@ -233,7 +233,7 @@ describe("APIService", () => {
       const mockError = new Error("Network Error");
 
       // Act & Assert
-      expect(() => responseErrorFn(mockError)).toThrow("Network Error");
+      await expect(responseErrorFn(mockError)).rejects.toThrow("Network Error");
     });
   });
 });
