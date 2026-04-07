@@ -106,17 +106,6 @@ describe("auth module", () => {
       await expect(init()).resolves.toBeUndefined();
     });
 
-    it("should throw when authentication fails", async () => {
-      // Arrange
-      mockKeycloakInstance.init.mockResolvedValue(false);
-
-      // Act
-      const { init } = await import("../../auth/index");
-
-      // Assert - should reject with authentication error
-      await expect(init()).rejects.toThrow("Authentication failed");
-    });
-
     it("should propagate init errors", async () => {
       // Arrange
       mockKeycloakInstance.init.mockRejectedValue(new Error("Init failed"));

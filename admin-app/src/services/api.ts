@@ -57,9 +57,7 @@ class APIService {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error) => {
-        throw error;
-      },
+      (error) => Promise.reject(error),
     );
   }
 

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@bcgov/bc-sans/css/BC_Sans.css";
 import "./index.css";
 import App from "./App.tsx";
-import { init } from "./auth";
+import AuthProvider from "./auth";
 
 /** Cache time for React Query in milliseconds (5 minutes) */
 const QUERY_STALE_TIME_MS = 1000 * 60 * 5;
@@ -18,18 +18,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
-}
-
-// Initialize Keycloak before rendering - ensures auth is ready
-init(() => {
-  createRoot(rootElement).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <App />
-      </QueryClientProvider>
-    </StrictMode>,
-  );
-});
+      </AuthProvider>
+    </QueryClientProvider>
+  </StrictMode>,
+);
