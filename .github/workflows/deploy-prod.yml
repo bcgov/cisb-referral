@@ -51,6 +51,10 @@ jobs:
           push: true
           tags: ${{ steps.meta-admin-app.outputs.tags }}
           labels: ${{ steps.meta-admin-app.outputs.labels }}
+          build-args: |
+            VITE_KC_URL=${{ secrets.KC_URL }}
+            VITE_KC_REALM=${{ secrets.ADMIN_KC_REALM }}
+            VITE_KC_CLIENT_ID=${{ secrets.ADMIN_KC_CLIENT_ID }}
 
       # Build referral-app image
       - name: Extract metadata for referral-app
@@ -71,6 +75,10 @@ jobs:
           push: true
           tags: ${{ steps.meta-referral-app.outputs.tags }}
           labels: ${{ steps.meta-referral-app.outputs.labels }}
+          build-args: |
+            VITE_KC_URL=${{ secrets.KC_URL }}
+            VITE_KC_REALM=${{ secrets.REFERRAL_KC_REALM }}
+            VITE_KC_CLIENT_ID=${{ secrets.REFERRAL_KC_CLIENT_ID }}
 
       # Build backend image
       - name: Extract metadata for backend

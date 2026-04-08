@@ -31,6 +31,13 @@ const mockAxiosCreate = vi.fn();
 const mockRequestInterceptor = vi.fn();
 const mockResponseInterceptor = vi.fn();
 
+// Hoisted mock client methods so tests can set return values
+const mockGet = vi.fn();
+const mockPost = vi.fn();
+const mockPut = vi.fn();
+const mockPatch = vi.fn();
+const mockDelete = vi.fn();
+
 vi.mock("axios", () => ({
   default: {
     create: (config: unknown) => {
@@ -40,11 +47,11 @@ vi.mock("axios", () => ({
           request: { use: mockRequestInterceptor },
           response: { use: mockResponseInterceptor },
         },
-        get: vi.fn(),
-        post: vi.fn(),
-        put: vi.fn(),
-        patch: vi.fn(),
-        delete: vi.fn(),
+        get: mockGet,
+        post: mockPost,
+        put: mockPut,
+        patch: mockPatch,
+        delete: mockDelete,
       };
     },
   },
@@ -233,7 +240,7 @@ describe("APIService", () => {
       const mockError = new Error("Network Error");
 
       // Act & Assert
-      expect(() => responseErrorFn(mockError)).toThrow("Network Error");
+      await expect(responseErrorFn(mockError)).rejects.toThrow("Network Error");
     });
   });
 });

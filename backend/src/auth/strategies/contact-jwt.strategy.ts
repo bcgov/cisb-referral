@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
@@ -50,22 +50,19 @@ export class ContactJwtStrategy extends PassportStrategy(
       where: { keycloakId },
     });
 
-    if (!contact) {
-      // Auto-create contact on first login with data from token
-      contact = await this.prisma.contact.create({
-        data: {
-          keycloakId,
-          email: payload.email || '',
-          fullName: payload.name || payload.preferred_username || '',
-          userName: payload.preferred_username || payload.email || keycloakId,
-          isActive: true,
-        },
-      });
-    }
+    contact ??= await this.prisma.contact.create({
+      data: {
+        keycloakId,
+        email: payload.email ?? '',
+        fullName: payload.name ?? payload.preferred_username ?? '',
+        userName: payload.preferred_username ?? payload.email ?? keycloakId,
+        isActive: true,
+      },
+    });
 
     if (!contact.isActive) {
       // Contact exists but is deactivated
-      throw new Error('Contact account is deactivated.');
+      throw new UnauthorizedException('Contact account is deactivated.');
     }
 
     // Determine if profile is complete (has required fields filled)

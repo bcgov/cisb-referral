@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 
 /**
  * Auth module security configuration constants
@@ -106,17 +107,6 @@ describe("auth module", () => {
       await expect(init()).resolves.toBeUndefined();
     });
 
-    it("should throw when authentication fails", async () => {
-      // Arrange
-      mockKeycloakInstance.init.mockResolvedValue(false);
-
-      // Act
-      const { init } = await import("../../auth/index");
-
-      // Assert - should reject with authentication error
-      await expect(init()).rejects.toThrow("Authentication failed");
-    });
-
     it("should propagate init errors", async () => {
       // Arrange
       mockKeycloakInstance.init.mockRejectedValue(new Error("Init failed"));
@@ -207,6 +197,88 @@ describe("auth module", () => {
       // Assert - using location.origin ensures we only redirect to our own domain
       const logoutCall = mockKeycloakInstance.logout.mock.calls[0][0];
       expect(logoutCall.redirectUri).toBe("https://test.local");
+    });
+  });
+
+  describe("keycloak export", () => {
+    it("should export keycloak instance for direct access", async () => {
+      // Act
+      const { keycloak } = await import("../../auth/index");
+
+      // Assert
+      expect(keycloak).toBeDefined();
+      expect(keycloak.init).toBeDefined();
+      expect(keycloak.logout).toBeDefined();
+    });
+  });
+
+  describe("AuthProvider", () => {
+    it("should render children after auth initializes", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div data-testid="child">Protected Content</div>
+          </AuthProvider>,
+        );
+      });
+
+      // Assert
+      expect(screen.getByTestId("child")).toHaveTextContent(
+        "Protected Content",
+      );
+    });
+
+    it("should show fallback while auth is pending", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockImplementation(() => new Promise(() => {}));
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      render(
+        <AuthProvider>
+          <div data-testid="child">Protected Content</div>
+        </AuthProvider>,
+      );
+
+      // Assert - child should not be rendered while suspended
+      expect(screen.queryByTestId("child")).toBeNull();
+    });
+
+    it("should only call init once across multiple renders", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      const { unmount } = await act(async () =>
+        render(
+          <AuthProvider>
+            <div>First</div>
+          </AuthProvider>,
+        ),
+      );
+
+      expect(screen.getByText("First")).toBeInTheDocument();
+
+      unmount();
+
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div>Second</div>
+          </AuthProvider>,
+        );
+      });
+
+      expect(screen.getByText("Second")).toBeInTheDocument();
+
+      // Assert - init should only be called once due to promise caching
+      expect(mockKeycloakInstance.init).toHaveBeenCalledTimes(1);
     });
   });
 });

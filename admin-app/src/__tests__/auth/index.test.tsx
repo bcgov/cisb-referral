@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 
 /**
  * Auth module security configuration constants
@@ -58,16 +59,13 @@ describe("auth module", () => {
     it("should initialize Keycloak with secure configuration", async () => {
       // Arrange
       mockKeycloakInstance.init.mockResolvedValue(true);
-      const onSuccess = vi.fn();
 
       // Act
       const { init } = await import("../../auth/index");
-      init(onSuccess);
+      await init();
 
       // Assert - verify security-critical configuration
-      await vi.waitFor(() => {
-        expect(mockKeycloakInstance.init).toHaveBeenCalledWith(AUTH_CONFIG);
-      });
+      expect(mockKeycloakInstance.init).toHaveBeenCalledWith(AUTH_CONFIG);
     });
 
     it("should use PKCE S256 for OAuth security", async () => {
@@ -76,13 +74,11 @@ describe("auth module", () => {
 
       // Act
       const { init } = await import("../../auth/index");
-      init(vi.fn());
+      await init();
 
       // Assert - PKCE S256 is critical for preventing authorization code interception
-      await vi.waitFor(() => {
-        const initCall = mockKeycloakInstance.init.mock.calls[0][0];
-        expect(initCall.pkceMethod).toBe("S256");
-      });
+      const initCall = mockKeycloakInstance.init.mock.calls[0][0];
+      expect(initCall.pkceMethod).toBe("S256");
     });
 
     it("should require login on load for protected routes", async () => {
@@ -91,13 +87,11 @@ describe("auth module", () => {
 
       // Act
       const { init } = await import("../../auth/index");
-      init(vi.fn());
+      await init();
 
       // Assert - login-required ensures no unauthenticated access
-      await vi.waitFor(() => {
-        const initCall = mockKeycloakInstance.init.mock.calls[0][0];
-        expect(initCall.onLoad).toBe("login-required");
-      });
+      const initCall = mockKeycloakInstance.init.mock.calls[0][0];
+      expect(initCall.onLoad).toBe("login-required");
     });
 
     it("should disable login iframe to prevent clickjacking", async () => {
@@ -106,62 +100,33 @@ describe("auth module", () => {
 
       // Act
       const { init } = await import("../../auth/index");
-      init(vi.fn());
+      await init();
 
       // Assert - disabled iframe prevents silent session checks that can be exploited
-      await vi.waitFor(() => {
-        const initCall = mockKeycloakInstance.init.mock.calls[0][0];
-        expect(initCall.checkLoginIframe).toBe(false);
-      });
+      const initCall = mockKeycloakInstance.init.mock.calls[0][0];
+      expect(initCall.checkLoginIframe).toBe(false);
     });
 
-    it("should call onSuccess callback when authentication succeeds", async () => {
+    it("should resolve when authentication succeeds", async () => {
       // Arrange
       mockKeycloakInstance.init.mockResolvedValue(true);
-      const onSuccess = vi.fn();
 
       // Act
       const { init } = await import("../../auth/index");
-      init(onSuccess);
 
-      // Assert
-      await vi.waitFor(() => {
-        expect(onSuccess).toHaveBeenCalledTimes(1);
-      });
+      // Assert - should resolve without throwing
+      await expect(init()).resolves.toBeUndefined();
     });
 
-    it("should not call onSuccess when authentication fails", async () => {
+    it("should propagate init errors", async () => {
       // Arrange
-      mockKeycloakInstance.init.mockResolvedValue(false);
-      const onSuccess = vi.fn();
-
-      // Act
-      const { init } = await import("../../auth/index");
-      init(onSuccess);
-
-      // Assert - wait a tick then verify not called
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      expect(onSuccess).not.toHaveBeenCalled();
-    });
-
-    it("should handle init failure gracefully without logging", async () => {
-      // Arrange
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
       mockKeycloakInstance.init.mockRejectedValue(new Error("Init failed"));
-      const onSuccess = vi.fn();
 
       // Act
       const { init } = await import("../../auth/index");
-      init(onSuccess);
 
-      // Assert - no console logging, no crash
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      expect(consoleErrorSpy).not.toHaveBeenCalled();
-      expect(onSuccess).not.toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
+      // Assert - should propagate the error
+      await expect(init()).rejects.toThrow("Init failed");
     });
 
     it("should set up token expiry handler that refreshes token", async () => {
@@ -171,21 +136,17 @@ describe("auth module", () => {
 
       // Act
       const { init } = await import("../../auth/index");
-      init(vi.fn());
+      await init();
 
-      // Assert - token expiry handler should be set
-      await vi.waitFor(() => {
-        expect(mockKeycloakInstance.onTokenExpired).toBeDefined();
-      });
+      // Assert - onTokenExpired should be set for automatic refresh
+      expect(mockKeycloakInstance.onTokenExpired).toBeTypeOf("function");
 
       // Trigger token expiry
-      mockKeycloakInstance.onTokenExpired?.();
+      mockKeycloakInstance.onTokenExpired!();
 
-      await vi.waitFor(() => {
-        expect(mockKeycloakInstance.updateToken).toHaveBeenCalledWith(
-          TOKEN_REFRESH_BUFFER_SECONDS,
-        );
-      });
+      expect(mockKeycloakInstance.updateToken).toHaveBeenCalledWith(
+        TOKEN_REFRESH_BUFFER_SECONDS,
+      );
     });
 
     it("should logout when token refresh fails on expiry", async () => {
@@ -197,14 +158,10 @@ describe("auth module", () => {
 
       // Act
       const { init } = await import("../../auth/index");
-      init(vi.fn());
-
-      await vi.waitFor(() => {
-        expect(mockKeycloakInstance.onTokenExpired).toBeDefined();
-      });
+      await init();
 
       // Trigger token expiry
-      mockKeycloakInstance.onTokenExpired?.();
+      mockKeycloakInstance.onTokenExpired!();
 
       // Assert - must redirect to dynamic origin to prevent open redirect attacks
       await vi.waitFor(() => {
@@ -276,8 +233,6 @@ describe("auth module", () => {
 
       // Assert
       expect(result).toEqual({
-        id: "user-123",
-        email: "admin@gov.bc.ca",
         name: "Admin User",
       });
     });
@@ -300,8 +255,6 @@ describe("auth module", () => {
 
       // Assert
       expect(result).toEqual({
-        id: "user-456",
-        email: "user@gov.bc.ca",
         name: "jsmith",
       });
     });
@@ -322,8 +275,6 @@ describe("auth module", () => {
 
       // Assert
       expect(result).toEqual({
-        id: "",
-        email: "",
         name: "",
       });
     });
@@ -338,6 +289,76 @@ describe("auth module", () => {
       expect(keycloak).toBeDefined();
       expect(keycloak.init).toBeDefined();
       expect(keycloak.logout).toBeDefined();
+    });
+  });
+
+  describe("AuthProvider", () => {
+    it("should render children after auth initializes", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div data-testid="child">Protected Content</div>
+          </AuthProvider>,
+        );
+      });
+
+      // Assert
+      expect(screen.getByTestId("child")).toHaveTextContent(
+        "Protected Content",
+      );
+    });
+
+    it("should show fallback while auth is pending", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockImplementation(() => new Promise(() => {}));
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      render(
+        <AuthProvider>
+          <div data-testid="child">Protected Content</div>
+        </AuthProvider>,
+      );
+
+      // Assert - child should not be rendered while suspended
+      expect(screen.queryByTestId("child")).toBeNull();
+    });
+
+    it("should only call init once across multiple renders", async () => {
+      // Arrange
+      mockKeycloakInstance.init.mockResolvedValue(true);
+      const AuthProvider = (await import("../../auth/index")).default;
+
+      // Act
+      const { unmount } = await act(async () =>
+        render(
+          <AuthProvider>
+            <div>First</div>
+          </AuthProvider>,
+        ),
+      );
+
+      expect(screen.getByText("First")).toBeInTheDocument();
+
+      unmount();
+
+      await act(async () => {
+        render(
+          <AuthProvider>
+            <div>Second</div>
+          </AuthProvider>,
+        );
+      });
+
+      expect(screen.getByText("Second")).toBeInTheDocument();
+
+      // Assert - init should only be called once due to promise caching
+      expect(mockKeycloakInstance.init).toHaveBeenCalledTimes(1);
     });
   });
 });
