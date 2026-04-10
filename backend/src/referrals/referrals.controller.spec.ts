@@ -8,7 +8,6 @@ const mockReferralsService = {
   findAll: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
-  addStatusHistory: jest.fn(),
 };
 
 const mockContact = {
@@ -137,36 +136,6 @@ describe('ReferralsController', () => {
 
       expect(result).toEqual(updatedReferral);
       expect(mockReferralsService.update).toHaveBeenCalledWith(
-        'referral-1',
-        dto,
-        'user-1',
-      );
-    });
-  });
-
-  describe('addStatusHistory', () => {
-    const mockStatusEntry = {
-      id: 'history-1',
-      referralId: 'referral-1',
-      fromStatus: ReferralStatus.OPEN,
-      toStatus: ReferralStatus.ASSIGNED,
-    };
-
-    it('should delegate to service with id, dto, and user id', async () => {
-      const dto = {
-        toStatus: ReferralStatus.ASSIGNED,
-        comment: 'Test comment',
-      };
-      mockReferralsService.addStatusHistory.mockResolvedValue(mockStatusEntry);
-
-      const result = await controller.addStatusHistory(
-        'referral-1',
-        dto,
-        mockUser as any,
-      );
-
-      expect(result).toEqual(mockStatusEntry);
-      expect(mockReferralsService.addStatusHistory).toHaveBeenCalledWith(
         'referral-1',
         dto,
         'user-1',

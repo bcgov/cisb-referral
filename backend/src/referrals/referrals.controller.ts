@@ -19,12 +19,7 @@ import {
 import { ReferralsService } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
-import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import type {
-  Referral,
-  ReferralStatusHistory,
-  User,
-} from '../generated/prisma/client';
+import type { Referral, User } from '../generated/prisma/client';
 import {
   AdminAuthGuard,
   ContactAuthGuard,
@@ -130,24 +125,5 @@ export class ReferralsController {
     @CurrentUser() user: User,
   ): Promise<Referral> {
     return this.referralsService.update(id, updateReferralDto, user.id);
-  }
-
-  @Post(':id/status-history')
-  @UseGuards(AdminAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Add status history entry' })
-  @ApiResponse({ status: 201, description: 'Status history entry created' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Referral not found' })
-  async addStatusHistory(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() createStatusHistoryDto: CreateStatusHistoryDto,
-    @CurrentUser() user: User,
-  ): Promise<ReferralStatusHistory> {
-    return this.referralsService.addStatusHistory(
-      id,
-      createStatusHistoryDto,
-      user.id,
-    );
   }
 }

@@ -6,8 +6,7 @@ import {
   ReleaseFromType,
 } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
-import { CreateStatusHistoryDto } from './dto/create-status-history.dto';
-import { Referral, ReferralStatusHistory } from '../generated/prisma/client';
+import { Referral } from '../generated/prisma/client';
 
 @Injectable()
 export class ReferralsService {
@@ -155,11 +154,6 @@ export class ReferralsService {
         ministry: true,
         agencyType: true,
         assignedTo: true,
-        statusHistory: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
       },
     });
 
@@ -175,22 +169,7 @@ export class ReferralsService {
     updateReferralDto: UpdateReferralDto,
     userId?: string,
   ): Promise<Referral> {
-    const existingReferral = await this.findOne(id);
-
-    // Create status history entry if status is changing
-    if (
-      updateReferralDto.referralStatus &&
-      updateReferralDto.referralStatus !== existingReferral.referralStatus
-    ) {
-      await this.prisma.referralStatusHistory.create({
-        data: {
-          referralId: id,
-          fromStatus: existingReferral.referralStatus,
-          toStatus: updateReferralDto.referralStatus,
-          createdBy: userId,
-        },
-      });
-    }
+    await this.findOne(id);
 
     return this.prisma.referral.update({
       where: { id },
@@ -216,24 +195,6 @@ export class ReferralsService {
         ministry: true,
         agencyType: true,
         assignedTo: true,
-      },
-    });
-  }
-
-  async addStatusHistory(
-    id: string,
-    createStatusHistoryDto: CreateStatusHistoryDto,
-    userId?: string,
-  ): Promise<ReferralStatusHistory> {
-    const referral = await this.findOne(id);
-
-    return this.prisma.referralStatusHistory.create({
-      data: {
-        referralId: id,
-        fromStatus: referral.referralStatus,
-        toStatus: createStatusHistoryDto.toStatus as ReferralStatus,
-        comment: createStatusHistoryDto.comment,
-        createdBy: userId,
       },
     });
   }

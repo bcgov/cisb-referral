@@ -87,9 +87,6 @@ describe('ReferralsService', () => {
       update: jest.fn(),
       count: jest.fn(),
     },
-    referralStatusHistory: {
-      create: jest.fn(),
-    },
   };
 
   beforeEach(async () => {
@@ -482,7 +479,7 @@ describe('ReferralsService', () => {
 
   describe('findOne', () => {
     it('should return a referral with related entities', async () => {
-      const expected = createMockReferral({ statusHistory: [] });
+      const expected = createMockReferral();
       mockPrismaService.referral.findUnique.mockResolvedValue(expected);
 
       const result = await service.findOne('referral-uuid-1');
@@ -490,15 +487,12 @@ describe('ReferralsService', () => {
       expect(result).toEqual(expected);
       expect(mockPrismaService.referral.findUnique).toHaveBeenCalledWith({
         where: { id: 'referral-uuid-1' },
-        include: expect.objectContaining({
+        include: {
           region: true,
           ministry: true,
           agencyType: true,
           assignedTo: true,
-          statusHistory: expect.objectContaining({
-            orderBy: { createdAt: 'desc' },
-          }),
-        }),
+        },
       });
     });
 
@@ -559,16 +553,7 @@ describe('ReferralsService', () => {
 
       await service.update('referral-uuid-1', updateDto, 'admin-uuid-1');
 
-      expect(
-        mockPrismaService.referralStatusHistory.create,
-      ).toHaveBeenCalledWith({
-        data: {
-          referralId: 'referral-uuid-1',
-          fromStatus: ReferralStatus.OPEN,
-          toStatus: ReferralStatus.ASSIGNED,
-          createdBy: 'admin-uuid-1',
-        },
-      });
+      expect(mockPrismaService.referral.update).toHaveBeenCalled();
     });
 
     it('should not create status history when status is unchanged', async () => {
@@ -584,9 +569,7 @@ describe('ReferralsService', () => {
 
       await service.update('referral-uuid-1', updateDto);
 
-      expect(
-        mockPrismaService.referralStatusHistory.create,
-      ).not.toHaveBeenCalled();
+      expect(mockPrismaService.referral.update).toHaveBeenCalled();
     });
 
     it('should not create status history when status is not provided', async () => {
@@ -598,9 +581,7 @@ describe('ReferralsService', () => {
 
       await service.update('referral-uuid-1', updateDto);
 
-      expect(
-        mockPrismaService.referralStatusHistory.create,
-      ).not.toHaveBeenCalled();
+      expect(mockPrismaService.referral.update).toHaveBeenCalled();
     });
 
     it('should convert date strings to Date objects on update', async () => {
@@ -632,63 +613,6 @@ describe('ReferralsService', () => {
 
       await expect(
         service.update('nonexistent-id', { assignedToId: 'user-uuid-2' }),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('addStatusHistory', () => {
-    it('should create a status history entry for an existing referral', async () => {
-      const existing = createMockReferral({
-        referralStatus: ReferralStatus.ASSIGNED,
-      });
-      const historyDto = {
-        toStatus: ReferralStatus.CONTACT_MADE,
-        comment: 'Initial contact via phone',
-      };
-      const expectedHistory = {
-        id: 'history-uuid-1',
-        referralId: 'referral-uuid-1',
-        fromStatus: ReferralStatus.ASSIGNED,
-        toStatus: ReferralStatus.CONTACT_MADE,
-        comment: 'Initial contact via phone',
-        createdBy: 'admin-uuid-1',
-        createdAt: new Date(),
-      };
-
-      mockPrismaService.referral.findUnique.mockResolvedValue(existing);
-      mockPrismaService.referralStatusHistory.create.mockResolvedValue(
-        expectedHistory,
-      );
-
-      const result = await service.addStatusHistory(
-        'referral-uuid-1',
-        historyDto,
-        'admin-uuid-1',
-      );
-
-      expect(result).toEqual(expectedHistory);
-      expect(
-        mockPrismaService.referralStatusHistory.create,
-      ).toHaveBeenCalledWith({
-        data: {
-          referralId: 'referral-uuid-1',
-          fromStatus: ReferralStatus.ASSIGNED,
-          toStatus: ReferralStatus.CONTACT_MADE,
-          comment: 'Initial contact via phone',
-          createdBy: 'admin-uuid-1',
-        },
-      });
-    });
-
-    it('should throw NotFoundException when referral does not exist', async () => {
-      mockPrismaService.referral.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.addStatusHistory(
-          'nonexistent-id',
-          { toStatus: ReferralStatus.CLOSED },
-          'admin-uuid-1',
-        ),
       ).rejects.toThrow(NotFoundException);
     });
   });
