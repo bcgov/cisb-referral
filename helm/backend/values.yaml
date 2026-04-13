@@ -11,8 +11,8 @@ service:
   targetPort: 3000
 
 # Crunchy PostgreSQL secret created by PGO operator
-# Format: <fullnameOverride>-pguser-<fullnameOverride>
-crunchySecret: crunchy-postgres-pguser-crunchy-postgres
+# Format: <fullnameOverride>-pguser-<username>
+crunchySecret: crunchy-postgres-pguser-referral-app-user
 
 # Horizontal Pod Autoscaler configuration
 autoscaling:
