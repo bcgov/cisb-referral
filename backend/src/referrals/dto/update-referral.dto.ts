@@ -8,6 +8,11 @@ import {
   IsArray,
 } from 'class-validator';
 import { SupportType } from '../../generated/prisma/client';
+import {
+  ReferredByType,
+  YesNoUnknown,
+  ReleaseFromType,
+} from './create-referral.dto';
 
 export enum ReferralStatus {
   OPEN = 'OPEN',
@@ -83,6 +88,7 @@ export class UpdateReferralDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsArray()
+  @IsEnum(SupportType, { each: true })
   currentlyConnectedSupports?: SupportType[];
 
   @ApiProperty({ required: false })
@@ -103,6 +109,7 @@ export class UpdateReferralDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsArray()
+  @IsEnum(SupportType, { each: true })
   neededSupports?: SupportType[];
 
   @ApiProperty({ required: false })
@@ -116,10 +123,10 @@ export class UpdateReferralDto {
   referralSummary?: string;
 
   // Referred By Info fields
-  @ApiProperty({ required: false })
+  @ApiProperty({ enum: ReferredByType, required: false })
   @IsOptional()
-  @IsString()
-  referredBy?: string;
+  @IsEnum(ReferredByType)
+  referredBy?: ReferredByType;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -213,20 +220,20 @@ export class UpdateReferralDto {
   @IsString()
   bestWayToReach?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ enum: YesNoUnknown, required: false })
   @IsOptional()
-  @IsString()
-  currentlyHomeless?: string;
+  @IsEnum(YesNoUnknown)
+  currentlyHomeless?: YesNoUnknown;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ enum: YesNoUnknown, required: false })
   @IsOptional()
-  @IsString()
-  losingHousing?: string;
+  @IsEnum(YesNoUnknown)
+  losingHousing?: YesNoUnknown;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ enum: ReleaseFromType, required: false })
   @IsOptional()
-  @IsString()
-  pendingRelease?: string;
+  @IsEnum(ReleaseFromType)
+  pendingRelease?: ReleaseFromType;
 
   @ApiProperty({ required: false })
   @IsOptional()

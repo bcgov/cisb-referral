@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { diffObjects } from '../audit/audit.utils';
 import {
   CreateReferralDto,
+  ReferredByType,
   YesNoUnknown,
   ReleaseFromType,
 } from './dto/create-referral.dto';
@@ -58,10 +63,52 @@ export class ReferralsService {
   private static readonly URGENT_RELEASE_WINDOW_DAYS = 4;
   private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
+  private static readonly VALID_STATUS_TRANSITIONS: Record<
+    ReferralStatus,
+    ReferralStatus[]
+  > = {
+    [ReferralStatus.OPEN]: [ReferralStatus.ASSIGNED],
+    [ReferralStatus.ASSIGNED]: [
+      ReferralStatus.CONTACT_MADE,
+      ReferralStatus.OPEN,
+    ],
+    [ReferralStatus.CONTACT_MADE]: [
+      ReferralStatus.CLOSED,
+      ReferralStatus.ASSIGNED,
+    ],
+    [ReferralStatus.CLOSED]: [],
+  };
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
   ) {}
+
+  private validateStatusTransition(
+    currentStatus: ReferralStatus,
+    newStatus: ReferralStatus,
+    dto: UpdateReferralDto,
+  ): void {
+    const allowed =
+      ReferralsService.VALID_STATUS_TRANSITIONS[currentStatus] ?? [];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Cannot transition from ${currentStatus} to ${newStatus}`,
+      );
+    }
+
+    if (newStatus === ReferralStatus.ASSIGNED && !dto.assignedToId) {
+      throw new BadRequestException(
+        'assignedToId is required when setting status to ASSIGNED',
+      );
+    }
+
+    if (newStatus === ReferralStatus.CLOSED && !dto.referralOutcome) {
+      throw new BadRequestException(
+        'referralOutcome is required when closing a referral',
+      );
+    }
+  }
 
   private calculateFlag(
     experiencingHomelessnessResponse?: YesNoUnknown,
@@ -114,10 +161,36 @@ export class ReferralsService {
     return diffDays >= 0 && diffDays <= maxDays;
   }
 
+  private async validateOtherFields(dto: CreateReferralDto): Promise<void> {
+    if (dto.referredBy === ReferredByType.PARTNER_MINISTRY && dto.ministryId) {
+      const ministry = await this.prisma.ministry.findUnique({
+        where: { id: dto.ministryId },
+      });
+      if (ministry?.name?.toLowerCase() === 'other' && !dto.ministryNameOther) {
+        throw new BadRequestException(
+          'ministryNameOther is required when the selected ministry is Other',
+        );
+      }
+    }
+
+    if (dto.referredBy === ReferredByType.PARTNER_AGENCY && dto.agencyTypeId) {
+      const agencyType = await this.prisma.agencyType.findUnique({
+        where: { id: dto.agencyTypeId },
+      });
+      if (agencyType?.name?.toLowerCase() === 'other' && !dto.agencyTypeOther) {
+        throw new BadRequestException(
+          'agencyTypeOther is required when the selected agency type is Other',
+        );
+      }
+    }
+  }
+
   async create(
     createReferralDto: CreateReferralDto,
     contactId: string,
   ): Promise<Referral> {
+    await this.validateOtherFields(createReferralDto);
+
     const flag = this.calculateFlag(
       createReferralDto.currentlyHomeless,
       createReferralDto.losingHousing,
@@ -219,6 +292,96 @@ export class ReferralsService {
     return referral;
   }
 
+  private toDateOrUndefined(value?: string): Date | undefined {
+    return value ? new Date(value) : undefined;
+  }
+
+  private buildUpdateData(
+    dto: UpdateReferralDto,
+    userId?: string,
+  ): Record<string, unknown> {
+    return {
+      referralStatus: dto.referralStatus,
+      assignedToId: dto.assignedToId,
+      referralOutcome: dto.referralOutcome,
+      communityPartnerName: dto.communityPartnerName,
+      flag: dto.flag,
+      modifiedBy: userId,
+      followUpDate: this.toDateOrUndefined(dto.followUpDate),
+      dueDate: this.toDateOrUndefined(dto.dueDate),
+      completedDate: this.toDateOrUndefined(dto.completedDate),
+      assignedOn: this.toDateOrUndefined(dto.assignedOn),
+      firstContactMadeOn: this.toDateOrUndefined(dto.firstContactMadeOn),
+      currentlyConnectedSupports: dto.currentlyConnectedSupports,
+      currentlyConnectedSupportsOther: dto.currentlyConnectedSupportsOther,
+      regionId: dto.regionId,
+      specificCityTown: dto.specificCityTown,
+      neededSupports: dto.neededSupports,
+      neededSupportsOther: dto.neededSupportsOther,
+      referralSummary: dto.referralSummary,
+      referredBy: dto.referredBy,
+      ministryId: dto.ministryId,
+      ministryNameOther: dto.ministryNameOther,
+      agencyTypeId: dto.agencyTypeId,
+      agencyTypeOther: dto.agencyTypeOther,
+      partnerAgencyName: dto.partnerAgencyName,
+      programArea: dto.programArea,
+      referrerContactName: dto.referrerContactName,
+      referrerEmail: dto.referrerEmail,
+      referrerPhone: dto.referrerPhone,
+      individualFirstName: dto.individualFirstName,
+      individualMiddleName: dto.individualMiddleName,
+      individualLastName: dto.individualLastName,
+      individualPreferredName: dto.individualPreferredName,
+      individualDateOfBirth: this.toDateOrUndefined(dto.individualDateOfBirth),
+      individualPhone: dto.individualPhone,
+      personId: dto.personId,
+      secondaryContact: dto.secondaryContact,
+      bestWayToReach: dto.bestWayToReach,
+      currentlyHomeless: dto.currentlyHomeless,
+      losingHousing: dto.losingHousing,
+      pendingRelease: dto.pendingRelease,
+      releaseDate: this.toDateOrUndefined(dto.releaseDate),
+    };
+  }
+
+  private applyAutoTimestamps(
+    updateData: Record<string, unknown>,
+    currentStatus: ReferralStatus,
+    newStatus: ReferralStatus | undefined,
+    existing: Referral,
+  ): void {
+    if (
+      newStatus === ReferralStatus.ASSIGNED &&
+      currentStatus !== ReferralStatus.ASSIGNED &&
+      !existing.assignedOn &&
+      !updateData.assignedOn
+    ) {
+      updateData.assignedOn = new Date();
+    }
+
+    if (
+      newStatus === ReferralStatus.CONTACT_MADE &&
+      currentStatus !== ReferralStatus.CONTACT_MADE &&
+      !existing.firstContactMadeOn &&
+      !updateData.firstContactMadeOn
+    ) {
+      updateData.firstContactMadeOn = new Date();
+    }
+  }
+
+  private removeUndefinedKeys(
+    data: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        clean[key] = value;
+      }
+    }
+    return clean;
+  }
+
   async update(
     id: string,
     updateReferralDto: UpdateReferralDto,
@@ -226,72 +389,31 @@ export class ReferralsService {
   ): Promise<Referral> {
     const existing = await this.findOne(id);
 
-    const updateData: Record<string, unknown> = {
-      referralStatus: updateReferralDto.referralStatus,
-      assignedToId: updateReferralDto.assignedToId,
-      referralOutcome: updateReferralDto.referralOutcome,
-      communityPartnerName: updateReferralDto.communityPartnerName,
-      flag: updateReferralDto.flag,
-      modifiedBy: userId,
-      followUpDate: updateReferralDto.followUpDate
-        ? new Date(updateReferralDto.followUpDate)
-        : undefined,
-      dueDate: updateReferralDto.dueDate
-        ? new Date(updateReferralDto.dueDate)
-        : undefined,
-      completedDate: updateReferralDto.completedDate
-        ? new Date(updateReferralDto.completedDate)
-        : undefined,
-      assignedOn: updateReferralDto.assignedOn
-        ? new Date(updateReferralDto.assignedOn)
-        : undefined,
-      firstContactMadeOn: updateReferralDto.firstContactMadeOn
-        ? new Date(updateReferralDto.firstContactMadeOn)
-        : undefined,
-      currentlyConnectedSupports: updateReferralDto.currentlyConnectedSupports,
-      currentlyConnectedSupportsOther:
-        updateReferralDto.currentlyConnectedSupportsOther,
-      regionId: updateReferralDto.regionId,
-      specificCityTown: updateReferralDto.specificCityTown,
-      neededSupports: updateReferralDto.neededSupports,
-      neededSupportsOther: updateReferralDto.neededSupportsOther,
-      referralSummary: updateReferralDto.referralSummary,
-      referredBy: updateReferralDto.referredBy,
-      ministryId: updateReferralDto.ministryId,
-      ministryNameOther: updateReferralDto.ministryNameOther,
-      agencyTypeId: updateReferralDto.agencyTypeId,
-      agencyTypeOther: updateReferralDto.agencyTypeOther,
-      partnerAgencyName: updateReferralDto.partnerAgencyName,
-      programArea: updateReferralDto.programArea,
-      referrerContactName: updateReferralDto.referrerContactName,
-      referrerEmail: updateReferralDto.referrerEmail,
-      referrerPhone: updateReferralDto.referrerPhone,
-      individualFirstName: updateReferralDto.individualFirstName,
-      individualMiddleName: updateReferralDto.individualMiddleName,
-      individualLastName: updateReferralDto.individualLastName,
-      individualPreferredName: updateReferralDto.individualPreferredName,
-      individualDateOfBirth: updateReferralDto.individualDateOfBirth
-        ? new Date(updateReferralDto.individualDateOfBirth)
-        : undefined,
-      individualPhone: updateReferralDto.individualPhone,
-      personId: updateReferralDto.personId,
-      secondaryContact: updateReferralDto.secondaryContact,
-      bestWayToReach: updateReferralDto.bestWayToReach,
-      currentlyHomeless: updateReferralDto.currentlyHomeless,
-      losingHousing: updateReferralDto.losingHousing,
-      pendingRelease: updateReferralDto.pendingRelease,
-      releaseDate: updateReferralDto.releaseDate
-        ? new Date(updateReferralDto.releaseDate)
-        : undefined,
-    };
+    const currentStatus = existing.referralStatus as ReferralStatus;
+    let newStatus = updateReferralDto.referralStatus;
 
-    // Remove undefined keys so diffObjects only sees provided fields
-    const cleanData: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updateData)) {
-      if (value !== undefined) {
-        cleanData[key] = value;
-      }
+    // Auto-transition: setting firstContactMadeOn while ASSIGNED → CONTACT_MADE
+    if (
+      updateReferralDto.firstContactMadeOn &&
+      !newStatus &&
+      currentStatus === ReferralStatus.ASSIGNED
+    ) {
+      newStatus = ReferralStatus.CONTACT_MADE;
+      updateReferralDto.referralStatus = newStatus;
     }
+
+    if (newStatus && newStatus !== currentStatus) {
+      this.validateStatusTransition(
+        currentStatus,
+        newStatus,
+        updateReferralDto,
+      );
+    }
+
+    const updateData = this.buildUpdateData(updateReferralDto, userId);
+    this.applyAutoTimestamps(updateData, currentStatus, newStatus, existing);
+
+    const cleanData = this.removeUndefinedKeys(updateData);
 
     const changes = diffObjects(
       existing as unknown as Record<string, unknown>,

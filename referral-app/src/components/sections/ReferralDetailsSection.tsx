@@ -18,12 +18,62 @@ export function ReferralDetailsSection({
   ministries,
   agencyTypes,
 }: Readonly<ReferralDetailsSectionProps>) {
-  const { control, watch } = form;
+  const { control, watch, setValue, setError, clearErrors } = form;
 
   const referredBy = watch("referredBy");
+  const ministryId = watch("ministryId");
+  const agencyTypeId = watch("agencyTypeId");
 
   const showMinistryFields = referredBy === ReferredByType.PARTNER_MINISTRY;
   const showAgencyFields = referredBy === ReferredByType.PARTNER_AGENCY;
+
+  const selectedMinistry = ministries.find((m) => m.id === ministryId);
+  const isOtherMinistry = selectedMinistry?.name?.toLowerCase() === "other";
+
+  const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
+  const isOtherAgencyType = selectedAgencyType?.name?.toLowerCase() === "other";
+
+  const handleReferredByChange = () => {
+    setValue("ministryId", undefined);
+    setValue("ministryNameOther", undefined);
+    setValue("programArea", undefined);
+    setValue("partnerAgencyName", undefined);
+    setValue("agencyTypeId", undefined);
+    setValue("agencyTypeOther", undefined);
+    clearErrors([
+      "ministryId",
+      "ministryNameOther",
+      "partnerAgencyName",
+      "agencyTypeId",
+      "agencyTypeOther",
+    ]);
+  };
+
+  const handleMinistryChange = (key: unknown) => {
+    const selected = ministries.find((m) => m.id === key);
+    if (selected?.name?.toLowerCase() === "other") {
+      setError("ministryNameOther", {
+        type: "custom",
+        message: "Please specify the ministry name",
+      });
+    } else {
+      clearErrors("ministryNameOther");
+      setValue("ministryNameOther", undefined);
+    }
+  };
+
+  const handleAgencyTypeChange = (key: unknown) => {
+    const selected = agencyTypes.find((a) => a.id === key);
+    if (selected?.name?.toLowerCase() === "other") {
+      setError("agencyTypeOther", {
+        type: "custom",
+        message: "Please specify the agency type",
+      });
+    } else {
+      clearErrors("agencyTypeOther");
+      setValue("agencyTypeOther", undefined);
+    }
+  };
 
   return (
     <section>
@@ -36,6 +86,7 @@ export function ReferralDetailsSection({
           label="Referred By"
           options={ReferredByTypeOptions}
           isRequired
+          onChangeCallback={handleReferredByChange}
         />
 
         <TextInput
@@ -70,12 +121,14 @@ export function ReferralDetailsSection({
             label="Name of Ministry"
             options={ministries}
             isRequired
+            onChangeCallback={handleMinistryChange}
           />
 
           <TextInput
             name="ministryNameOther"
             control={control}
             label="Specify Ministry (if not listed)"
+            isRequired={isOtherMinistry}
           />
 
           <TextInput
@@ -100,12 +153,15 @@ export function ReferralDetailsSection({
             control={control}
             label="Type of Agency"
             options={agencyTypes}
+            isRequired
+            onChangeCallback={handleAgencyTypeChange}
           />
 
           <TextInput
             name="agencyTypeOther"
             control={control}
             label="Specify Agency Type (if not listed)"
+            isRequired={isOtherAgencyType}
           />
         </div>
       )}
