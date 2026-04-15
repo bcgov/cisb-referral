@@ -31,6 +31,10 @@ describe('audit.utils', () => {
     it('should serialize arrays to JSON', () => {
       expect(serializeValue(['a', 'b'])).toBe('["a","b"]');
     });
+
+    it('should serialize objects to JSON', () => {
+      expect(serializeValue({ key: 'val' })).toBe('{"key":"val"}');
+    });
   });
 
   describe('diffObjects', () => {

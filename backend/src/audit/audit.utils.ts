@@ -20,7 +20,7 @@ export function diffObjects(
   const changes: FieldChange[] = [];
 
   for (const field of trackedFields) {
-    if (!(field in newObj)) {
+    if (!Object.hasOwn(newObj, field)) {
       continue;
     }
 
@@ -55,7 +55,7 @@ export function serializeValue(value: unknown): string | null {
     return value.toISOString();
   }
 
-  if (Array.isArray(value)) {
+  if (typeof value === 'object' || Array.isArray(value)) {
     return JSON.stringify(value);
   }
 
