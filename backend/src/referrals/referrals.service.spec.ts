@@ -911,6 +911,51 @@ describe('ReferralsService', () => {
           }),
         ).rejects.toThrow(BadRequestException);
       });
+
+      it('should auto-transition to CONTACT_MADE when firstContactMadeOn is set while ASSIGNED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({
+            referralStatus: ReferralStatus.CONTACT_MADE,
+          }),
+        );
+
+        await service.update('referral-uuid-1', {
+          firstContactMadeOn: '2026-04-15',
+        });
+
+        expect(mockPrismaService.referral.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              referralStatus: ReferralStatus.CONTACT_MADE,
+              firstContactMadeOn: new Date('2026-04-15'),
+            }),
+          }),
+        );
+      });
+
+      it('should not auto-transition when firstContactMadeOn is set but status is not ASSIGNED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(existing);
+
+        await service.update('referral-uuid-1', {
+          firstContactMadeOn: '2026-04-15',
+        });
+
+        expect(mockPrismaService.referral.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.not.objectContaining({
+              referralStatus: ReferralStatus.CONTACT_MADE,
+            }),
+          }),
+        );
+      });
     });
   });
 

@@ -248,6 +248,12 @@ export function ReferralDetailsTab({
                       className="w-full px-3 py-2 text-left hover:bg-gray-100"
                       onMouseDown={() => {
                         updateField("assignedToId", user.id);
+                        if (formData.referralStatus === ReferralStatus.OPEN) {
+                          updateField(
+                            "referralStatus",
+                            ReferralStatus.ASSIGNED,
+                          );
+                        }
                         setUserSearch("");
                         setShowUserDropdown(false);
                       }}

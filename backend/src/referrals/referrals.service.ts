@@ -354,7 +354,8 @@ export class ReferralsService {
     if (
       newStatus === ReferralStatus.ASSIGNED &&
       currentStatus !== ReferralStatus.ASSIGNED &&
-      !existing.assignedOn
+      !existing.assignedOn &&
+      !updateData.assignedOn
     ) {
       updateData.assignedOn = new Date();
     }
@@ -362,7 +363,8 @@ export class ReferralsService {
     if (
       newStatus === ReferralStatus.CONTACT_MADE &&
       currentStatus !== ReferralStatus.CONTACT_MADE &&
-      !existing.firstContactMadeOn
+      !existing.firstContactMadeOn &&
+      !updateData.firstContactMadeOn
     ) {
       updateData.firstContactMadeOn = new Date();
     }
@@ -388,7 +390,17 @@ export class ReferralsService {
     const existing = await this.findOne(id);
 
     const currentStatus = existing.referralStatus as ReferralStatus;
-    const newStatus = updateReferralDto.referralStatus;
+    let newStatus = updateReferralDto.referralStatus;
+
+    // Auto-transition: setting firstContactMadeOn while ASSIGNED → CONTACT_MADE
+    if (
+      updateReferralDto.firstContactMadeOn &&
+      !newStatus &&
+      currentStatus === ReferralStatus.ASSIGNED
+    ) {
+      newStatus = ReferralStatus.CONTACT_MADE;
+      updateReferralDto.referralStatus = newStatus;
+    }
 
     if (newStatus && newStatus !== currentStatus) {
       this.validateStatusTransition(
