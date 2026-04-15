@@ -63,6 +63,14 @@ export function ReferralDetail() {
     );
   }
 
+  const handleUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ["referral", id] });
+    queryClient.invalidateQueries({ queryKey: ["referrals"] });
+    queryClient.invalidateQueries({
+      queryKey: ["referral-audit", referral.id],
+    });
+  };
+
   return (
     <div className="flex flex-col flex-1">
       <div className="flex justify-between items-center p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
@@ -91,24 +99,14 @@ export function ReferralDetail() {
             key={referral.id}
             referral={referral}
             users={users}
-            onUpdate={() => {
-              queryClient.invalidateQueries({ queryKey: ["referral", id] });
-              queryClient.invalidateQueries({
-                queryKey: ["referral-audit", referral.id],
-              });
-            }}
+            onUpdate={handleUpdate}
           />
         )}
         {activeTab === "referrer-individual" && (
           <ReferrerIndividualTab
             key={referral.id}
             referral={referral}
-            onUpdate={() => {
-              queryClient.invalidateQueries({ queryKey: ["referral", id] });
-              queryClient.invalidateQueries({
-                queryKey: ["referral-audit", referral.id],
-              });
-            }}
+            onUpdate={handleUpdate}
           />
         )}
         {activeTab === "related" && isSystemAdmin && (

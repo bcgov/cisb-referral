@@ -179,7 +179,7 @@ export function Referrals() {
                     {referral.specificCityTown || "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.assignedToId || "—"}
+                    {referral.assignedTo?.fullName || "—"}
                   </td>
                 </tr>
               ))
