@@ -72,7 +72,9 @@ export class CreateReferralDto {
   programArea?: string;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf(
+    (o: CreateReferralDto) => o.referredBy === ReferredByType.PARTNER_AGENCY,
+  )
   @IsString()
   partnerAgencyName?: string;
 
@@ -163,7 +165,9 @@ export class CreateReferralDto {
   currentlyHomeless: YesNoUnknown;
 
   @ApiProperty({ enum: YesNoUnknown, required: false })
-  @IsOptional()
+  @ValidateIf(
+    (o: CreateReferralDto) => o.currentlyHomeless !== YesNoUnknown.YES,
+  )
   @IsEnum(YesNoUnknown)
   losingHousing?: YesNoUnknown;
 

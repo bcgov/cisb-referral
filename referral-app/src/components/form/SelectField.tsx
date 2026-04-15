@@ -16,6 +16,7 @@ interface SelectFieldProps<T extends FieldValues> {
   readonly placeholder?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
+  readonly onChangeCallback?: (key: Key | null) => void;
 }
 
 export function SelectField<T extends FieldValues>({
@@ -26,6 +27,7 @@ export function SelectField<T extends FieldValues>({
   placeholder = "Select an option",
   description,
   isRequired = false,
+  onChangeCallback,
 }: Readonly<SelectFieldProps<T>>) {
   const {
     field,
@@ -38,13 +40,14 @@ export function SelectField<T extends FieldValues>({
 
   const handleSelectionChange = (key: Key | null) => {
     field.onChange(key ?? "");
+    onChangeCallback?.(key);
   };
 
   return (
     <Select
       label={label}
       items={items}
-      value={field.value || null}
+      value={field.value ?? null}
       onChange={handleSelectionChange}
       onBlur={field.onBlur}
       name={field.name}

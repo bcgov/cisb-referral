@@ -214,6 +214,14 @@ function validatePartnerAgency(
       path: ["partnerAgencyName"],
     });
   }
+
+  if (!data.agencyTypeId) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Type of agency is required when referred by Partner Agency",
+      path: ["agencyTypeId"],
+    });
+  }
 }
 
 function validateHousingStatus(

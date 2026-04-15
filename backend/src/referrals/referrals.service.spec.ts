@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ReferralsService } from './referrals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -44,6 +44,8 @@ describe('ReferralsService', () => {
     createdBy: 'contact-uuid-1',
     createdAt: new Date('2026-01-15'),
     updatedAt: new Date('2026-01-15'),
+    assignedOn: null,
+    firstContactMadeOn: null,
     region: { id: 'region-uuid-1', name: 'Test Region' },
     ministry: null,
     agencyType: null,
@@ -87,6 +89,12 @@ describe('ReferralsService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
+    },
+    ministry: {
+      findUnique: jest.fn(),
+    },
+    agencyType: {
+      findUnique: jest.fn(),
     },
   };
 
@@ -562,6 +570,7 @@ describe('ReferralsService', () => {
       });
       const updateDto: UpdateReferralDto = {
         referralStatus: ReferralStatus.ASSIGNED,
+        assignedToId: 'user-uuid-1',
       };
 
       mockPrismaService.referral.findUnique.mockResolvedValue(existing);
@@ -640,6 +649,340 @@ describe('ReferralsService', () => {
       await expect(
         service.update('nonexistent-id', { assignedToId: 'user-uuid-2' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    describe('status transition validation', () => {
+      it('should reject invalid transition from OPEN to CLOSED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.CLOSED,
+            referralOutcome: 'SERVICES_PROVIDED',
+          }),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should reject invalid transition from OPEN to CONTACT_MADE', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.CONTACT_MADE,
+          }),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should reject transition from CLOSED to any status', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CLOSED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.OPEN,
+          }),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should require assignedToId when transitioning to ASSIGNED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.ASSIGNED,
+          }),
+        ).rejects.toThrow('assignedToId is required');
+      });
+
+      it('should require referralOutcome when transitioning to CLOSED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.CLOSED,
+          }),
+        ).rejects.toThrow('referralOutcome is required');
+      });
+
+      it('should allow valid transition from OPEN to ASSIGNED with assignedToId', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        const updated = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+          assignedToId: 'user-uuid-1',
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.ASSIGNED,
+          assignedToId: 'user-uuid-1',
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.ASSIGNED);
+      });
+
+      it('should auto-set assignedOn when transitioning to ASSIGNED', async () => {
+        jest.useFakeTimers();
+        jest.setSystemTime(fixedNow);
+
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+          assignedOn: null,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({
+            referralStatus: ReferralStatus.ASSIGNED,
+            assignedOn: fixedNow,
+          }),
+        );
+
+        await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.ASSIGNED,
+          assignedToId: 'user-uuid-1',
+        });
+
+        expect(mockPrismaService.referral.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              assignedOn: fixedNow,
+            }),
+          }),
+        );
+
+        jest.useRealTimers();
+      });
+
+      it('should auto-set firstContactMadeOn when transitioning to CONTACT_MADE', async () => {
+        jest.useFakeTimers();
+        jest.setSystemTime(fixedNow);
+
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+          firstContactMadeOn: null,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({
+            referralStatus: ReferralStatus.CONTACT_MADE,
+            firstContactMadeOn: fixedNow,
+          }),
+        );
+
+        await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+
+        expect(mockPrismaService.referral.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              firstContactMadeOn: fixedNow,
+            }),
+          }),
+        );
+
+        jest.useRealTimers();
+      });
+
+      it('should not overwrite existing assignedOn when re-assigning', async () => {
+        const existingDate = new Date('2026-03-01');
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+          assignedOn: existingDate,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(existing);
+
+        await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.ASSIGNED,
+          assignedToId: 'user-uuid-2',
+        });
+
+        const updateCall = mockPrismaService.referral.update.mock.calls[0][0];
+        expect(updateCall.data.assignedOn).toBeUndefined();
+      });
+
+      it('should not overwrite existing firstContactMadeOn when re-entering CONTACT_MADE', async () => {
+        const existingDate = new Date('2026-03-05');
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+          firstContactMadeOn: existingDate,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(existing);
+
+        await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+
+        const updateCall = mockPrismaService.referral.update.mock.calls[0][0];
+        expect(updateCall.data.firstContactMadeOn).toBeUndefined();
+      });
+
+      it('should allow valid transition from ASSIGNED to OPEN', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({ referralStatus: ReferralStatus.OPEN }),
+        );
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.OPEN,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.OPEN);
+      });
+
+      it('should allow valid transition from CONTACT_MADE to ASSIGNED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({ referralStatus: ReferralStatus.ASSIGNED }),
+        );
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.ASSIGNED,
+          assignedToId: 'user-uuid-1',
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.ASSIGNED);
+      });
+
+      it('should allow valid transition from CONTACT_MADE to CLOSED with referralOutcome', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(
+          createMockReferral({ referralStatus: ReferralStatus.CLOSED }),
+        );
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CLOSED,
+          referralOutcome: 'SERVICES_PROVIDED',
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.CLOSED);
+      });
+
+      it('should reject invalid transition from ASSIGNED to CLOSED', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.CLOSED,
+            referralOutcome: 'SERVICES_PROVIDED',
+          }),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should reject invalid transition from CONTACT_MADE to OPEN', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+
+        await expect(
+          service.update('referral-uuid-1', {
+            referralStatus: ReferralStatus.OPEN,
+          }),
+        ).rejects.toThrow(BadRequestException);
+      });
+    });
+  });
+
+  describe('validateOtherFields', () => {
+    it('should reject when ministry is Other and ministryNameOther is missing', async () => {
+      const dto = createReferralDto({
+        referredBy: ReferredByType.PARTNER_MINISTRY,
+        ministryId: 'ministry-other-uuid',
+      });
+
+      mockPrismaService.ministry.findUnique.mockResolvedValue({
+        id: 'ministry-other-uuid',
+        name: 'Other',
+      });
+
+      await expect(service.create(dto, 'contact-uuid-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should accept when ministry is Other and ministryNameOther is provided', async () => {
+      const dto = createReferralDto({
+        referredBy: ReferredByType.PARTNER_MINISTRY,
+        ministryId: 'ministry-other-uuid',
+        ministryNameOther: 'Custom Ministry Name',
+      });
+
+      mockPrismaService.ministry.findUnique.mockResolvedValue({
+        id: 'ministry-other-uuid',
+        name: 'Other',
+      });
+      mockPrismaService.referral.create.mockResolvedValue(createMockReferral());
+
+      await expect(
+        service.create(dto, 'contact-uuid-1'),
+      ).resolves.toBeDefined();
+    });
+
+    it('should reject when agencyType is Other and agencyTypeOther is missing', async () => {
+      const dto = createReferralDto({
+        referredBy: ReferredByType.PARTNER_AGENCY,
+        partnerAgencyName: 'Test Agency',
+        agencyTypeId: 'agency-other-uuid',
+      });
+
+      mockPrismaService.agencyType.findUnique.mockResolvedValue({
+        id: 'agency-other-uuid',
+        name: 'Other',
+      });
+
+      await expect(service.create(dto, 'contact-uuid-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should accept when agencyType is Other and agencyTypeOther is provided', async () => {
+      const dto = createReferralDto({
+        referredBy: ReferredByType.PARTNER_AGENCY,
+        partnerAgencyName: 'Test Agency',
+        agencyTypeId: 'agency-other-uuid',
+        agencyTypeOther: 'Custom Agency Type',
+      });
+
+      mockPrismaService.agencyType.findUnique.mockResolvedValue({
+        id: 'agency-other-uuid',
+        name: 'Other',
+      });
+      mockPrismaService.referral.create.mockResolvedValue(createMockReferral());
+
+      await expect(
+        service.create(dto, 'contact-uuid-1'),
+      ).resolves.toBeDefined();
     });
   });
 });
