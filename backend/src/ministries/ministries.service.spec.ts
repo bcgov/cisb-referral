@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { MinistriesService } from './ministries.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { Prisma } from '../generated/prisma/client';
 
 const mockPrismaService = {
@@ -12,6 +13,10 @@ const mockPrismaService = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+};
+
+const mockAuditService = {
+  logGlobal: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockMinistry = {
@@ -30,6 +35,7 @@ describe('MinistriesService', () => {
       providers: [
         MinistriesService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -84,11 +90,21 @@ describe('MinistriesService', () => {
     it('should create and return a ministry', async () => {
       mockPrismaService.ministry.create.mockResolvedValue(mockMinistry);
 
-      const result = await service.create({ name: 'Test Ministry' } as any);
+      const result = await service.create(
+        { name: 'Test Ministry' } as any,
+        'admin-1',
+      );
 
       expect(result).toEqual(mockMinistry);
       expect(mockPrismaService.ministry.create).toHaveBeenCalledWith({
         data: { name: 'Test Ministry' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'ministry',
+        recordId: 'ministry-1',
+        action: 'CREATE',
+        changes: [{ field: 'name', oldValue: null, newValue: 'Test Ministry' }],
+        userId: 'admin-1',
       });
     });
 
@@ -121,11 +137,39 @@ describe('MinistriesService', () => {
       mockPrismaService.ministry.findUnique.mockResolvedValue(mockMinistry);
       mockPrismaService.ministry.update.mockResolvedValue(updated);
 
-      const result = await service.update('ministry-1', {
-        name: 'Updated Ministry',
-      } as any);
+      const result = await service.update(
+        'ministry-1',
+        {
+          name: 'Updated Ministry',
+        } as any,
+        'admin-1',
+      );
 
       expect(result.name).toBe('Updated Ministry');
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'ministry',
+        recordId: 'ministry-1',
+        action: 'UPDATE',
+        changes: [
+          {
+            field: 'name',
+            oldValue: 'Test Ministry',
+            newValue: 'Updated Ministry',
+          },
+        ],
+        userId: 'admin-1',
+      });
+    });
+
+    it('should not log audit when no fields changed', async () => {
+      mockPrismaService.ministry.findUnique.mockResolvedValue(mockMinistry);
+      mockPrismaService.ministry.update.mockResolvedValue(mockMinistry);
+
+      await service.update('ministry-1', {
+        name: 'Test Ministry',
+      } as any);
+
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for nonexistent ministry', async () => {
@@ -155,11 +199,18 @@ describe('MinistriesService', () => {
       mockPrismaService.ministry.findUnique.mockResolvedValue(mockMinistry);
       mockPrismaService.ministry.delete.mockResolvedValue(mockMinistry);
 
-      const result = await service.remove('ministry-1');
+      const result = await service.remove('ministry-1', 'admin-1');
 
       expect(result).toEqual(mockMinistry);
       expect(mockPrismaService.ministry.delete).toHaveBeenCalledWith({
         where: { id: 'ministry-1' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'ministry',
+        recordId: 'ministry-1',
+        action: 'DELETE',
+        changes: [],
+        userId: 'admin-1',
       });
     });
 

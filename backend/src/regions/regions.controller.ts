@@ -24,7 +24,8 @@ import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
 import { Region, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { Roles, CurrentUser } from '../auth/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('regions')
 @ApiBearerAuth()
@@ -71,8 +72,11 @@ export class RegionsController {
     status: 409,
     description: 'Region with this name already exists',
   })
-  async create(@Body() createRegionDto: CreateRegionDto): Promise<Region> {
-    return this.regionsService.create(createRegionDto);
+  async create(
+    @Body() createRegionDto: CreateRegionDto,
+    @CurrentUser() user: User,
+  ): Promise<Region> {
+    return this.regionsService.create(createRegionDto, user.id);
   }
 
   @Put(':id')
@@ -98,8 +102,9 @@ export class RegionsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRegionDto: UpdateRegionDto,
+    @CurrentUser() user: User,
   ): Promise<Region> {
-    return this.regionsService.update(id, updateRegionDto);
+    return this.regionsService.update(id, updateRegionDto, user.id);
   }
 
   @Delete(':id')
@@ -114,7 +119,10 @@ export class RegionsController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'Region not found' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.regionsService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    await this.regionsService.remove(id, user.id);
   }
 }

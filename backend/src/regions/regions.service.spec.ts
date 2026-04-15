@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { RegionsService } from './regions.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { Prisma } from '../generated/prisma/client';
 
 const mockPrismaService = {
@@ -12,6 +13,10 @@ const mockPrismaService = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+};
+
+const mockAuditService = {
+  logGlobal: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockRegion = {
@@ -29,6 +34,7 @@ describe('RegionsService', () => {
       providers: [
         RegionsService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -71,11 +77,18 @@ describe('RegionsService', () => {
     it('should create and return a region', async () => {
       mockPrismaService.region.create.mockResolvedValue(mockRegion);
 
-      const result = await service.create({ name: 'Test Region' });
+      const result = await service.create({ name: 'Test Region' }, 'admin-1');
 
       expect(result).toEqual(mockRegion);
       expect(mockPrismaService.region.create).toHaveBeenCalledWith({
         data: { name: 'Test Region' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'region',
+        recordId: 'region-1',
+        action: 'CREATE',
+        changes: [{ field: 'name', oldValue: null, newValue: 'Test Region' }],
+        userId: 'admin-1',
       });
     });
 
@@ -108,11 +121,39 @@ describe('RegionsService', () => {
       mockPrismaService.region.findUnique.mockResolvedValue(mockRegion);
       mockPrismaService.region.update.mockResolvedValue(updated);
 
-      const result = await service.update('region-1', {
-        name: 'Updated Region',
-      });
+      const result = await service.update(
+        'region-1',
+        {
+          name: 'Updated Region',
+        },
+        'admin-1',
+      );
 
       expect(result.name).toBe('Updated Region');
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'region',
+        recordId: 'region-1',
+        action: 'UPDATE',
+        changes: [
+          {
+            field: 'name',
+            oldValue: 'Test Region',
+            newValue: 'Updated Region',
+          },
+        ],
+        userId: 'admin-1',
+      });
+    });
+
+    it('should not log audit when no fields changed', async () => {
+      mockPrismaService.region.findUnique.mockResolvedValue(mockRegion);
+      mockPrismaService.region.update.mockResolvedValue(mockRegion);
+
+      await service.update('region-1', {
+        name: 'Test Region',
+      });
+
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for nonexistent region', async () => {
@@ -142,11 +183,18 @@ describe('RegionsService', () => {
       mockPrismaService.region.findUnique.mockResolvedValue(mockRegion);
       mockPrismaService.region.delete.mockResolvedValue(mockRegion);
 
-      const result = await service.remove('region-1');
+      const result = await service.remove('region-1', 'admin-1');
 
       expect(result).toEqual(mockRegion);
       expect(mockPrismaService.region.delete).toHaveBeenCalledWith({
         where: { id: 'region-1' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'region',
+        recordId: 'region-1',
+        action: 'DELETE',
+        changes: [],
+        userId: 'admin-1',
       });
     });
 

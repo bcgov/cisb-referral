@@ -4,13 +4,20 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { diffObjects } from '../audit/audit.utils';
 import { AgencyType, Prisma } from '../generated/prisma/client';
 import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
 
+const TRACKED_FIELDS = ['name', 'isActive'];
+
 @Injectable()
 export class AgencyTypesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   async findAll(activeOnly = false): Promise<AgencyType[]> {
     return this.prisma.agencyType.findMany({
@@ -33,11 +40,24 @@ export class AgencyTypesService {
     return agencyType;
   }
 
-  async create(createAgencyTypeDto: CreateAgencyTypeDto): Promise<AgencyType> {
+  async create(
+    createAgencyTypeDto: CreateAgencyTypeDto,
+    userId?: string,
+  ): Promise<AgencyType> {
     try {
-      return await this.prisma.agencyType.create({
+      const agencyType = await this.prisma.agencyType.create({
         data: createAgencyTypeDto,
       });
+
+      await this.auditService.logGlobal({
+        tableName: 'agency_type',
+        recordId: agencyType.id,
+        action: 'CREATE',
+        changes: [{ field: 'name', oldValue: null, newValue: agencyType.name }],
+        userId,
+      });
+
+      return agencyType;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -53,14 +73,33 @@ export class AgencyTypesService {
   async update(
     id: string,
     updateAgencyTypeDto: UpdateAgencyTypeDto,
+    userId?: string,
   ): Promise<AgencyType> {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
+
+    const changes = diffObjects(
+      existing as unknown as Record<string, unknown>,
+      updateAgencyTypeDto as unknown as Record<string, unknown>,
+      TRACKED_FIELDS,
+    );
 
     try {
-      return await this.prisma.agencyType.update({
+      const updated = await this.prisma.agencyType.update({
         where: { id },
         data: updateAgencyTypeDto,
       });
+
+      if (changes.length > 0) {
+        await this.auditService.logGlobal({
+          tableName: 'agency_type',
+          recordId: id,
+          action: 'UPDATE',
+          changes,
+          userId,
+        });
+      }
+
+      return updated;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -73,11 +112,21 @@ export class AgencyTypesService {
     }
   }
 
-  async remove(id: string): Promise<AgencyType> {
+  async remove(id: string, userId?: string): Promise<AgencyType> {
     await this.findOne(id);
 
-    return this.prisma.agencyType.delete({
+    const removed = await this.prisma.agencyType.delete({
       where: { id },
     });
+
+    await this.auditService.logGlobal({
+      tableName: 'agency_type',
+      recordId: id,
+      action: 'DELETE',
+      changes: [],
+      userId,
+    });
+
+    return removed;
   }
 }

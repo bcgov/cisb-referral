@@ -280,6 +280,20 @@ describe("APIService methods", () => {
   });
 
   describe("users", () => {
+    it("should fetch the current user", async () => {
+      // Arrange
+      const mockUser = { id: "1", fullName: "Test User", role: "ADMIN" };
+      mockGet.mockResolvedValue({ data: mockUser });
+      const { apiService } = await import("../../services/api");
+
+      // Act
+      const result = await apiService.fetchCurrentUser();
+
+      // Assert
+      expect(mockGet).toHaveBeenCalledWith("/users/me");
+      expect(result).toEqual(mockUser);
+    });
+
     it("should fetch users without filters", async () => {
       // Arrange
       const mockUsers = [{ id: "1", name: "User A" }];

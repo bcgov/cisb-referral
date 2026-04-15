@@ -21,9 +21,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto, UserRole } from './dto/user.dto';
-import { User, UserRole as PrismaUserRole } from '../generated/prisma/client';
+import { UserRole as PrismaUserRole } from '../generated/prisma/client';
+import type { User } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { Roles, CurrentUser } from '../auth/decorators';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -31,6 +32,18 @@ import { Roles } from '../auth/decorators';
 @UseGuards(AdminAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user details',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  me(@CurrentUser() currentUser: User): User {
+    return currentUser;
+  }
 
   @Post()
   @Roles(PrismaUserRole.ADMIN, PrismaUserRole.SYSTEM_ADMINISTRATOR)
@@ -46,8 +59,11 @@ export class UsersController {
     status: 403,
     description: 'Forbidden - Insufficient permissions',
   })
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @CurrentUser() currentUser: User,
+  ): Promise<User> {
+    return this.usersService.create(createUserDto, currentUser.id);
   }
 
   @Get()
@@ -104,8 +120,9 @@ export class UsersController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, updateUserDto, currentUser.id);
   }
 
   @Delete(':id')
@@ -118,7 +135,10 @@ export class UsersController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<User> {
-    return this.usersService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<User> {
+    return this.usersService.remove(id, currentUser.id);
   }
 }

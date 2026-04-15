@@ -16,6 +16,8 @@ const mockMinistry = {
   isActive: true,
 };
 
+const mockUser = { id: 'user-1' };
+
 describe('MinistriesController', () => {
   let controller: MinistriesController;
 
@@ -64,14 +66,20 @@ describe('MinistriesController', () => {
     it('should delegate to service with dto', async () => {
       mockMinistriesService.create.mockResolvedValue(mockMinistry);
 
-      const result = await controller.create({
-        name: 'Test Ministry',
-      } as any);
+      const result = await controller.create(
+        {
+          name: 'Test Ministry',
+        } as any,
+        mockUser as any,
+      );
 
       expect(result).toEqual(mockMinistry);
-      expect(mockMinistriesService.create).toHaveBeenCalledWith({
-        name: 'Test Ministry',
-      });
+      expect(mockMinistriesService.create).toHaveBeenCalledWith(
+        {
+          name: 'Test Ministry',
+        },
+        'user-1',
+      );
     });
   });
 
@@ -80,14 +88,22 @@ describe('MinistriesController', () => {
       const updated = { ...mockMinistry, name: 'Updated Ministry' };
       mockMinistriesService.update.mockResolvedValue(updated);
 
-      const result = await controller.update('ministry-1', {
-        name: 'Updated Ministry',
-      } as any);
+      const result = await controller.update(
+        'ministry-1',
+        {
+          name: 'Updated Ministry',
+        } as any,
+        mockUser as any,
+      );
 
       expect(result.name).toBe('Updated Ministry');
-      expect(mockMinistriesService.update).toHaveBeenCalledWith('ministry-1', {
-        name: 'Updated Ministry',
-      });
+      expect(mockMinistriesService.update).toHaveBeenCalledWith(
+        'ministry-1',
+        {
+          name: 'Updated Ministry',
+        },
+        'user-1',
+      );
     });
   });
 
@@ -95,9 +111,12 @@ describe('MinistriesController', () => {
     it('should delegate to service with id', async () => {
       mockMinistriesService.remove.mockResolvedValue(mockMinistry);
 
-      await controller.remove('ministry-1');
+      await controller.remove('ministry-1', mockUser as any);
 
-      expect(mockMinistriesService.remove).toHaveBeenCalledWith('ministry-1');
+      expect(mockMinistriesService.remove).toHaveBeenCalledWith(
+        'ministry-1',
+        'user-1',
+      );
     });
   });
 });

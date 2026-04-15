@@ -11,6 +11,8 @@ import type {
   AgencyType,
   PaginatedResponse,
   FetchReferralsParams,
+  FetchAuditLogsParams,
+  GlobalAuditLogEntry,
   CreateRegionDto,
   UpdateRegionDto,
   CreateMinistryDto,
@@ -22,6 +24,7 @@ import type {
   UpdateUserDto,
   UserRole,
   UpdateReferralDto,
+  ReferralAuditLogEntry,
 } from "../types";
 import { keycloak } from "../auth";
 
@@ -147,6 +150,11 @@ class APIService {
     await this.client.delete(`/agency-types/${id}`);
   }
 
+  async fetchCurrentUser(): Promise<User> {
+    const response = await this.client.get<User>("/users/me");
+    return response.data;
+  }
+
   async fetchUsers(role?: UserRole, isActive?: boolean): Promise<User[]> {
     const params: Record<string, string> = {};
     if (role) params.role = role;
@@ -167,6 +175,24 @@ class APIService {
 
   async deleteUser(id: string): Promise<User> {
     const response = await this.client.delete<User>(`/users/${id}`);
+    return response.data;
+  }
+
+  async fetchAuditLogs(
+    params: FetchAuditLogsParams = {},
+  ): Promise<PaginatedResponse<GlobalAuditLogEntry>> {
+    const response = await this.client.get<
+      PaginatedResponse<GlobalAuditLogEntry>
+    >("/audit-logs", { params });
+    return response.data;
+  }
+
+  async fetchReferralAuditHistory(
+    referralId: string,
+  ): Promise<ReferralAuditLogEntry[]> {
+    const response = await this.client.get<ReferralAuditLogEntry[]>(
+      `/referrals/${referralId}/audit`,
+    );
     return response.data;
   }
 }

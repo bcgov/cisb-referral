@@ -39,7 +39,7 @@ export function ReferrerIndividualTab({
     individualPreferredName: referral.individualPreferredName,
     individualDateOfBirth: referral.individualDateOfBirth,
     individualPhone: referral.individualPhone,
-    gainFile: referral.gainFile,
+    personId: referral.personId,
     secondaryContact: referral.secondaryContact,
     bestWayToReach: referral.bestWayToReach,
     currentlyHomeless: referral.currentlyHomeless,
@@ -124,9 +124,9 @@ export function ReferrerIndividualTab({
             required
           />
           <TextInput
-            label="GAIN File (GA)"
-            value={formData.gainFile}
-            onChange={(v) => updateField("gainFile", v)}
+            label="GAIN File"
+            value={formData.personId}
+            onChange={(v) => updateField("personId", v)}
           />
           <SelectInput
             label="Experiencing Homelessness"

@@ -7,6 +7,7 @@ import {
   Ministries,
   AgencyTypes,
   Users,
+  AuditHistory,
 } from "./pages";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="ministries" element={<Ministries />} />
           <Route path="agency-types" element={<AgencyTypes />} />
           <Route path="users" element={<Users />} />
+          <Route path="audit-history" element={<AuditHistory />} />
         </Route>
       </Routes>
     </BrowserRouter>

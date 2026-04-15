@@ -201,7 +201,7 @@ export class UpdateReferralDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  gainFile?: string;
+  personId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

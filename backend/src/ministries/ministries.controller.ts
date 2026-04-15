@@ -26,7 +26,8 @@ import { CreateMinistryDto } from './dto/create-ministry.dto';
 import { UpdateMinistryDto } from './dto/update-ministry.dto';
 import { Ministry, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { Roles, CurrentUser } from '../auth/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('ministries')
 @ApiBearerAuth()
@@ -86,8 +87,9 @@ export class MinistriesController {
   })
   async create(
     @Body() createMinistryDto: CreateMinistryDto,
+    @CurrentUser() user: User,
   ): Promise<Ministry> {
-    return this.ministriesService.create(createMinistryDto);
+    return this.ministriesService.create(createMinistryDto, user.id);
   }
 
   @Put(':id')
@@ -113,8 +115,9 @@ export class MinistriesController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMinistryDto: UpdateMinistryDto,
+    @CurrentUser() user: User,
   ): Promise<Ministry> {
-    return this.ministriesService.update(id, updateMinistryDto);
+    return this.ministriesService.update(id, updateMinistryDto, user.id);
   }
 
   @Delete(':id')
@@ -129,7 +132,10 @@ export class MinistriesController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'Ministry not found' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.ministriesService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    await this.ministriesService.remove(id, user.id);
   }
 }

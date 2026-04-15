@@ -49,8 +49,9 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
 
     // If not found by keycloakId, try by email and auto-link
     if (!user && email) {
+      const normalizedEmail = email.toLowerCase();
       user = await this.prisma.user.findUnique({
-        where: { email },
+        where: { email: normalizedEmail },
       });
 
       if (user && !user.keycloakId) {

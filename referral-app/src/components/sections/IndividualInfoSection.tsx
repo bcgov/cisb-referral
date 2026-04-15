@@ -4,6 +4,7 @@ import {
   YesNoUnknown,
   YesNoUnknownOptions,
   ReleaseFromTypeOptions,
+  ReferredByType,
 } from "../../schemas/referralSchema";
 import {
   SelectField,
@@ -26,12 +27,14 @@ export function IndividualInfoSection({
 
   const currentlyHomeless = watch("currentlyHomeless");
   const pendingRelease = watch("pendingRelease");
+  const referredBy = watch("referredBy");
 
   // Only show losingHousing when currentlyHomeless is explicitly "NO" or "UNKNOWN"
   const showAtRiskField =
     currentlyHomeless === YesNoUnknown.NO ||
     currentlyHomeless === YesNoUnknown.UNKNOWN;
   const showReleaseDateField = !!pendingRelease;
+  const showGainFile = referredBy === ReferredByType.SDPR_INTERNAL;
 
   return (
     <section>
@@ -92,11 +95,13 @@ export function IndividualInfoSection({
           isRequired
         />
 
-        <TextInput
-          name="gainFile"
-          control={control}
-          label="GAIN File (SA) (Optional)"
-        />
+        {showGainFile && (
+          <TextInput
+            name="personId"
+            control={control}
+            label="GAIN File (Optional)"
+          />
+        )}
 
         <TextInput
           name="secondaryContact"

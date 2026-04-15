@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ReferralsService } from './referrals.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import {
   ReferredByType,
   YesNoUnknown,
@@ -89,6 +90,10 @@ describe('ReferralsService', () => {
     },
   };
 
+  const mockAuditService = {
+    logReferralChange: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -96,6 +101,7 @@ describe('ReferralsService', () => {
       providers: [
         ReferralsService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -331,6 +337,10 @@ describe('ReferralsService', () => {
           }),
         }),
       );
+      expect(mockAuditService.logReferralChange).toHaveBeenCalledWith({
+        referralId: expected.id,
+        action: 'CREATE',
+      });
     });
 
     it('should convert date strings to Date objects', async () => {
@@ -536,6 +546,14 @@ describe('ReferralsService', () => {
           }),
         }),
       );
+      expect(mockAuditService.logReferralChange).toHaveBeenCalledWith({
+        referralId: 'referral-uuid-1',
+        action: 'UPDATE',
+        changes: expect.arrayContaining([
+          expect.objectContaining({ field: 'assignedToId' }),
+        ]),
+        userId: 'admin-uuid-1',
+      });
     });
 
     it('should create status history when status changes', async () => {
@@ -554,6 +572,14 @@ describe('ReferralsService', () => {
       await service.update('referral-uuid-1', updateDto, 'admin-uuid-1');
 
       expect(mockPrismaService.referral.update).toHaveBeenCalled();
+      expect(mockAuditService.logReferralChange).toHaveBeenCalledWith({
+        referralId: 'referral-uuid-1',
+        action: 'STATUS_CHANGE',
+        changes: expect.arrayContaining([
+          expect.objectContaining({ field: 'referralStatus' }),
+        ]),
+        userId: 'admin-uuid-1',
+      });
     });
 
     it('should not create status history when status is unchanged', async () => {

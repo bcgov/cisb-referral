@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
 import { logout, getUser } from "../auth";
+import { useCurrentUser } from "../hooks";
 
 /** Navigation links displayed in sidebar */
 const NAV_ITEMS = [
@@ -12,6 +13,10 @@ const NAV_ITEMS = [
   { to: "/users", label: "Users" },
 ] as const;
 
+const SYSTEM_ADMIN_NAV_ITEMS = [
+  { to: "/audit-history", label: "Audit History" },
+] as const;
+
 /**
  * Root layout with a collapsible sidebar.
  * Sidebar is always visible on md+ screens and toggles
@@ -19,6 +24,7 @@ const NAV_ITEMS = [
  */
 export function Layout() {
   const user = getUser();
+  const { isSystemAdmin } = useCurrentUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((o) => !o), []);
@@ -86,6 +92,24 @@ export function Layout() {
                 </NavLink>
               </li>
             ))}
+            {isSystemAdmin &&
+              SYSTEM_ADMIN_NAV_ITEMS.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    onClick={closeSidebar}
+                    className={({ isActive }) =>
+                      `block py-3 px-6 text-white no-underline font-medium transition-colors hover:bg-bcgov-blue-hover ${
+                        isActive
+                          ? "bg-bcgov-blue-dark border-l-4 border-bcgov-gold pl-5"
+                          : ""
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
           </ul>
           <div className="border-t border-bcgov-blue-dark mt-4 pt-4 px-4">
             {user && (

@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { diffObjects } from '../audit/audit.utils';
 import {
   CreateReferralDto,
   YesNoUnknown,
@@ -8,12 +10,58 @@ import {
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import { Referral } from '../generated/prisma/client';
 
+const TRACKED_FIELDS = [
+  'referralStatus',
+  'referralOutcome',
+  'assignedToId',
+  'communityPartnerName',
+  'flag',
+  'followUpDate',
+  'dueDate',
+  'completedDate',
+  'assignedOn',
+  'firstContactMadeOn',
+  'currentlyConnectedSupports',
+  'currentlyConnectedSupportsOther',
+  'regionId',
+  'specificCityTown',
+  'neededSupports',
+  'neededSupportsOther',
+  'referralSummary',
+  'referredBy',
+  'ministryId',
+  'ministryNameOther',
+  'agencyTypeId',
+  'agencyTypeOther',
+  'partnerAgencyName',
+  'programArea',
+  'referrerContactName',
+  'referrerEmail',
+  'referrerPhone',
+  'individualFirstName',
+  'individualMiddleName',
+  'individualLastName',
+  'individualPreferredName',
+  'individualDateOfBirth',
+  'individualPhone',
+  'personId',
+  'secondaryContact',
+  'bestWayToReach',
+  'currentlyHomeless',
+  'losingHousing',
+  'pendingRelease',
+  'releaseDate',
+];
+
 @Injectable()
 export class ReferralsService {
   private static readonly URGENT_RELEASE_WINDOW_DAYS = 4;
   private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   private calculateFlag(
     experiencingHomelessnessResponse?: YesNoUnknown,
@@ -77,7 +125,7 @@ export class ReferralsService {
       createReferralDto.releaseDate,
     );
 
-    return this.prisma.referral.create({
+    const referral = await this.prisma.referral.create({
       data: {
         ...createReferralDto,
         individualDateOfBirth: createReferralDto.individualDateOfBirth
@@ -96,6 +144,13 @@ export class ReferralsService {
         agencyType: true,
       },
     });
+
+    await this.auditService.logReferralChange({
+      referralId: referral.id,
+      action: 'CREATE',
+    });
+
+    return referral;
   }
 
   async findAll(params: {
@@ -169,27 +224,86 @@ export class ReferralsService {
     updateReferralDto: UpdateReferralDto,
     userId?: string,
   ): Promise<Referral> {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
 
-    return this.prisma.referral.update({
+    const updateData: Record<string, unknown> = {
+      referralStatus: updateReferralDto.referralStatus,
+      assignedToId: updateReferralDto.assignedToId,
+      referralOutcome: updateReferralDto.referralOutcome,
+      communityPartnerName: updateReferralDto.communityPartnerName,
+      flag: updateReferralDto.flag,
+      modifiedBy: userId,
+      followUpDate: updateReferralDto.followUpDate
+        ? new Date(updateReferralDto.followUpDate)
+        : undefined,
+      dueDate: updateReferralDto.dueDate
+        ? new Date(updateReferralDto.dueDate)
+        : undefined,
+      completedDate: updateReferralDto.completedDate
+        ? new Date(updateReferralDto.completedDate)
+        : undefined,
+      assignedOn: updateReferralDto.assignedOn
+        ? new Date(updateReferralDto.assignedOn)
+        : undefined,
+      firstContactMadeOn: updateReferralDto.firstContactMadeOn
+        ? new Date(updateReferralDto.firstContactMadeOn)
+        : undefined,
+      currentlyConnectedSupports: updateReferralDto.currentlyConnectedSupports,
+      currentlyConnectedSupportsOther:
+        updateReferralDto.currentlyConnectedSupportsOther,
+      regionId: updateReferralDto.regionId,
+      specificCityTown: updateReferralDto.specificCityTown,
+      neededSupports: updateReferralDto.neededSupports,
+      neededSupportsOther: updateReferralDto.neededSupportsOther,
+      referralSummary: updateReferralDto.referralSummary,
+      referredBy: updateReferralDto.referredBy,
+      ministryId: updateReferralDto.ministryId,
+      ministryNameOther: updateReferralDto.ministryNameOther,
+      agencyTypeId: updateReferralDto.agencyTypeId,
+      agencyTypeOther: updateReferralDto.agencyTypeOther,
+      partnerAgencyName: updateReferralDto.partnerAgencyName,
+      programArea: updateReferralDto.programArea,
+      referrerContactName: updateReferralDto.referrerContactName,
+      referrerEmail: updateReferralDto.referrerEmail,
+      referrerPhone: updateReferralDto.referrerPhone,
+      individualFirstName: updateReferralDto.individualFirstName,
+      individualMiddleName: updateReferralDto.individualMiddleName,
+      individualLastName: updateReferralDto.individualLastName,
+      individualPreferredName: updateReferralDto.individualPreferredName,
+      individualDateOfBirth: updateReferralDto.individualDateOfBirth
+        ? new Date(updateReferralDto.individualDateOfBirth)
+        : undefined,
+      individualPhone: updateReferralDto.individualPhone,
+      personId: updateReferralDto.personId,
+      secondaryContact: updateReferralDto.secondaryContact,
+      bestWayToReach: updateReferralDto.bestWayToReach,
+      currentlyHomeless: updateReferralDto.currentlyHomeless,
+      losingHousing: updateReferralDto.losingHousing,
+      pendingRelease: updateReferralDto.pendingRelease,
+      releaseDate: updateReferralDto.releaseDate
+        ? new Date(updateReferralDto.releaseDate)
+        : undefined,
+    };
+
+    // Remove undefined keys so diffObjects only sees provided fields
+    const cleanData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updateData)) {
+      if (value !== undefined) {
+        cleanData[key] = value;
+      }
+    }
+
+    const changes = diffObjects(
+      existing as unknown as Record<string, unknown>,
+      cleanData,
+      TRACKED_FIELDS,
+    );
+
+    const hasStatusChange = changes.some((c) => c.field === 'referralStatus');
+
+    const updated = await this.prisma.referral.update({
       where: { id },
-      data: {
-        referralStatus: updateReferralDto.referralStatus,
-        assignedToId: updateReferralDto.assignedToId,
-        referralOutcome: updateReferralDto.referralOutcome,
-        communityPartnerName: updateReferralDto.communityPartnerName,
-        flag: updateReferralDto.flag,
-        modifiedBy: userId,
-        followUpDate: updateReferralDto.followUpDate
-          ? new Date(updateReferralDto.followUpDate)
-          : undefined,
-        dueDate: updateReferralDto.dueDate
-          ? new Date(updateReferralDto.dueDate)
-          : undefined,
-        completedDate: updateReferralDto.completedDate
-          ? new Date(updateReferralDto.completedDate)
-          : undefined,
-      },
+      data: cleanData,
       include: {
         region: true,
         ministry: true,
@@ -197,5 +311,16 @@ export class ReferralsService {
         assignedTo: true,
       },
     });
+
+    if (changes.length > 0) {
+      await this.auditService.logReferralChange({
+        referralId: id,
+        action: hasStatusChange ? 'STATUS_CHANGE' : 'UPDATE',
+        changes,
+        userId,
+      });
+    }
+
+    return updated;
   }
 }
