@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { AgencyTypesService } from './agency-types.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { Prisma } from '../generated/prisma/client';
 
 const mockPrismaService = {
@@ -12,6 +13,10 @@ const mockPrismaService = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+};
+
+const mockAuditService = {
+  logGlobal: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockAgencyType = {
@@ -30,6 +35,7 @@ describe('AgencyTypesService', () => {
       providers: [
         AgencyTypesService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -84,13 +90,25 @@ describe('AgencyTypesService', () => {
     it('should create and return an agency type', async () => {
       mockPrismaService.agencyType.create.mockResolvedValue(mockAgencyType);
 
-      const result = await service.create({
-        name: 'Test Agency Type',
-      } as any);
+      const result = await service.create(
+        {
+          name: 'Test Agency Type',
+        } as any,
+        'admin-1',
+      );
 
       expect(result).toEqual(mockAgencyType);
       expect(mockPrismaService.agencyType.create).toHaveBeenCalledWith({
         data: { name: 'Test Agency Type' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'agency_type',
+        recordId: 'agency-type-1',
+        action: 'CREATE',
+        changes: [
+          { field: 'name', oldValue: null, newValue: 'Test Agency Type' },
+        ],
+        userId: 'admin-1',
       });
     });
 
@@ -123,11 +141,39 @@ describe('AgencyTypesService', () => {
       mockPrismaService.agencyType.findUnique.mockResolvedValue(mockAgencyType);
       mockPrismaService.agencyType.update.mockResolvedValue(updated);
 
-      const result = await service.update('agency-type-1', {
-        name: 'Updated Agency Type',
-      } as any);
+      const result = await service.update(
+        'agency-type-1',
+        {
+          name: 'Updated Agency Type',
+        } as any,
+        'admin-1',
+      );
 
       expect(result.name).toBe('Updated Agency Type');
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'agency_type',
+        recordId: 'agency-type-1',
+        action: 'UPDATE',
+        changes: [
+          {
+            field: 'name',
+            oldValue: 'Test Agency Type',
+            newValue: 'Updated Agency Type',
+          },
+        ],
+        userId: 'admin-1',
+      });
+    });
+
+    it('should not log audit when no fields changed', async () => {
+      mockPrismaService.agencyType.findUnique.mockResolvedValue(mockAgencyType);
+      mockPrismaService.agencyType.update.mockResolvedValue(mockAgencyType);
+
+      await service.update('agency-type-1', {
+        name: 'Test Agency Type',
+      } as any);
+
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for nonexistent agency type', async () => {
@@ -157,11 +203,18 @@ describe('AgencyTypesService', () => {
       mockPrismaService.agencyType.findUnique.mockResolvedValue(mockAgencyType);
       mockPrismaService.agencyType.delete.mockResolvedValue(mockAgencyType);
 
-      const result = await service.remove('agency-type-1');
+      const result = await service.remove('agency-type-1', 'admin-1');
 
       expect(result).toEqual(mockAgencyType);
       expect(mockPrismaService.agencyType.delete).toHaveBeenCalledWith({
         where: { id: 'agency-type-1' },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'agency_type',
+        recordId: 'agency-type-1',
+        action: 'DELETE',
+        changes: [],
+        userId: 'admin-1',
       });
     });
 

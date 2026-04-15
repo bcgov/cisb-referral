@@ -16,6 +16,8 @@ const mockAgencyType = {
   isActive: true,
 };
 
+const mockUser = { id: 'user-1' };
+
 describe('AgencyTypesController', () => {
   let controller: AgencyTypesController;
 
@@ -66,14 +68,20 @@ describe('AgencyTypesController', () => {
     it('should delegate to service with dto', async () => {
       mockAgencyTypesService.create.mockResolvedValue(mockAgencyType);
 
-      const result = await controller.create({
-        name: 'Test Agency Type',
-      } as any);
+      const result = await controller.create(
+        {
+          name: 'Test Agency Type',
+        } as any,
+        mockUser as any,
+      );
 
       expect(result).toEqual(mockAgencyType);
-      expect(mockAgencyTypesService.create).toHaveBeenCalledWith({
-        name: 'Test Agency Type',
-      });
+      expect(mockAgencyTypesService.create).toHaveBeenCalledWith(
+        {
+          name: 'Test Agency Type',
+        },
+        'user-1',
+      );
     });
   });
 
@@ -82,14 +90,19 @@ describe('AgencyTypesController', () => {
       const updated = { ...mockAgencyType, name: 'Updated Agency Type' };
       mockAgencyTypesService.update.mockResolvedValue(updated);
 
-      const result = await controller.update('agency-type-1', {
-        name: 'Updated Agency Type',
-      } as any);
+      const result = await controller.update(
+        'agency-type-1',
+        {
+          name: 'Updated Agency Type',
+        } as any,
+        mockUser as any,
+      );
 
       expect(result.name).toBe('Updated Agency Type');
       expect(mockAgencyTypesService.update).toHaveBeenCalledWith(
         'agency-type-1',
         { name: 'Updated Agency Type' },
+        'user-1',
       );
     });
   });
@@ -98,10 +111,11 @@ describe('AgencyTypesController', () => {
     it('should delegate to service with id', async () => {
       mockAgencyTypesService.remove.mockResolvedValue(mockAgencyType);
 
-      await controller.remove('agency-type-1');
+      await controller.remove('agency-type-1', mockUser as any);
 
       expect(mockAgencyTypesService.remove).toHaveBeenCalledWith(
         'agency-type-1',
+        'user-1',
       );
     });
   });

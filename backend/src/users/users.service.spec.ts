@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 const mockPrismaService = {
   user: {
@@ -10,6 +11,10 @@ const mockPrismaService = {
     findFirst: jest.fn(),
     update: jest.fn(),
   },
+};
+
+const mockAuditService = {
+  logGlobal: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockUser = {
@@ -30,6 +35,7 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();
 
@@ -46,7 +52,7 @@ describe('UsersService', () => {
       };
       mockPrismaService.user.create.mockResolvedValue(mockUser);
 
-      const result = await service.create(dto as any);
+      const result = await service.create(dto as any, 'admin-1');
 
       expect(result).toEqual(mockUser);
       expect(mockPrismaService.user.create).toHaveBeenCalledWith({
@@ -56,6 +62,17 @@ describe('UsersService', () => {
           role: 'ADMIN',
           isActive: true,
         },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'user',
+        recordId: 'user-1',
+        action: 'CREATE',
+        changes: [
+          { field: 'fullName', oldValue: null, newValue: 'Test User' },
+          { field: 'email', oldValue: null, newValue: 'test@test.com' },
+          { field: 'role', oldValue: null, newValue: 'ADMIN' },
+        ],
+        userId: 'admin-1',
       });
     });
 
@@ -137,15 +154,43 @@ describe('UsersService', () => {
       mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
       mockPrismaService.user.update.mockResolvedValue(updated);
 
-      const result = await service.update('user-1', {
-        fullName: 'Updated User',
-      } as any);
+      const result = await service.update(
+        'user-1',
+        {
+          fullName: 'Updated User',
+        } as any,
+        'admin-1',
+      );
 
       expect(result.fullName).toBe('Updated User');
       expect(mockPrismaService.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: { fullName: 'Updated User' },
       });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'user',
+        recordId: 'user-1',
+        action: 'UPDATE',
+        changes: [
+          {
+            field: 'fullName',
+            oldValue: 'Test User',
+            newValue: 'Updated User',
+          },
+        ],
+        userId: 'admin-1',
+      });
+    });
+
+    it('should not log audit when no fields changed', async () => {
+      mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
+      mockPrismaService.user.update.mockResolvedValue(mockUser);
+
+      await service.update('user-1', {
+        fullName: 'Test User',
+      } as any);
+
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for nonexistent user', async () => {
@@ -163,7 +208,7 @@ describe('UsersService', () => {
       mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
       mockPrismaService.user.update.mockResolvedValue(deleted);
 
-      const result = await service.remove('user-1');
+      const result = await service.remove('user-1', 'admin-1');
 
       expect(result.isActive).toBe(false);
       expect(result.deletedAt).toBeDefined();
@@ -173,6 +218,13 @@ describe('UsersService', () => {
           deletedAt: expect.any(Date),
           isActive: false,
         },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'user',
+        recordId: 'user-1',
+        action: 'DELETE',
+        changes: [],
+        userId: 'admin-1',
       });
     });
 

@@ -88,7 +88,7 @@ export interface Referral {
   individualPronouns: string | null;
   individualEmail: string | null;
   individualPhone: string | null;
-  gainFile: string | null;
+  personId: string | null;
   secondaryContact: string | null;
   bestWayToReach: string | null;
   regionId: string | null;
@@ -179,7 +179,7 @@ export interface UpdateReferralDto {
   individualPreferredName?: string | null;
   individualDateOfBirth?: string | null;
   individualPhone?: string | null;
-  gainFile?: string | null;
+  personId?: string | null;
   secondaryContact?: string | null;
   bestWayToReach?: string | null;
   currentlyHomeless?: string | null;
@@ -239,4 +239,35 @@ export interface UpdateUserDto {
   contact?: string;
   role?: UserRole;
   isActive?: boolean;
+}
+
+export interface FetchAuditLogsParams {
+  tableName?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GlobalAuditLogEntry {
+  id: string;
+  tableName: string;
+  recordId: string;
+  action: string;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  author: { id: string; fullName: string } | null;
+}
+
+export interface ReferralAuditLogEntry {
+  id: string;
+  referralId: string;
+  action: string;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  author: { id: string; fullName: string } | null;
 }

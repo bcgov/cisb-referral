@@ -145,9 +145,6 @@ const baseSchema = z.object({
   agencyTypeId: z.uuid().optional(),
   agencyTypeOther: z.string().optional(),
 
-  // SDPR Internal
-  personId: z.string().optional(),
-
   // Common referrer fields
   referrerContactName: z.string().min(1, "Contact name is required"),
   referrerEmail: z.email({ message: "Please enter a valid email" }),
@@ -158,7 +155,7 @@ const baseSchema = z.object({
   individualMiddleName: z.string().optional(),
   individualLastName: z.string().optional(),
   individualPreferredName: z.string().optional(),
-  gainFile: z.string().optional(),
+  personId: z.string().optional(),
   individualPhone: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
   regionId: z.uuid({ message: "Please select a region" }),

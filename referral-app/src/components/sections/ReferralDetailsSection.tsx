@@ -24,7 +24,6 @@ export function ReferralDetailsSection({
 
   const showMinistryFields = referredBy === ReferredByType.PARTNER_MINISTRY;
   const showAgencyFields = referredBy === ReferredByType.PARTNER_AGENCY;
-  const showSDPRField = referredBy === ReferredByType.SDPR_INTERNAL;
 
   return (
     <section>
@@ -108,12 +107,6 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Agency Type (if not listed)"
           />
-        </div>
-      )}
-
-      {showSDPRField && (
-        <div className="form-grid">
-          <TextInput name="personId" control={control} label="Person ID" />
         </div>
       )}
     </section>

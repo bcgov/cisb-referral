@@ -130,11 +130,6 @@ export class CreateReferralDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
-  gainFile?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
   @IsDateString()
   individualDateOfBirth?: string;
 

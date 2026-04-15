@@ -132,7 +132,8 @@ model User {
   lastLoginAt     DateTime?
   
   assignedReferrals         Referral[]   @relation("AssignedReferrals")
-  statusHistoryEntries      ReferralStatusHistory[]
+  auditLogs                 AuditLog[]   @relation("AuditLogs")
+  referralAuditLogs         ReferralAuditLog[] @relation("ReferralAuditLogs")
 
   @@index([email])
   @@index([role])
@@ -184,7 +185,6 @@ model Referral {
   individualMiddleName  String?
   individualLastName    String?
   individualPreferredName String?
-  gainFile              String?
   individualDateOfBirth DateTime?   @db.Date
   individualPhone       String?
 
@@ -221,7 +221,7 @@ model Referral {
   createdBy             String?
   createdByContact      Contact?  @relation("CreatedReferrals", fields: [createdBy], references: [id])
   
-  statusHistory         ReferralStatusHistory[]
+  auditLogs             ReferralAuditLog[]
   
   @@index([referredBy])
   @@index([regionId])
@@ -235,18 +235,36 @@ model Referral {
   @@map("referrals")
 }
 
-model ReferralStatusHistory {
-  id            String          @id @default(uuid())
-  referralId    String
-  referral      Referral        @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  fromStatus    ReferralStatus?
-  toStatus      ReferralStatus
-  comment       String?         @db.Text
-  createdAt     DateTime        @default(now())
-  createdBy     String?
-  author        User?           @relation(fields: [createdBy], references: [id])
-  
+model AuditLog {
+  id          String   @id @default(uuid())
+  tableName   String
+  recordId    String
+  action      String
+  field       String?
+  oldValue    String?  @db.Text
+  newValue    String?  @db.Text
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  author      User?    @relation("AuditLogs", fields: [createdBy], references: [id])
+
+  @@index([tableName, recordId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model ReferralAuditLog {
+  id          String   @id @default(uuid())
+  referralId  String
+  referral    Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  action      String
+  field       String?
+  oldValue    String?  @db.Text
+  newValue    String?  @db.Text
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  author      User?    @relation("ReferralAuditLogs", fields: [createdBy], references: [id])
+
   @@index([referralId])
   @@index([createdAt])
-  @@map("referral_status_history")
+  @@map("referral_audit_log")
 }

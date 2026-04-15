@@ -4,13 +4,26 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { diffObjects } from '../audit/audit.utils';
 import { Region, Prisma } from '../generated/prisma/client';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
 
+const TRACKED_FIELDS = [
+  'name',
+  'managerEmail',
+  'supervisorEmail',
+  'assistantSupervisorEmail',
+  'sharedMailboxEmail',
+];
+
 @Injectable()
 export class RegionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   async findAll(): Promise<Region[]> {
     return this.prisma.region.findMany({
@@ -32,11 +45,24 @@ export class RegionsService {
     return region;
   }
 
-  async create(createRegionDto: CreateRegionDto): Promise<Region> {
+  async create(
+    createRegionDto: CreateRegionDto,
+    userId?: string,
+  ): Promise<Region> {
     try {
-      return await this.prisma.region.create({
+      const region = await this.prisma.region.create({
         data: createRegionDto,
       });
+
+      await this.auditService.logGlobal({
+        tableName: 'region',
+        recordId: region.id,
+        action: 'CREATE',
+        changes: [{ field: 'name', oldValue: null, newValue: region.name }],
+        userId,
+      });
+
+      return region;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -47,14 +73,36 @@ export class RegionsService {
     }
   }
 
-  async update(id: string, updateRegionDto: UpdateRegionDto): Promise<Region> {
-    await this.findOne(id);
+  async update(
+    id: string,
+    updateRegionDto: UpdateRegionDto,
+    userId?: string,
+  ): Promise<Region> {
+    const existing = await this.findOne(id);
+
+    const changes = diffObjects(
+      existing as unknown as Record<string, unknown>,
+      updateRegionDto as unknown as Record<string, unknown>,
+      TRACKED_FIELDS,
+    );
 
     try {
-      return await this.prisma.region.update({
+      const updated = await this.prisma.region.update({
         where: { id },
         data: updateRegionDto,
       });
+
+      if (changes.length > 0) {
+        await this.auditService.logGlobal({
+          tableName: 'region',
+          recordId: id,
+          action: 'UPDATE',
+          changes,
+          userId,
+        });
+      }
+
+      return updated;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -65,11 +113,21 @@ export class RegionsService {
     }
   }
 
-  async remove(id: string): Promise<Region> {
+  async remove(id: string, userId?: string): Promise<Region> {
     await this.findOne(id);
 
-    return this.prisma.region.delete({
+    const removed = await this.prisma.region.delete({
       where: { id },
     });
+
+    await this.auditService.logGlobal({
+      tableName: 'region',
+      recordId: id,
+      action: 'DELETE',
+      changes: [],
+      userId,
+    });
+
+    return removed;
   }
 }

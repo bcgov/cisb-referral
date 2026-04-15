@@ -26,7 +26,8 @@ import { CreateAgencyTypeDto } from './dto/create-agency-type.dto';
 import { UpdateAgencyTypeDto } from './dto/update-agency-type.dto';
 import { AgencyType, UserRole } from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
-import { Roles } from '../auth/decorators';
+import { Roles, CurrentUser } from '../auth/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('agency-types')
 @ApiBearerAuth()
@@ -86,8 +87,9 @@ export class AgencyTypesController {
   })
   async create(
     @Body() createAgencyTypeDto: CreateAgencyTypeDto,
+    @CurrentUser() user: User,
   ): Promise<AgencyType> {
-    return this.agencyTypesService.create(createAgencyTypeDto);
+    return this.agencyTypesService.create(createAgencyTypeDto, user.id);
   }
 
   @Put(':id')
@@ -113,8 +115,9 @@ export class AgencyTypesController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAgencyTypeDto: UpdateAgencyTypeDto,
+    @CurrentUser() user: User,
   ): Promise<AgencyType> {
-    return this.agencyTypesService.update(id, updateAgencyTypeDto);
+    return this.agencyTypesService.update(id, updateAgencyTypeDto, user.id);
   }
 
   @Delete(':id')
@@ -129,7 +132,10 @@ export class AgencyTypesController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 404, description: 'Agency type not found' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.agencyTypesService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    await this.agencyTypesService.remove(id, user.id);
   }
 }

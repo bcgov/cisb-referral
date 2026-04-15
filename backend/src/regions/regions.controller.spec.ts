@@ -15,6 +15,8 @@ const mockRegion = {
   name: 'Test Region',
 };
 
+const mockUser = { id: 'user-1' };
+
 describe('RegionsController', () => {
   let controller: RegionsController;
 
@@ -53,12 +55,18 @@ describe('RegionsController', () => {
     it('should delegate to service with dto', async () => {
       mockRegionsService.create.mockResolvedValue(mockRegion);
 
-      const result = await controller.create({ name: 'Test Region' } as any);
+      const result = await controller.create(
+        { name: 'Test Region' } as any,
+        mockUser as any,
+      );
 
       expect(result).toEqual(mockRegion);
-      expect(mockRegionsService.create).toHaveBeenCalledWith({
-        name: 'Test Region',
-      });
+      expect(mockRegionsService.create).toHaveBeenCalledWith(
+        {
+          name: 'Test Region',
+        },
+        'user-1',
+      );
     });
   });
 
@@ -67,14 +75,22 @@ describe('RegionsController', () => {
       const updated = { ...mockRegion, name: 'Updated Region' };
       mockRegionsService.update.mockResolvedValue(updated);
 
-      const result = await controller.update('region-1', {
-        name: 'Updated Region',
-      } as any);
+      const result = await controller.update(
+        'region-1',
+        {
+          name: 'Updated Region',
+        } as any,
+        mockUser as any,
+      );
 
       expect(result.name).toBe('Updated Region');
-      expect(mockRegionsService.update).toHaveBeenCalledWith('region-1', {
-        name: 'Updated Region',
-      });
+      expect(mockRegionsService.update).toHaveBeenCalledWith(
+        'region-1',
+        {
+          name: 'Updated Region',
+        },
+        'user-1',
+      );
     });
   });
 
@@ -82,9 +98,12 @@ describe('RegionsController', () => {
     it('should delegate to service with id', async () => {
       mockRegionsService.remove.mockResolvedValue(mockRegion);
 
-      await controller.remove('region-1');
+      await controller.remove('region-1', mockUser as any);
 
-      expect(mockRegionsService.remove).toHaveBeenCalledWith('region-1');
+      expect(mockRegionsService.remove).toHaveBeenCalledWith(
+        'region-1',
+        'user-1',
+      );
     });
   });
 });

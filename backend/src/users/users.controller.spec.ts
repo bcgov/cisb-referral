@@ -31,15 +31,23 @@ describe('UsersController', () => {
     jest.clearAllMocks();
   });
 
+  describe('me', () => {
+    it('should return the current user', () => {
+      const result = controller.me(mockUser as any);
+
+      expect(result).toEqual(mockUser);
+    });
+  });
+
   describe('create', () => {
     it('should delegate to service', async () => {
       mockUsersService.create.mockResolvedValue(mockUser);
       const dto = { fullName: 'Test User', email: 'test@test.com' };
 
-      const result = await controller.create(dto as any);
+      const result = await controller.create(dto as any, mockUser as any);
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.create).toHaveBeenCalledWith(dto);
+      expect(mockUsersService.create).toHaveBeenCalledWith(dto, 'user-1');
     });
   });
 
@@ -91,10 +99,18 @@ describe('UsersController', () => {
         fullName: 'Updated User',
       });
 
-      const result = await controller.update('user-1', dto as any);
+      const result = await controller.update(
+        'user-1',
+        dto as any,
+        mockUser as any,
+      );
 
       expect(result.fullName).toBe('Updated User');
-      expect(mockUsersService.update).toHaveBeenCalledWith('user-1', dto);
+      expect(mockUsersService.update).toHaveBeenCalledWith(
+        'user-1',
+        dto,
+        'user-1',
+      );
     });
   });
 
@@ -105,10 +121,10 @@ describe('UsersController', () => {
         isActive: false,
       });
 
-      const result = await controller.remove('user-1');
+      const result = await controller.remove('user-1', mockUser as any);
 
       expect(result.isActive).toBe(false);
-      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1');
+      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1', 'user-1');
     });
   });
 });
