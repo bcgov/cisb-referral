@@ -4,13 +4,6 @@ import { apiService } from "../services";
 import { referredByLabels } from "../constants";
 import type { Referral } from "../types";
 
-const statusStyles: Record<string, string> = {
-  open: "bg-blue-100 text-bcgov-link",
-  assigned: "bg-amber-100 text-amber-800",
-  contact_made: "bg-green-100 text-green-800",
-  closed: "bg-gray-100 text-bcgov-gray",
-};
-
 /**
  * Formats an ISO date string for display.
  */
@@ -154,14 +147,7 @@ export function Referrals() {
                       referral.referredBy}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    <span
-                      className={`inline-block py-1 px-2 rounded text-xs font-medium ${
-                        statusStyles[referral.referralStatus.toLowerCase()] ||
-                        ""
-                      }`}
-                    >
-                      {referral.referralStatus}
-                    </span>
+                    {referral.referralStatus}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.referralOutcome || "—"}
