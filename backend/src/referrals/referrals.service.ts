@@ -88,24 +88,27 @@ export class ReferralsService {
     currentStatus: ReferralStatus,
     newStatus: ReferralStatus,
     dto: UpdateReferralDto,
+    existing: Referral,
   ): void {
     const allowed =
       ReferralsService.VALID_STATUS_TRANSITIONS[currentStatus] ?? [];
     if (!allowed.includes(newStatus)) {
       throw new BadRequestException(
-        `Cannot transition from ${currentStatus} to ${newStatus}`,
+        `Status cannot be changed from ${currentStatus} to ${newStatus}`,
       );
     }
 
-    if (newStatus === ReferralStatus.ASSIGNED && !dto.assignedToId) {
+    const effectiveAssignedToId = dto.assignedToId ?? existing.assignedToId;
+    if (newStatus === ReferralStatus.ASSIGNED && !effectiveAssignedToId) {
       throw new BadRequestException(
-        'assignedToId is required when setting status to ASSIGNED',
+        'A team member must be assigned before setting the status to Assigned',
       );
     }
 
-    if (newStatus === ReferralStatus.CLOSED && !dto.referralOutcome) {
+    const effectiveOutcome = dto.referralOutcome ?? existing.referralOutcome;
+    if (newStatus === ReferralStatus.CLOSED && !effectiveOutcome) {
       throw new BadRequestException(
-        'referralOutcome is required when closing a referral',
+        'A referral outcome must be selected before closing the referral',
       );
     }
   }
@@ -168,7 +171,7 @@ export class ReferralsService {
       });
       if (ministry?.name?.toLowerCase() === 'other' && !dto.ministryNameOther) {
         throw new BadRequestException(
-          'ministryNameOther is required when the selected ministry is Other',
+          'Please specify the ministry name when "Other" is selected',
         );
       }
     }
@@ -179,7 +182,7 @@ export class ReferralsService {
       });
       if (agencyType?.name?.toLowerCase() === 'other' && !dto.agencyTypeOther) {
         throw new BadRequestException(
-          'agencyTypeOther is required when the selected agency type is Other',
+          'Please specify the agency type when "Other" is selected',
         );
       }
     }
@@ -392,11 +395,21 @@ export class ReferralsService {
     const currentStatus = existing.referralStatus as ReferralStatus;
     let newStatus = updateReferralDto.referralStatus;
 
+    // Auto-transition: assigning a team member while OPEN → ASSIGNED
+    if (
+      updateReferralDto.assignedToId &&
+      currentStatus === ReferralStatus.OPEN &&
+      (!newStatus || newStatus === ReferralStatus.OPEN)
+    ) {
+      newStatus = ReferralStatus.ASSIGNED;
+      updateReferralDto.referralStatus = newStatus;
+    }
+
     // Auto-transition: setting firstContactMadeOn while ASSIGNED → CONTACT_MADE
     if (
       updateReferralDto.firstContactMadeOn &&
-      !newStatus &&
-      currentStatus === ReferralStatus.ASSIGNED
+      currentStatus === ReferralStatus.ASSIGNED &&
+      (!newStatus || newStatus === ReferralStatus.ASSIGNED)
     ) {
       newStatus = ReferralStatus.CONTACT_MADE;
       updateReferralDto.referralStatus = newStatus;
@@ -407,6 +420,7 @@ export class ReferralsService {
         currentStatus,
         newStatus,
         updateReferralDto,
+        existing,
       );
     }
 

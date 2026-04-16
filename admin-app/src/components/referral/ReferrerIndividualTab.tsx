@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Section, TextInput, DateInput, SelectInput } from "../ui";
 import { apiService } from "../../services";
 import { yesNoUnknownLabels, releaseFromLabels } from "../../constants";
+import { getChangedFields } from "../../utils";
 import type { Referral, UpdateReferralDto } from "../../types";
 
 const YES_NO_OPTIONS = [
@@ -29,24 +30,29 @@ export function ReferrerIndividualTab({
   referral,
   onUpdate,
 }: Readonly<ReferrerIndividualTabProps>) {
-  const [formData, setFormData] = useState<UpdateReferralDto>({
-    referrerContactName: referral.referrerContactName,
-    referrerEmail: referral.referrerContactEmail,
-    referrerPhone: referral.referrerContactPhone,
-    individualFirstName: referral.individualFirstName,
-    individualMiddleName: referral.individualMiddleName,
-    individualLastName: referral.individualLastName,
-    individualPreferredName: referral.individualPreferredName,
-    individualDateOfBirth: referral.individualDateOfBirth,
-    individualPhone: referral.individualPhone,
-    personId: referral.personId,
-    secondaryContact: referral.secondaryContact,
-    bestWayToReach: referral.bestWayToReach,
-    currentlyHomeless: referral.currentlyHomeless,
-    losingHousing: referral.losingHousing,
-    pendingRelease: referral.pendingRelease,
-    releaseDate: referral.releaseDate,
-  });
+  const initialFormData = useMemo<UpdateReferralDto>(
+    () => ({
+      referrerContactName: referral.referrerContactName,
+      referrerEmail: referral.referrerContactEmail,
+      referrerPhone: referral.referrerContactPhone,
+      individualFirstName: referral.individualFirstName,
+      individualMiddleName: referral.individualMiddleName,
+      individualLastName: referral.individualLastName,
+      individualPreferredName: referral.individualPreferredName,
+      individualDateOfBirth: referral.individualDateOfBirth,
+      individualPhone: referral.individualPhone,
+      personId: referral.personId,
+      secondaryContact: referral.secondaryContact,
+      bestWayToReach: referral.bestWayToReach,
+      currentlyHomeless: referral.currentlyHomeless,
+      losingHousing: referral.losingHousing,
+      pendingRelease: referral.pendingRelease,
+      releaseDate: referral.releaseDate,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [referral.id],
+  );
+  const [formData, setFormData] = useState<UpdateReferralDto>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -64,14 +70,20 @@ export function ReferrerIndividualTab({
     setSaveSuccess(false);
 
     try {
-      await apiService.updateReferral(referral.id, formData);
+      const changedFields = getChangedFields(formData, initialFormData);
+      if (Object.keys(changedFields).length === 0) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        return;
+      }
+      await apiService.updateReferral(referral.id, changedFields);
       setSaveSuccess(true);
       onUpdate();
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setSaveError(
-        error.response?.data?.message || "Failed to update referral",
+        error.response?.data?.message || "Failed to update referral.",
       );
     } finally {
       setSaving(false);

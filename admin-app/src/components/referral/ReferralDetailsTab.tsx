@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Section,
@@ -17,7 +17,11 @@ import {
   outcomeLabels,
   supportLabels,
 } from "../../constants";
-import { calculateTriageTime, calculateContactTime } from "../../utils";
+import {
+  calculateTriageTime,
+  calculateContactTime,
+  getChangedFields,
+} from "../../utils";
 import type {
   Referral,
   User,
@@ -62,30 +66,34 @@ export function ReferralDetailsTab({
   users,
   onUpdate,
 }: Readonly<ReferralDetailsTabProps>) {
-  const [formData, setFormData] = useState<UpdateReferralDto>({
-    referralStatus: referral.referralStatus as ReferralStatus,
-    referralOutcome: referral.referralOutcome as ReferralOutcome | null,
-    assignedToId: referral.assignedToId,
-    communityPartnerName: referral.communityPartnerName,
-    flag: referral.flag,
-    assignedOn: referral.assignedOn,
-    firstContactMadeOn: referral.firstContactMadeOn,
-    currentlyConnectedSupports: referral.currentlyConnectedSupports,
-    currentlyConnectedSupportsOther: referral.currentlyConnectedSupportsOther,
-    regionId: referral.regionId,
-    specificCityTown: referral.specificCityTown,
-    neededSupports: referral.neededSupports,
-    neededSupportsOther: referral.neededSupportsOther,
-    referralSummary: referral.referralSummary,
-    // Referred By Info
-    referredBy: referral.referredBy,
-    ministryId: referral.ministryId,
-    ministryNameOther: referral.ministryNameOther,
-    agencyTypeId: referral.agencyTypeId,
-    agencyTypeOther: referral.agencyTypeOther,
-    partnerAgencyName: referral.partnerAgencyName,
-    programArea: referral.programArea,
-  });
+  const initialFormData = useMemo<UpdateReferralDto>(
+    () => ({
+      referralStatus: referral.referralStatus as ReferralStatus,
+      referralOutcome: referral.referralOutcome as ReferralOutcome | null,
+      assignedToId: referral.assignedToId,
+      communityPartnerName: referral.communityPartnerName,
+      flag: referral.flag,
+      assignedOn: referral.assignedOn,
+      firstContactMadeOn: referral.firstContactMadeOn,
+      currentlyConnectedSupports: referral.currentlyConnectedSupports,
+      currentlyConnectedSupportsOther: referral.currentlyConnectedSupportsOther,
+      regionId: referral.regionId,
+      specificCityTown: referral.specificCityTown,
+      neededSupports: referral.neededSupports,
+      neededSupportsOther: referral.neededSupportsOther,
+      referralSummary: referral.referralSummary,
+      referredBy: referral.referredBy,
+      ministryId: referral.ministryId,
+      ministryNameOther: referral.ministryNameOther,
+      agencyTypeId: referral.agencyTypeId,
+      agencyTypeOther: referral.agencyTypeOther,
+      partnerAgencyName: referral.partnerAgencyName,
+      programArea: referral.programArea,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [referral.id],
+  );
+  const [formData, setFormData] = useState<UpdateReferralDto>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -158,19 +166,36 @@ export function ReferralDetailsTab({
   };
 
   const handleSave = async () => {
-    setSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
 
+    if (
+      formData.referralStatus === ReferralStatus.CLOSED &&
+      !formData.referralOutcome
+    ) {
+      setSaveError(
+        "A referral outcome must be selected before closing the referral.",
+      );
+      return;
+    }
+
+    setSaving(true);
+
     try {
-      await apiService.updateReferral(referral.id, formData);
+      const changedFields = getChangedFields(formData, initialFormData);
+      if (Object.keys(changedFields).length === 0) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        return;
+      }
+      await apiService.updateReferral(referral.id, changedFields);
       setSaveSuccess(true);
       onUpdate();
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setSaveError(
-        error.response?.data?.message || "Failed to update referral",
+        error.response?.data?.message || "Failed to update referral.",
       );
     } finally {
       setSaving(false);
@@ -248,12 +273,6 @@ export function ReferralDetailsTab({
                       className="w-full px-3 py-2 text-left hover:bg-gray-100"
                       onMouseDown={() => {
                         updateField("assignedToId", user.id);
-                        if (formData.referralStatus === ReferralStatus.OPEN) {
-                          updateField(
-                            "referralStatus",
-                            ReferralStatus.ASSIGNED,
-                          );
-                        }
                         setUserSearch("");
                         setShowUserDropdown(false);
                       }}

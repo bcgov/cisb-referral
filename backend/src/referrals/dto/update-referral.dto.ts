@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsArray,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { SupportType } from '../../generated/prisma/client';
 import {
   ReferredByType,
@@ -43,7 +44,8 @@ export class UpdateReferralDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  assignedToId?: string;
+  @Transform(({ value }) => (value === '' ? null : value))
+  assignedToId?: string | null;
 
   @ApiProperty({ enum: ReferralOutcome, required: false })
   @IsOptional()
