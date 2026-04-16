@@ -73,6 +73,48 @@ export function DateInput({
   );
 }
 
+interface DateTimeInputProps {
+  readonly label: string;
+  readonly value: string | null | undefined;
+  readonly onChange: (value: string | null) => void;
+}
+
+export function DateTimeInput({
+  label,
+  value,
+  onChange,
+}: Readonly<DateTimeInputProps>) {
+  const formatDateTimeForInput = (date: string | null | undefined): string => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  return (
+    <FormField label={label}>
+      <input
+        type="datetime-local"
+        value={formatDateTimeForInput(value)}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (!val) {
+            onChange(null);
+            return;
+          }
+          onChange(new Date(val).toISOString());
+        }}
+        className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+      />
+    </FormField>
+  );
+}
+
 interface SelectInputProps {
   readonly label: string;
   readonly value: string | null | undefined;

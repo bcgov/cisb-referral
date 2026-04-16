@@ -5,7 +5,7 @@ import {
   Field,
   MultiSelect,
   TextInput,
-  DateInput,
+  DateTimeInput,
   SelectInput,
   TextAreaInput,
   ReadOnlyField,
@@ -17,11 +17,7 @@ import {
   outcomeLabels,
   supportLabels,
 } from "../../constants";
-import {
-  calculateTriageTime,
-  calculateContactTime,
-  getChangedFields,
-} from "../../utils";
+import { formatHours, getChangedFields } from "../../utils";
 import type {
   Referral,
   User,
@@ -363,26 +359,23 @@ export function ReferralDetailsTab({
             onChange={(v) => updateField("flag", v === "YES")}
             options={FLAG_OPTIONS}
           />
-          <DateInput
+          <DateTimeInput
             label="Assigned On"
             value={formData.assignedOn}
             onChange={(v) => updateField("assignedOn", v)}
           />
-          <DateInput
+          <DateTimeInput
             label="First Contact Made On"
             value={formData.firstContactMadeOn}
             onChange={(v) => updateField("firstContactMadeOn", v)}
           />
           <Field
-            label="Length of Time to Triage"
-            value={calculateTriageTime(referral.createdAt, referral.assignedOn)}
+            label="Length Of Time To Triage (Hours)"
+            value={formatHours(referral.lottTriage)}
           />
           <Field
-            label="Length of Time to Contact After Triage"
-            value={calculateContactTime(
-              referral.assignedOn,
-              referral.firstContactMadeOn,
-            )}
+            label="Length Of Time To Contact After Triage (Hours)"
+            value={formatHours(referral.lottContact)}
           />
         </div>
       </Section>

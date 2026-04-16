@@ -373,6 +373,33 @@ export class ReferralsService {
     }
   }
 
+  private computeHoursDiff(start: Date, end: Date): number {
+    return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  }
+
+  private computeLottFields(
+    updateData: Record<string, unknown>,
+    existing: Referral,
+  ): void {
+    const assignedOn =
+      (updateData.assignedOn as Date | undefined) ?? existing.assignedOn;
+    const firstContactMadeOn =
+      (updateData.firstContactMadeOn as Date | undefined) ??
+      existing.firstContactMadeOn;
+    const createdAt = existing.createdAt;
+
+    if (assignedOn) {
+      updateData.lottTriage = this.computeHoursDiff(createdAt, assignedOn);
+    }
+
+    if (assignedOn && firstContactMadeOn) {
+      updateData.lottContact = this.computeHoursDiff(
+        assignedOn,
+        firstContactMadeOn,
+      );
+    }
+  }
+
   private removeUndefinedKeys(
     data: Record<string, unknown>,
   ): Record<string, unknown> {
@@ -426,6 +453,7 @@ export class ReferralsService {
 
     const updateData = this.buildUpdateData(updateReferralDto, userId);
     this.applyAutoTimestamps(updateData, currentStatus, newStatus, existing);
+    this.computeLottFields(updateData, existing);
 
     const cleanData = this.removeUndefinedKeys(updateData);
 

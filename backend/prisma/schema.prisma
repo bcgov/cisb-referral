@@ -213,6 +213,8 @@ model Referral {
   assignedTo            User?           @relation("AssignedReferrals", fields: [assignedToId], references: [id])
   assignedOn            DateTime?
   firstContactMadeOn    DateTime?
+  lottTriage            Float?
+  lottContact           Float?
   followUpDate          DateTime?   @db.Date
   dueDate               DateTime?   @db.Date
   completedDate         DateTime?   @db.Date

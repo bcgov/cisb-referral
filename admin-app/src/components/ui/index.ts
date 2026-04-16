@@ -11,6 +11,7 @@ export {
   FormField,
   TextInput,
   DateInput,
+  DateTimeInput,
   SelectInput,
   TextAreaInput,
   ReadOnlyField,

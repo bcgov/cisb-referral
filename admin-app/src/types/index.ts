@@ -108,6 +108,8 @@ export interface Referral {
   assignedTo: User | null;
   assignedOn: string | null;
   firstContactMadeOn: string | null;
+  lottTriage: number | null;
+  lottContact: number | null;
   followUpDate: string | null;
   dueDate: string | null;
   completedDate: string | null;
