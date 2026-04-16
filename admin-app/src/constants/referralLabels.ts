@@ -33,7 +33,7 @@ export const supportLabels: Record<string, string> = {
 export const statusLabels: Record<string, string> = {
   OPEN: "Open",
   ASSIGNED: "Assigned",
-  CONTACT_MADE: "Contact Made",
+  CONTACT_MADE: "Contact-Made",
   CLOSED: "Closed",
 };
 

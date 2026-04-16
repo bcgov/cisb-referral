@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiService } from "../services";
-import { referredByLabels } from "../constants";
+import { referredByLabels, statusLabels, outcomeLabels } from "../constants";
 import type { Referral } from "../types";
 
 /**
@@ -147,10 +147,14 @@ export function Referrals() {
                       referral.referredBy}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.referralStatus}
+                    {statusLabels[referral.referralStatus] ||
+                      referral.referralStatus}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.referralOutcome || "—"}
+                    {referral.referralOutcome
+                      ? outcomeLabels[referral.referralOutcome] ||
+                        referral.referralOutcome
+                      : "—"}
                   </td>
                   <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
                     {referral.individualFirstName || "—"}
