@@ -1,36 +1,23 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@bcgov/design-system-react-components";
 
 export function ReferralSuccess() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const referenceNumber = searchParams.get("ref");
-
   return (
     <div className="success-container">
       <div className="success-card">
-        <div className="success-icon">✓</div>
-        <h1>Submission Successful</h1>
-
-        <p className="success-message">
+        <h1 className="success-message">
           Your referral was successfully submitted.
-        </p>
-
-        {referenceNumber && (
-          <div className="reference-box">
-            <span className="reference-label">Reference Number:</span>
-            <span className="reference-number">{referenceNumber}</span>
-          </div>
-        )}
+        </h1>
 
         <p className="confirmation-note">
-          A confirmation email will be sent to your registered email address.
+          A confirmation email will be sent to your email address.
         </p>
 
         <p className="thank-you">Thank you!</p>
 
         <div className="success-actions">
-          <Button variant="primary" onPress={() => navigate("/")}>
+          <Button variant="primary" onPress={() => navigate("/referrals")}>
             Make Another Referral
           </Button>
           <Button variant="secondary" onPress={() => navigate("/")}>

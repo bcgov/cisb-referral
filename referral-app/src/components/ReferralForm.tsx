@@ -13,13 +13,14 @@ import {
   IndividualInfoSection,
   SupportServicesSection,
 } from "./sections";
-import { useLookupData } from "../hooks";
+import { useLookupData, useProfile } from "../hooks";
 import { apiService } from "../services";
 
 export function ReferralForm() {
   const navigate = useNavigate();
   const { regions, ministries, agencyTypes, isLoading, error } =
     useLookupData();
+  const { profile } = useProfile();
 
   const [submitStatus, setSubmitStatus] = useState<{
     type: "idle" | "loading" | "error";
@@ -29,6 +30,9 @@ export function ReferralForm() {
   const form = useForm<ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
     defaultValues: {
+      referrerContactName: profile?.fullName ?? "",
+      referrerPhone: profile?.phone ?? "",
+      referrerEmail: profile?.email ?? "",
       currentlyConnectedSupports: [],
       neededSupports: [],
     },
