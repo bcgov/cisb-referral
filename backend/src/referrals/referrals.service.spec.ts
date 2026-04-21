@@ -106,6 +106,7 @@ describe('ReferralsService', () => {
   const mockMailService = {
     sendAutomaticReply: jest.fn().mockResolvedValue(undefined),
     sendAssignmentNotification: jest.fn().mockResolvedValue(undefined),
+    sendRegionChangeNotification: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {

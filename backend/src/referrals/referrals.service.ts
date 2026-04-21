@@ -498,6 +498,7 @@ export class ReferralsService {
     }
 
     this.maybeNotifyNewAssignee(existing.assignedToId, updated);
+    this.maybeNotifyRegionChange(existing.regionId, updated);
 
     return updated;
   }
@@ -525,6 +526,44 @@ export class ReferralsService {
       .catch((err: unknown) => {
         this.logger.error(
           `Assignment notification failed for referral ${updated.id}: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err.stack : undefined,
+        );
+      });
+  }
+
+  private maybeNotifyRegionChange(
+    previousRegionId: string,
+    updated: Referral,
+  ): void {
+    if (updated.regionId === previousRegionId) return;
+
+    const region = (updated as Referral & {
+      region: { supervisorEmail: string | null; sharedMailboxEmail: string | null };
+    }).region;
+
+    const recipients = [
+      region.supervisorEmail?.trim(),
+      region.sharedMailboxEmail?.trim(),
+    ].filter((email): email is string => Boolean(email));
+
+    if (recipients.length === 0) {
+      this.logger.warn(
+        `Region change for referral ${updated.id} but new region has no supervisor or shared mailbox configured`,
+      );
+      return;
+    }
+
+    void this.mailService
+      .sendRegionChangeNotification(recipients, {
+        referralId: updated.id,
+        cityTown: updated.specificCityTown,
+        createdAt: updated.createdAt,
+        status: updated.referralStatus,
+        flagged: updated.flag,
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Region change notification failed for referral ${updated.id}: ${err instanceof Error ? err.message : String(err)}`,
           err instanceof Error ? err.stack : undefined,
         );
       });

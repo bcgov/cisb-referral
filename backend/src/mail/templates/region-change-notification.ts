@@ -6,19 +6,19 @@ import {
   renderReferralSummaryTextLines,
 } from './referral-summary-table';
 
-export type AssignmentNotificationParams = ReferralSummaryRow;
+export type RegionChangeNotificationParams = ReferralSummaryRow;
 
-export function renderAssignmentNotification(
-  params: AssignmentNotificationParams,
+export function renderRegionChangeNotification(
+  params: RegionChangeNotificationParams,
 ): RenderedEmail {
   const s = formatReferralSummary(params);
 
-  const subject = `Referral Assignment (${s.when}) (${s.referralId})`;
+  const subject = `Referral Re-Assignment (${s.when}) (${s.referralId})`;
 
   const text = [
     'Hello,',
     '',
-    'You have been assigned the following referral:',
+    'The following referral has been re-assigned to your region:',
     '',
     ...renderReferralSummaryTextLines(s),
     '',
@@ -27,7 +27,7 @@ export function renderAssignmentNotification(
 
   const html = `
     <p>Hello,</p>
-    <p>You have been assigned the following referral:</p>
+    <p>The following referral has been re-assigned to your region:</p>
     ${renderReferralSummaryHtmlTable(s)}
     <p>Please attend to accordingly.</p>
   `.trim();

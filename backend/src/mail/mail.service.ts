@@ -7,6 +7,10 @@ import {
   AssignmentNotificationParams,
   renderAssignmentNotification,
 } from './templates/assignment-notification';
+import {
+  RegionChangeNotificationParams,
+  renderRegionChangeNotification,
+} from './templates/region-change-notification';
 import { Referral } from '../generated/prisma/client';
 
 interface ResolvedTransport {
@@ -59,6 +63,30 @@ export class MailService {
 
     this.logger.log(
       `Assignment notification sent for referral ${data.referralId} to ${to} (messageId=${info.messageId})`,
+    );
+  }
+
+  async sendRegionChangeNotification(
+    to: string[],
+    data: Omit<RegionChangeNotificationParams, 'referralUrl'>,
+  ): Promise<void> {
+    const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
+    const { subject, text, html } = renderRegionChangeNotification({
+      ...data,
+      referralUrl,
+    });
+    const { transporter, from } = this.getTransport();
+
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      text,
+      html,
+    });
+
+    this.logger.log(
+      `Region change notification sent for referral ${data.referralId} to ${to.join(', ')} (messageId=${info.messageId})`,
     );
   }
 
