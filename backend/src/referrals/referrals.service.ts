@@ -1,10 +1,12 @@
 import {
   Injectable,
   BadRequestException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { MailService } from '../mail/mail.service';
 import { diffObjects } from '../audit/audit.utils';
 import {
   CreateReferralDto,
@@ -79,9 +81,12 @@ export class ReferralsService {
     [ReferralStatus.CLOSED]: [],
   };
 
+  private readonly logger = new Logger('REFERRALS');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly mailService: MailService,
   ) {}
 
   private validateStatusTransition(
@@ -224,6 +229,13 @@ export class ReferralsService {
     await this.auditService.logReferralChange({
       referralId: referral.id,
       action: 'CREATE',
+    });
+
+    void this.mailService.sendAutomaticReply(referral).catch((err: unknown) => {
+      this.logger.error(
+        `Automatic reply failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
     });
 
     return referral;

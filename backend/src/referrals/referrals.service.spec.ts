@@ -3,6 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ReferralsService } from './referrals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { MailService } from '../mail/mail.service';
 import {
   ReferredByType,
   YesNoUnknown,
@@ -102,6 +103,10 @@ describe('ReferralsService', () => {
     logReferralChange: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockMailService = {
+    sendAutomaticReply: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -110,6 +115,7 @@ describe('ReferralsService', () => {
         ReferralsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: AuditService, useValue: mockAuditService },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
