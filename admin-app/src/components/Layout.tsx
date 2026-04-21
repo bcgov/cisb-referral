@@ -3,6 +3,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
 import { logout, getUser } from "../auth";
 import { useCurrentUser } from "../hooks";
+import { AccessDenied } from "./AccessDenied";
 
 /** Navigation links displayed in sidebar */
 const NAV_ITEMS = [
@@ -24,11 +25,15 @@ const SYSTEM_ADMIN_NAV_ITEMS = [
  */
 export function Layout() {
   const user = getUser();
-  const { isSystemAdmin } = useCurrentUser();
+  const { isSystemAdmin, isForbidden } = useCurrentUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((o) => !o), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  if (isForbidden) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -60,7 +65,7 @@ export function Layout() {
           </svg>
         </button>
         <div className="flex-1">
-          <Header title="CISB Admin" />
+          <Header title="CISB Referral App" />
         </div>
       </div>
 
