@@ -1,4 +1,5 @@
 import { Referral } from '../../generated/prisma/client';
+import { escapeHtml } from './escape-html';
 
 export interface RenderedEmail {
   subject: string;
@@ -9,7 +10,7 @@ export interface RenderedEmail {
 export function renderAutomaticReply(referral: Referral): RenderedEmail {
   const greetingName = referral.referrerContactName?.trim() || 'there';
 
-  const subject = "We've received your referral";
+  const subject = 'CISB Referral';
 
   const text = [
     `Hello ${greetingName},`,
@@ -36,13 +37,4 @@ export function renderAutomaticReply(referral: Referral): RenderedEmail {
   `.trim();
 
   return { subject, text, html };
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }

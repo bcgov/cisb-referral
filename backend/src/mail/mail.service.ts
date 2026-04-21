@@ -3,6 +3,10 @@ import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { MailConfigService } from './mail.config';
 import { renderAutomaticReply } from './templates/automatic-reply';
+import {
+  AssignmentNotificationParams,
+  renderAssignmentNotification,
+} from './templates/assignment-notification';
 import { Referral } from '../generated/prisma/client';
 
 interface ResolvedTransport {
@@ -31,6 +35,30 @@ export class MailService {
 
     this.logger.log(
       `Automatic reply sent for referral ${referral.id} (messageId=${info.messageId})`,
+    );
+  }
+
+  async sendAssignmentNotification(
+    to: string,
+    data: Omit<AssignmentNotificationParams, 'referralUrl'>,
+  ): Promise<void> {
+    const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
+    const { subject, text, html } = renderAssignmentNotification({
+      ...data,
+      referralUrl,
+    });
+    const { transporter, from } = this.getTransport();
+
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      text,
+      html,
+    });
+
+    this.logger.log(
+      `Assignment notification sent for referral ${data.referralId} to ${to} (messageId=${info.messageId})`,
     );
   }
 

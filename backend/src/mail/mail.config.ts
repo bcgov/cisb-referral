@@ -33,4 +33,10 @@ export class MailConfigService {
       from: this.configService.getOrThrow<string>('SMTP_FROM'),
     };
   }
+
+  getAdminAppUrl(): string {
+    return this.configService
+      .getOrThrow<string>('ADMIN_APP_URL')
+      .replace(/\/+$/, '');
+  }
 }

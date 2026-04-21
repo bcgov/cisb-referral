@@ -497,6 +497,36 @@ export class ReferralsService {
       });
     }
 
+    this.maybeNotifyNewAssignee(existing.assignedToId, updated);
+
     return updated;
+  }
+
+  private maybeNotifyNewAssignee(
+    previousAssigneeId: string | null,
+    updated: Referral,
+  ): void {
+    const assignee = (updated as Referral & { assignedTo: { email: string } | null })
+      .assignedTo;
+    const newAssigneeId = updated.assignedToId;
+
+    if (!newAssigneeId || newAssigneeId === previousAssigneeId || !assignee) {
+      return;
+    }
+
+    void this.mailService
+      .sendAssignmentNotification(assignee.email, {
+        referralId: updated.id,
+        cityTown: updated.specificCityTown,
+        createdAt: updated.createdAt,
+        status: updated.referralStatus,
+        flagged: updated.flag,
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Assignment notification failed for referral ${updated.id}: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err.stack : undefined,
+        );
+      });
   }
 }
