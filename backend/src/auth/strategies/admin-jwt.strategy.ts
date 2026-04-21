@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
@@ -64,17 +64,17 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
     }
 
     if (!user) {
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         'User not found. Please contact an administrator.',
       );
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User account is deactivated.');
+      throw new ForbiddenException('User account is deactivated.');
     }
 
     if (user.deletedAt) {
-      throw new UnauthorizedException('User account has been deleted.');
+      throw new ForbiddenException('User account has been deleted.');
     }
 
     return user;

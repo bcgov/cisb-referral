@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { AdminJwtStrategy } from './admin-jwt.strategy';
 import { KeycloakConfigService } from '../config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -89,21 +89,21 @@ describe('AdminJwtStrategy', () => {
       });
     });
 
-    it('should throw UnauthorizedException when user not found', async () => {
+    it('should throw ForbiddenException when user not found', async () => {
       // Arrange
       const payload = createTestPayload({ sub: 'unknown-kc-id' });
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
       await expect(strategy.validate(payload)).rejects.toThrow(
-        UnauthorizedException,
+        ForbiddenException,
       );
       await expect(strategy.validate(payload)).rejects.toThrow(
         'User not found. Please contact an administrator.',
       );
     });
 
-    it('should throw UnauthorizedException when user is inactive', async () => {
+    it('should throw ForbiddenException when user is inactive', async () => {
       // Arrange
       const inactiveUser = createTestUser({ isActive: false });
       const payload = createTestPayload();
@@ -111,14 +111,14 @@ describe('AdminJwtStrategy', () => {
 
       // Act & Assert
       await expect(strategy.validate(payload)).rejects.toThrow(
-        UnauthorizedException,
+        ForbiddenException,
       );
       await expect(strategy.validate(payload)).rejects.toThrow(
         'User account is deactivated.',
       );
     });
 
-    it('should throw UnauthorizedException when user is deleted', async () => {
+    it('should throw ForbiddenException when user is deleted', async () => {
       // Arrange
       const deletedUser = createTestUser({ deletedAt: new Date() });
       const payload = createTestPayload();
@@ -126,7 +126,7 @@ describe('AdminJwtStrategy', () => {
 
       // Act & Assert
       await expect(strategy.validate(payload)).rejects.toThrow(
-        UnauthorizedException,
+        ForbiddenException,
       );
       await expect(strategy.validate(payload)).rejects.toThrow(
         'User account has been deleted.',
