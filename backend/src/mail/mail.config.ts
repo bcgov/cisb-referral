@@ -39,4 +39,10 @@ export class MailConfigService {
       .getOrThrow<string>('ADMIN_APP_URL')
       .replace(/\/+$/, '');
   }
+
+  isMailEnabled(): boolean {
+    return (
+      this.configService.get<string>('MAIL_ENABLED')?.toLowerCase() === 'true'
+    );
+  }
 }

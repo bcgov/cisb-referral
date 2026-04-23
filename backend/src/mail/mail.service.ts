@@ -30,6 +30,8 @@ export class MailService {
   constructor(private readonly mailConfig: MailConfigService) {}
 
   async sendAutomaticReply(referral: Referral): Promise<void> {
+    if (this.skipIfDisabled(`automatic reply for referral ${referral.id}`))
+      return;
     const { subject, text, html } = renderAutomaticReply(referral);
     const { transporter, from } = this.getTransport();
 
@@ -50,6 +52,10 @@ export class MailService {
     to: string,
     data: Omit<AssignmentNotificationParams, 'referralUrl'>,
   ): Promise<void> {
+    if (
+      this.skipIfDisabled(`assignment notification for referral ${data.referralId}`)
+    )
+      return;
     const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
     const { subject, text, html } = renderAssignmentNotification({
       ...data,
@@ -74,6 +80,10 @@ export class MailService {
     to: string[],
     data: Omit<UrgentNotificationParams, 'referralUrl'>,
   ): Promise<void> {
+    if (
+      this.skipIfDisabled(`urgent notification for referral ${data.referralId}`)
+    )
+      return;
     const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
     const { subject, text, html } = renderUrgentNotification({
       ...data,
@@ -98,6 +108,12 @@ export class MailService {
     to: string[],
     data: Omit<RegionChangeNotificationParams, 'referralUrl'>,
   ): Promise<void> {
+    if (
+      this.skipIfDisabled(
+        `region change notification for referral ${data.referralId}`,
+      )
+    )
+      return;
     const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
     const { subject, text, html } = renderRegionChangeNotification({
       ...data,
@@ -116,6 +132,12 @@ export class MailService {
     this.logger.log(
       `Region change notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
     );
+  }
+
+  private skipIfDisabled(context: string): boolean {
+    if (this.mailConfig.isMailEnabled()) return false;
+    this.logger.warn(`MAIL_ENABLED=false; skipping ${context}`);
+    return true;
   }
 
   private getTransport(): ResolvedTransport {

@@ -107,6 +107,12 @@ spec:
                 secretKeyRef:
                   name: cisb-referral-backend-secrets
                   key: REFERRAL_KC_AUDIENCE
+            - name: MAIL_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: MAIL_ENABLED
+                  optional: true
             - name: SMTP_HOST
               valueFrom:
                 secretKeyRef:
