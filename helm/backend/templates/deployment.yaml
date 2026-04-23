@@ -160,7 +160,7 @@ spec:
           {{- end }}
           startupProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
               scheme: HTTP
             initialDelaySeconds: 5
@@ -170,7 +170,7 @@ spec:
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
               scheme: HTTP
             initialDelaySeconds: 5
@@ -180,7 +180,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
               scheme: HTTP
             initialDelaySeconds: 15
