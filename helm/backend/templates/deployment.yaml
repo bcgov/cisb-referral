@@ -107,6 +107,43 @@ spec:
                 secretKeyRef:
                   name: cisb-referral-backend-secrets
                   key: REFERRAL_KC_AUDIENCE
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_PORT
+            - name: SMTP_SECURE
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_SECURE
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_FROM
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_USER
+                  optional: true
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: SMTP_PASSWORD
+                  optional: true
+            - name: ADMIN_APP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cisb-referral-backend-secrets
+                  key: ADMIN_APP_URL
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
