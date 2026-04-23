@@ -15,7 +15,8 @@ export class MailConfigService {
   constructor(private readonly configService: ConfigService) {}
 
   getSmtpConfig(): SmtpConfig {
-    const user = this.configService.get<string>('SMTP_USER')?.trim() || undefined;
+    const user =
+      this.configService.get<string>('SMTP_USER')?.trim() || undefined;
     const password =
       this.configService.get<string>('SMTP_PASSWORD')?.trim() || undefined;
 
@@ -35,9 +36,9 @@ export class MailConfigService {
   }
 
   getAdminAppUrl(): string {
-    return this.configService
-      .getOrThrow<string>('ADMIN_APP_URL')
-      .replace(/\/+$/, '');
+    let url = this.configService.getOrThrow<string>('ADMIN_APP_URL');
+    while (url.endsWith('/')) url = url.slice(0, -1);
+    return url;
   }
 
   isMailEnabled(): boolean {
