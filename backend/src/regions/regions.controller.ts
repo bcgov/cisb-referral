@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { RegionsService } from './regions.service';
 import { RegionDto } from './dto/region.dto';
+import { RegionLookupDto } from './dto/region-lookup.dto';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
 import { Region, UserRole } from '../generated/prisma/client';
@@ -33,8 +34,22 @@ import type { User } from '../generated/prisma/client';
 export class RegionsController {
   constructor(private readonly regionsService: RegionsService) {}
 
+  @Get('lookup')
+  @ApiOperation({
+    summary: 'Get all regions (id and name only) for dropdowns',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Minimal region list safe for non-admin callers',
+    type: [RegionLookupDto],
+  })
+  async findAllLookup() {
+    return this.regionsService.findAllLookup();
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get all regions' })
+  @UseGuards(AdminAuthGuard)
+  @ApiOperation({ summary: 'Get all regions (admin, includes staff emails)' })
   @ApiResponse({
     status: 200,
     description: 'List of all regions',
@@ -45,7 +60,8 @@ export class RegionsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get region by ID' })
+  @UseGuards(AdminAuthGuard)
+  @ApiOperation({ summary: 'Get region by ID (admin, includes staff emails)' })
   @ApiResponse({ status: 200, description: 'Region details', type: RegionDto })
   @ApiResponse({ status: 404, description: 'Region not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Region> {

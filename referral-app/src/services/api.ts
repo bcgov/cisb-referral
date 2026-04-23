@@ -63,7 +63,7 @@ class APIService {
   }
 
   async fetchRegions(): Promise<Region[]> {
-    const response = await this.client.get<Region[]>("/regions");
+    const response = await this.client.get<Region[]>("/regions/lookup");
     return response.data;
   }
 

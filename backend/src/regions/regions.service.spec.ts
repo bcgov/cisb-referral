@@ -55,6 +55,21 @@ describe('RegionsService', () => {
     });
   });
 
+  describe('findAllLookup', () => {
+    it('should select only id and name', async () => {
+      const rows = [{ id: 'region-1', name: 'Test Region' }];
+      mockPrismaService.region.findMany.mockResolvedValue(rows);
+
+      const result = await service.findAllLookup();
+
+      expect(result).toEqual(rows);
+      expect(mockPrismaService.region.findMany).toHaveBeenCalledWith({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      });
+    });
+  });
+
   describe('findOne', () => {
     it('should return region when found', async () => {
       mockPrismaService.region.findUnique.mockResolvedValue(mockRegion);
