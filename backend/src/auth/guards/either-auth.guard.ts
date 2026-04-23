@@ -1,7 +1,8 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -43,8 +44,14 @@ export class EitherAuthGuard implements CanActivate {
       if (adminResult) {
         return true;
       }
-    } catch {
-      // Admin auth failed, try contact-jwt
+    } catch (error) {
+      // Admin JWT validated but the user is not permitted (not provisioned,
+      // deactivated, or deleted). Don't fall through to contact-jwt — rethrow
+      // so the client gets the specific 403 and can show the access-denied UI.
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      // Otherwise the token wasn't a valid admin token; fall through.
     }
 
     // Try contact-jwt
@@ -53,8 +60,10 @@ export class EitherAuthGuard implements CanActivate {
       if (contactResult) {
         return true;
       }
-    } catch {
-      // Contact auth also failed
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
     }
 
     throw new UnauthorizedException('Invalid or missing authentication token.');

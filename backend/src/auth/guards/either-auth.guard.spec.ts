@@ -1,4 +1,8 @@
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { EitherAuthGuard } from './either-auth.guard';
 
@@ -63,5 +67,18 @@ describe('EitherAuthGuard', () => {
     await expect(guard.canActivate(context)).rejects.toThrow(
       UnauthorizedException,
     );
+  });
+
+  it('should rethrow ForbiddenException from admin guard without falling through', async () => {
+    const context = createMockContext();
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+    const tryGuardSpy = jest
+      .spyOn(guard as any, 'tryGuard')
+      .mockRejectedValueOnce(new ForbiddenException('User not found.'));
+
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(tryGuardSpy).toHaveBeenCalledTimes(1);
   });
 });
