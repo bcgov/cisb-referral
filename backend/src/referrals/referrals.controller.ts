@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
+import { FindAllReferralsDto } from './dto/find-all-referrals.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import type { Referral, User } from '../generated/prisma/client';
 import {
@@ -84,20 +85,8 @@ export class ReferralsController {
   })
   @ApiResponse({ status: 200, description: 'List of referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('status') status?: ReferralStatus,
-    @Query('regionId') regionId?: string,
-    @Query('assignedToId') assignedToId?: string,
-  ) {
-    return this.referralsService.findAll({
-      page: page ? Number.parseInt(page, 10) : undefined,
-      limit: limit ? Number.parseInt(limit, 10) : undefined,
-      status,
-      regionId,
-      assignedToId,
-    });
+  async findAll(@Query() query: FindAllReferralsDto) {
+    return this.referralsService.findAll(query);
   }
 
   @Get(':id')
