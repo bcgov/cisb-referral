@@ -8,7 +8,11 @@ jest.mock('nodemailer');
 
 describe('MailService', () => {
   let service: MailService;
-  let mockMailConfig: Partial<Record<keyof MailConfigService, jest.Mock>>;
+  let mockMailConfig: {
+    isMailEnabled: jest.Mock;
+    getSmtpConfig: jest.Mock;
+    getAdminAppUrl: jest.Mock;
+  };
   let sendMail: jest.Mock;
   let createTransport: jest.MockedFunction<typeof nodemailer.createTransport>;
 
@@ -58,7 +62,7 @@ describe('MailService', () => {
 
   describe('kill switch (MAIL_ENABLED)', () => {
     beforeEach(() => {
-      (mockMailConfig.isMailEnabled as jest.Mock).mockReturnValue(false);
+      mockMailConfig.isMailEnabled.mockReturnValue(false);
     });
 
     it('does not send automatic reply when disabled', async () => {
