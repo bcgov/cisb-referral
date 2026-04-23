@@ -3,6 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ReferralsService } from './referrals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { MailService } from '../mail/mail.service';
 import {
   ReferredByType,
   YesNoUnknown,
@@ -102,6 +103,13 @@ describe('ReferralsService', () => {
     logReferralChange: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockMailService = {
+    sendAutomaticReply: jest.fn().mockResolvedValue(undefined),
+    sendAssignmentNotification: jest.fn().mockResolvedValue(undefined),
+    sendRegionChangeNotification: jest.fn().mockResolvedValue(undefined),
+    sendUrgentNotification: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -110,6 +118,7 @@ describe('ReferralsService', () => {
         ReferralsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: AuditService, useValue: mockAuditService },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -1153,6 +1162,185 @@ describe('ReferralsService', () => {
       await expect(
         service.create(dto, 'contact-uuid-1'),
       ).resolves.toBeDefined();
+    });
+  });
+
+  describe('email triggers', () => {
+    const flushAsync = (): Promise<void> =>
+      new Promise((resolve) => setImmediate(resolve));
+
+    const regionWithEmails = {
+      id: 'region-uuid-1',
+      name: 'Test Region',
+      managerEmail: 'mgr@test',
+      supervisorEmail: 'sup@test',
+      assistantSupervisorEmail: 'asst@test',
+      sharedMailboxEmail: 'shared@test',
+    };
+
+    describe('on create', () => {
+      it('fires automatic reply with the persisted referral', async () => {
+        const dto = createReferralDto();
+        const created = createMockReferral({ region: regionWithEmails });
+        mockPrismaService.referral.create.mockResolvedValue(created);
+
+        await service.create(dto, 'contact-uuid-1');
+        await flushAsync();
+
+        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledTimes(1);
+        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledWith(created);
+      });
+
+      it('fires urgent notification to all four region emails when urgent', async () => {
+        const dto = createReferralDto({ currentlyHomeless: YesNoUnknown.YES });
+        const created = createMockReferral({
+          flag: true,
+          region: regionWithEmails,
+        });
+        mockPrismaService.referral.create.mockResolvedValue(created);
+
+        await service.create(dto, 'contact-uuid-1');
+        await flushAsync();
+
+        expect(mockMailService.sendUrgentNotification).toHaveBeenCalledTimes(1);
+        const [recipients] = mockMailService.sendUrgentNotification.mock.calls[0];
+        expect(recipients).toEqual([
+          'mgr@test',
+          'sup@test',
+          'asst@test',
+          'shared@test',
+        ]);
+      });
+
+      it('does not fire urgent notification when flag is false', async () => {
+        const dto = createReferralDto();
+        mockPrismaService.referral.create.mockResolvedValue(
+          createMockReferral({ flag: false, region: regionWithEmails }),
+        );
+
+        await service.create(dto, 'contact-uuid-1');
+        await flushAsync();
+
+        expect(mockMailService.sendUrgentNotification).not.toHaveBeenCalled();
+      });
+
+      it('skips urgent notification when region has no recipient emails', async () => {
+        const dto = createReferralDto({ currentlyHomeless: YesNoUnknown.YES });
+        mockPrismaService.referral.create.mockResolvedValue(
+          createMockReferral({
+            flag: true,
+            region: {
+              id: 'region-uuid-1',
+              name: 'Test Region',
+              managerEmail: null,
+              supervisorEmail: null,
+              assistantSupervisorEmail: null,
+              sharedMailboxEmail: null,
+            },
+          }),
+        );
+
+        await service.create(dto, 'contact-uuid-1');
+        await flushAsync();
+
+        expect(mockMailService.sendUrgentNotification).not.toHaveBeenCalled();
+      });
+
+      it('swallows mail failures and still returns the referral', async () => {
+        mockMailService.sendAutomaticReply.mockRejectedValueOnce(
+          new Error('SMTP down'),
+        );
+        const dto = createReferralDto();
+        const created = createMockReferral({ region: regionWithEmails });
+        mockPrismaService.referral.create.mockResolvedValue(created);
+
+        await expect(
+          service.create(dto, 'contact-uuid-1'),
+        ).resolves.toEqual(created);
+        await flushAsync();
+      });
+    });
+
+    describe('on update', () => {
+      const existingReferral = {
+        ...createMockReferral(),
+        assignedToId: null,
+        region: regionWithEmails,
+      };
+
+      it('fires assignment notification when assignee changes to a new user', async () => {
+        mockPrismaService.referral.findUnique.mockResolvedValue(
+          existingReferral,
+        );
+        mockPrismaService.referral.update.mockResolvedValue({
+          ...existingReferral,
+          assignedToId: 'user-1',
+          assignedTo: { email: 'assignee@test' },
+          referralStatus: ReferralStatus.ASSIGNED,
+        });
+
+        const dto: UpdateReferralDto = { assignedToId: 'user-1' };
+        await service.update('referral-uuid-1', dto);
+        await flushAsync();
+
+        expect(mockMailService.sendAssignmentNotification).toHaveBeenCalledTimes(1);
+        const [to] = mockMailService.sendAssignmentNotification.mock.calls[0];
+        expect(to).toBe('assignee@test');
+      });
+
+      it('does not fire assignment notification when assignee is unchanged', async () => {
+        const already = {
+          ...existingReferral,
+          assignedToId: 'user-1',
+          referralStatus: ReferralStatus.ASSIGNED,
+        };
+        mockPrismaService.referral.findUnique.mockResolvedValue(already);
+        mockPrismaService.referral.update.mockResolvedValue({
+          ...already,
+          assignedTo: { email: 'assignee@test' },
+        });
+
+        await service.update('referral-uuid-1', {
+          referralSummary: 'updated notes',
+        });
+        await flushAsync();
+
+        expect(mockMailService.sendAssignmentNotification).not.toHaveBeenCalled();
+      });
+
+      it('fires region change notification when region changes', async () => {
+        mockPrismaService.referral.findUnique.mockResolvedValue(existingReferral);
+        mockPrismaService.referral.update.mockResolvedValue({
+          ...existingReferral,
+          regionId: 'region-uuid-2',
+          region: {
+            id: 'region-uuid-2',
+            name: 'New Region',
+            supervisorEmail: 'newsup@test',
+            sharedMailboxEmail: 'newshared@test',
+          },
+        });
+
+        await service.update('referral-uuid-1', { regionId: 'region-uuid-2' });
+        await flushAsync();
+
+        expect(mockMailService.sendRegionChangeNotification).toHaveBeenCalledTimes(1);
+        const [recipients] =
+          mockMailService.sendRegionChangeNotification.mock.calls[0];
+        expect(recipients).toEqual(['newsup@test', 'newshared@test']);
+      });
+
+      it('does not fire region change notification when region is unchanged', async () => {
+        mockPrismaService.referral.findUnique.mockResolvedValue(existingReferral);
+        mockPrismaService.referral.update.mockResolvedValue(existingReferral);
+
+        await service.update('referral-uuid-1', {
+          referralSummary: 'updated notes',
+        });
+        await flushAsync();
+
+        expect(mockMailService.sendRegionChangeNotification).not.toHaveBeenCalled();
+      });
     });
   });
 });

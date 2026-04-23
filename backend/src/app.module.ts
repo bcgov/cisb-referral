@@ -12,6 +12,7 @@ import { ReferralsModule } from './referrals/referrals.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { AuthModule } from './auth/auth.module';
 import { AuditModule } from './audit/audit.module';
+import { MailModule } from './mail/mail.module';
 import { HTTPLoggerMiddleware } from './middleware/req.res.logger';
 
 @Module({
@@ -22,6 +23,7 @@ import { HTTPLoggerMiddleware } from './middleware/req.res.logger';
     PrismaModule,
     AuthModule,
     AuditModule,
+    MailModule,
     RegionsModule,
     MinistriesModule,
     AgencyTypesModule,
