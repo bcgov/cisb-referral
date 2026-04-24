@@ -5,6 +5,10 @@ image:
   tag: main
   pullPolicy: Always
 
+# Application runtime env (override per environment via Helm --set)
+nodeEnv: production
+logLevel: info
+
 service:
   type: ClusterIP
   port: 80

@@ -12,10 +12,16 @@ const localLoggerFormat: winston.Logform.Format = winston.format.combine(
   utilities.format.nestLike('Backend', { prettyPrint: true }),
 );
 
+const resolveLogLevel = (): string => {
+  const explicit = process.env.LOG_LEVEL?.trim();
+  if (explicit) return explicit;
+  return 'info';
+};
+
 export const customLogger: LoggerService = WinstonModule.createLogger({
   transports: [
     new winston.transports.Console({
-      level: 'silly',
+      level: resolveLogLevel(),
       format: winston.format.combine(
         globalLoggerFormat,
         localLoggerFormat,

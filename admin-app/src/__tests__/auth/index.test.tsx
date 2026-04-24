@@ -35,17 +35,6 @@ vi.mock("keycloak-js", () => {
   };
 });
 
-// Factory for creating mock token payload
-const createMockTokenParsed = (overrides = {}) => ({
-  sub: "test-user-id",
-  email: "test@example.com",
-  name: "Test User",
-  preferred_username: "testuser",
-  exp: Math.floor(Date.now() / 1000) + 3600,
-  iat: Math.floor(Date.now() / 1000),
-  ...overrides,
-});
-
 describe("auth module", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -184,98 +173,6 @@ describe("auth module", () => {
       // Assert
       expect(mockKeycloakInstance.logout).toHaveBeenCalledWith({
         redirectUri: globalThis.location.origin,
-      });
-    });
-  });
-
-  describe("getUser", () => {
-    it("should return null when not authenticated", async () => {
-      // Arrange
-      mockKeycloakInstance.authenticated = false;
-      mockKeycloakInstance.init.mockResolvedValue(false);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it("should return null when tokenParsed is null", async () => {
-      // Arrange
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = null;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it("should return user info when authenticated with valid token", async () => {
-      // Arrange
-      const tokenPayload = createMockTokenParsed({
-        sub: "user-123",
-        email: "admin@gov.bc.ca",
-        name: "Admin User",
-      });
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "Admin User",
-      });
-    });
-
-    it("should fall back to preferred_username when name is missing", async () => {
-      // Arrange
-      const tokenPayload = createMockTokenParsed({
-        sub: "user-456",
-        email: "user@gov.bc.ca",
-        name: undefined,
-        preferred_username: "jsmith",
-      });
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "jsmith",
-      });
-    });
-
-    it("should return empty strings for missing token fields", async () => {
-      // Arrange
-      const tokenPayload = {
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        iat: Math.floor(Date.now() / 1000),
-      };
-      mockKeycloakInstance.authenticated = true;
-      mockKeycloakInstance.tokenParsed = tokenPayload;
-      mockKeycloakInstance.init.mockResolvedValue(true);
-
-      // Act
-      const { getUser } = await import("../../auth/index");
-      const result = getUser();
-
-      // Assert
-      expect(result).toEqual({
-        name: "",
       });
     });
   });

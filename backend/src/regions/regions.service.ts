@@ -33,6 +33,13 @@ export class RegionsService {
     });
   }
 
+  async findAllLookup(): Promise<Array<{ id: string; name: string }>> {
+    return this.prisma.region.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findOne(id: string): Promise<Region> {
     const region = await this.prisma.region.findUnique({
       where: { id },

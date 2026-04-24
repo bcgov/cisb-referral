@@ -4,6 +4,7 @@ import { RegionsService } from './regions.service';
 
 const mockRegionsService = {
   findAll: jest.fn(),
+  findAllLookup: jest.fn(),
   findOne: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
@@ -37,6 +38,18 @@ describe('RegionsController', () => {
       const result = await controller.findAll();
 
       expect(result).toEqual([mockRegion]);
+    });
+  });
+
+  describe('findAllLookup', () => {
+    it('should delegate to service and return minimal shape', async () => {
+      const lookup = [{ id: 'region-1', name: 'Test Region' }];
+      mockRegionsService.findAllLookup.mockResolvedValue(lookup);
+
+      const result = await controller.findAllLookup();
+
+      expect(result).toEqual(lookup);
+      expect(mockRegionsService.findAllLookup).toHaveBeenCalled();
     });
   });
 

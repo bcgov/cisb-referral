@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
-import { logout, getUser } from "../auth";
+import { logout } from "../auth";
 import { useCurrentUser } from "../hooks";
 import { AccessDenied } from "./AccessDenied";
 
@@ -24,8 +24,7 @@ const SYSTEM_ADMIN_NAV_ITEMS = [
  * via a hamburger button on smaller viewports.
  */
 export function Layout() {
-  const user = getUser();
-  const { isSystemAdmin, isForbidden } = useCurrentUser();
+  const { currentUser, isSystemAdmin, isForbidden } = useCurrentUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((o) => !o), []);
@@ -117,9 +116,12 @@ export function Layout() {
               ))}
           </ul>
           <div className="border-t border-bcgov-blue-dark mt-4 pt-4 px-4">
-            {user && (
-              <p className="text-white text-sm mb-2 truncate" title={user.name}>
-                {user.name}
+            {currentUser && (
+              <p
+                className="text-white text-sm mb-2 truncate"
+                title={currentUser.fullName}
+              >
+                {currentUser.fullName}
               </p>
             )}
             <button

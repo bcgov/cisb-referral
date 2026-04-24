@@ -25,22 +25,6 @@ export const logout = (): void => {
   keycloak.logout({ redirectUri: globalThis.location.origin });
 };
 
-// TODO: Replace getUser() with a /users/me API endpoint and useProfile hook
-// to match the referral-app pattern and avoid reading claims from the token.
-export const getUser = (): {
-  name: string;
-} | null => {
-  if (!keycloak.authenticated || !keycloak.tokenParsed) {
-    return null;
-  }
-  return {
-    name:
-      (keycloak.tokenParsed.name as string) ??
-      (keycloak.tokenParsed.preferred_username as string) ??
-      "",
-  };
-};
-
 /** Promise created once on first render — not re-created on re-render. */
 let authPromise: Promise<void> | null = null;
 

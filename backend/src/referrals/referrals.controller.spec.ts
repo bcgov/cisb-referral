@@ -62,49 +62,28 @@ describe('ReferralsController', () => {
       meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
     };
 
-    it('should delegate to service with parsed params', async () => {
+    it('should delegate to service with the validated query dto', async () => {
       mockReferralsService.findAll.mockResolvedValue(mockPaginatedResult);
 
-      const result = await controller.findAll(
-        '2',
-        '20',
-        ReferralStatus.OPEN,
-        'region-1',
-        'user-1',
-      );
-
-      expect(result).toEqual(mockPaginatedResult);
-      expect(mockReferralsService.findAll).toHaveBeenCalledWith({
+      const query = {
         page: 2,
         limit: 20,
         status: ReferralStatus.OPEN,
         regionId: 'region-1',
         assignedToId: 'user-1',
-      });
+      };
+      const result = await controller.findAll(query);
+
+      expect(result).toEqual(mockPaginatedResult);
+      expect(mockReferralsService.findAll).toHaveBeenCalledWith(query);
     });
 
-    it('should pass undefined for missing query params', async () => {
+    it('should pass an empty query through to the service', async () => {
       mockReferralsService.findAll.mockResolvedValue(mockPaginatedResult);
 
-      await controller.findAll();
+      await controller.findAll({});
 
-      expect(mockReferralsService.findAll).toHaveBeenCalledWith({
-        page: undefined,
-        limit: undefined,
-        status: undefined,
-        regionId: undefined,
-        assignedToId: undefined,
-      });
-    });
-
-    it('should parse page and limit as integers', async () => {
-      mockReferralsService.findAll.mockResolvedValue(mockPaginatedResult);
-
-      await controller.findAll('3', '50');
-
-      expect(mockReferralsService.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 3, limit: 50 }),
-      );
+      expect(mockReferralsService.findAll).toHaveBeenCalledWith({});
     });
   });
 
