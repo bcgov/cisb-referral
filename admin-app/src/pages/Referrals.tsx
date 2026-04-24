@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiService } from "../services";
 import { referredByLabels, statusLabels, outcomeLabels } from "../constants";
 import type { Referral } from "../types";
+
+const PAGE_SIZE = 25;
 
 /**
  * Formats an ISO date string for display.
@@ -21,13 +24,20 @@ function formatDate(dateString: string): string {
 /** Referrals list page with a scrollable data table. */
 export function Referrals() {
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["referrals"],
-    queryFn: () => apiService.fetchReferrals(),
+    queryKey: ["referrals", { page, limit: PAGE_SIZE }],
+    queryFn: () => apiService.fetchReferrals({ page, limit: PAGE_SIZE }),
+    placeholderData: keepPreviousData,
   });
 
   const referrals = data?.data ?? [];
+  const meta = data?.meta;
+  const totalPages = meta?.totalPages ?? 1;
+  const total = meta?.total ?? 0;
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
 
   if (isLoading) {
     return (
@@ -176,6 +186,44 @@ export function Referrals() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-3 bg-white border-t border-bcgov-border text-sm text-bcgov-gray-dark">
+        <span>
+          {total === 0
+            ? "No referrals"
+            : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(
+                page * PAGE_SIZE,
+                total,
+              )} of ${total}`}
+        </span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!canPrev}
+            className="py-1 px-3 border border-bcgov-border rounded bg-white
+              hover:bg-bcgov-gray-light disabled:opacity-50
+              disabled:cursor-not-allowed focus:outline-none focus:ring-2
+              focus:ring-bcgov-blue/20"
+          >
+            Previous
+          </button>
+          <span aria-live="polite">
+            Page {page} of {totalPages || 1}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={!canNext}
+            className="py-1 px-3 border border-bcgov-border rounded bg-white
+              hover:bg-bcgov-gray-light disabled:opacity-50
+              disabled:cursor-not-allowed focus:outline-none focus:ring-2
+              focus:ring-bcgov-blue/20"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
