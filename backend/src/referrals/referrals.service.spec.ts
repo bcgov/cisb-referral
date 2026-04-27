@@ -10,7 +10,11 @@ import {
   ReleaseFromType,
   CreateReferralDto,
 } from './dto/create-referral.dto';
-import { ReferralStatus, UpdateReferralDto } from './dto/update-referral.dto';
+import {
+  ReferralOutcome,
+  ReferralStatus,
+  UpdateReferralDto,
+} from './dto/update-referral.dto';
 
 describe('ReferralsService', () => {
   let service: ReferralsService;
@@ -674,7 +678,7 @@ describe('ReferralsService', () => {
         await expect(
           service.update('referral-uuid-1', {
             referralStatus: ReferralStatus.CLOSED,
-            referralOutcome: 'SERVICES_PROVIDED',
+            referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
           }),
         ).rejects.toThrow(BadRequestException);
       });
@@ -913,7 +917,7 @@ describe('ReferralsService', () => {
 
         const result = await service.update('referral-uuid-1', {
           referralStatus: ReferralStatus.CLOSED,
-          referralOutcome: 'SERVICES_PROVIDED',
+          referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
         });
 
         expect(result.referralStatus).toBe(ReferralStatus.CLOSED);
@@ -928,7 +932,7 @@ describe('ReferralsService', () => {
         await expect(
           service.update('referral-uuid-1', {
             referralStatus: ReferralStatus.CLOSED,
-            referralOutcome: 'SERVICES_PROVIDED',
+            referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
           }),
         ).rejects.toThrow(BadRequestException);
       });
