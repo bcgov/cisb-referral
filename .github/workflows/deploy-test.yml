@@ -1,11 +1,16 @@
-name: Deploy to Dev & Test
+name: Deploy to Test
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or full SHA to deploy (defaults to main)"
+        required: false
+        type: string
+        default: main
 
 concurrency:
-  group: deploy-dev-test
+  group: deploy-test
   cancel-in-progress: true
 
 env:
@@ -15,6 +20,8 @@ env:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
+    environment:
+      name: test
     permissions:
       contents: read
       packages: write
@@ -22,6 +29,12 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve commit SHA
+        id: resolve
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,15 +46,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build admin-app image
       - name: Extract metadata for admin-app
         id: meta-admin-app
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-admin-app
           tags: |
-            type=sha,prefix=sha-,format=long
-            type=raw,value=latest
+            type=raw,value=test-${{ steps.resolve.outputs.sha }}
+            type=raw,value=test
 
       - name: Build and push admin-app image
         uses: docker/build-push-action@v5
@@ -56,15 +68,14 @@ jobs:
             VITE_KC_REALM=${{ secrets.ADMIN_KC_REALM }}
             VITE_KC_CLIENT_ID=${{ secrets.ADMIN_KC_CLIENT_ID }}
 
-      # Build referral-app image
       - name: Extract metadata for referral-app
         id: meta-referral-app
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-referral-app
           tags: |
-            type=sha,prefix=sha-,format=long
-            type=raw,value=latest
+            type=raw,value=test-${{ steps.resolve.outputs.sha }}
+            type=raw,value=test
 
       - name: Build and push referral-app image
         uses: docker/build-push-action@v5
@@ -79,15 +90,14 @@ jobs:
             VITE_KC_REALM=${{ secrets.REFERRAL_KC_REALM }}
             VITE_KC_CLIENT_ID=${{ secrets.REFERRAL_KC_CLIENT_ID }}
 
-      # Build backend image
       - name: Extract metadata for backend
         id: meta-backend
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
           tags: |
-            type=sha,prefix=sha-,format=long
-            type=raw,value=latest
+            type=raw,value=test-${{ steps.resolve.outputs.sha }}
+            type=raw,value=test
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -99,70 +109,21 @@ jobs:
           labels: ${{ steps.meta-backend.outputs.labels }}
 
     outputs:
-      image_tag: sha-${{ github.sha }}
+      image_tag: test-${{ steps.resolve.outputs.sha }}
 
-  deploy-dev:
+  deploy:
     needs: build_and_push
-    environment:
-      name: dev
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v4
-
-      - name: Install oc
-        uses: redhat-actions/openshift-tools-installer@v1
-        with:
-          oc: 4
-
-      - name: Authenticate with OpenShift
-        uses: redhat-actions/oc-login@v1
-        with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-
-      - name: Deploy with Helm
-        run: |
-          helm upgrade --install cisb-referral-admin-app ./helm/admin-app \
-            --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
-            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-admin-app \
-            --set image.tag=${{ needs.build_and_push.outputs.image_tag }} \
-            --set route.host=${{ secrets.ADMIN_APP_HOSTNAME }} \
-            --set config.KC_URL=${{ secrets.KC_URL }}
-
-          helm upgrade --install cisb-referral-referral-app ./helm/referral-app \
-            --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
-            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-referral-app \
-            --set image.tag=${{ needs.build_and_push.outputs.image_tag }} \
-            --set route.host=${{ secrets.REFERRAL_APP_HOSTNAME }} \
-            --set config.KC_URL=${{ secrets.KC_URL }}
-
-          helm upgrade --install cisb-referral-backend ./helm/backend \
-            --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
-            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend \
-            --set image.tag=${{ needs.build_and_push.outputs.image_tag }}
-
-      - name: Trigger OpenShift Rollout
-        run: |
-          oc rollout restart deployment/cisb-referral-admin-app
-          oc rollout restart deployment/cisb-referral-referral-app
-          oc rollout restart deployment/cisb-referral-backend
-
-  deploy-test:
-    needs: build_and_push
     environment:
       name: test
-    runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Install oc
         uses: redhat-actions/openshift-tools-installer@v1

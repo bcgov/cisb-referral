@@ -1,13 +1,12 @@
-name: Deploy to Prod
+name: Deploy to Dev
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
 
 concurrency:
-  group: deploy-prod
-  cancel-in-progress: false
+  group: deploy-dev
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -17,7 +16,7 @@ jobs:
   build_and_push:
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: dev
     permissions:
       contents: read
       packages: write
@@ -42,8 +41,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-admin-app
           tags: |
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=sha,prefix=sha-,format=long
+            type=raw,value=dev
 
       - name: Build and push admin-app image
         uses: docker/build-push-action@v5
@@ -64,8 +63,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-referral-app
           tags: |
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=sha,prefix=sha-,format=long
+            type=raw,value=dev
 
       - name: Build and push referral-app image
         uses: docker/build-push-action@v5
@@ -86,8 +85,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
           tags: |
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=sha,prefix=sha-,format=long
+            type=raw,value=dev
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -98,11 +97,14 @@ jobs:
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
 
+    outputs:
+      image_tag: sha-${{ github.sha }}
+
   deploy:
     needs: build_and_push
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: dev
     permissions:
       contents: read
 
@@ -127,27 +129,21 @@ jobs:
           helm upgrade --install cisb-referral-admin-app ./helm/admin-app \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-admin-app \
-            --set image.tag=${{ github.ref_name }} \
+            --set image.tag=${{ needs.build_and_push.outputs.image_tag }} \
             --set route.host=${{ secrets.ADMIN_APP_HOSTNAME }} \
-            --set config.KC_URL=${{ secrets.KC_URL }} \
-            --set-string route.tls.certificate="${{ secrets.TLS_CERTIFICATE }}" \
-            --set-string route.tls.key="${{ secrets.TLS_KEY }}" \
-            --set-string route.tls.caCertificate="${{ secrets.TLS_CA_CERTIFICATE }}"
+            --set config.KC_URL=${{ secrets.KC_URL }}
 
           helm upgrade --install cisb-referral-referral-app ./helm/referral-app \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-referral-app \
-            --set image.tag=${{ github.ref_name }} \
+            --set image.tag=${{ needs.build_and_push.outputs.image_tag }} \
             --set route.host=${{ secrets.REFERRAL_APP_HOSTNAME }} \
-            --set config.KC_URL=${{ secrets.KC_URL }} \
-            --set-string route.tls.certificate="${{ secrets.TLS_CERTIFICATE }}" \
-            --set-string route.tls.key="${{ secrets.TLS_KEY }}" \
-            --set-string route.tls.caCertificate="${{ secrets.TLS_CA_CERTIFICATE }}"
+            --set config.KC_URL=${{ secrets.KC_URL }}
 
           helm upgrade --install cisb-referral-backend ./helm/backend \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend \
-            --set image.tag=${{ github.ref_name }}
+            --set image.tag=${{ needs.build_and_push.outputs.image_tag }}
 
       - name: Trigger OpenShift Rollout
         run: |
