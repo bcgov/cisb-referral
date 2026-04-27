@@ -67,6 +67,7 @@ export class UsersController {
   }
 
   @Get()
+  @Roles(PrismaUserRole.ADMIN, PrismaUserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Get all users' })
   @ApiQuery({
     name: 'role',
@@ -95,6 +96,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Roles(PrismaUserRole.ADMIN, PrismaUserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User details', type: UserDto })
   @ApiResponse({ status: 404, description: 'User not found' })
