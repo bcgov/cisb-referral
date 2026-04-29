@@ -89,6 +89,21 @@ export class ReferralsController {
     return this.referralsService.findAll(query);
   }
 
+  @Get('export')
+  @UseGuards(AdminAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get all referrals (capped) for client-side CSV export',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All referrals, unpaginated, with relations included',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async exportAll(@CurrentUser() user: User): Promise<Referral[]> {
+    return this.referralsService.findAllForExport(user.id);
+  }
+
   @Get(':id')
   @UseGuards(AdminAuthGuard)
   @ApiBearerAuth()

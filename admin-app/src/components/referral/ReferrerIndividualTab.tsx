@@ -33,8 +33,8 @@ export function ReferrerIndividualTab({
   const initialFormData = useMemo<UpdateReferralDto>(
     () => ({
       referrerContactName: referral.referrerContactName,
-      referrerEmail: referral.referrerContactEmail,
-      referrerPhone: referral.referrerContactPhone,
+      referrerEmail: referral.referrerEmail,
+      referrerPhone: referral.referrerPhone,
       individualFirstName: referral.individualFirstName,
       individualMiddleName: referral.individualMiddleName,
       individualLastName: referral.individualLastName,

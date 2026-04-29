@@ -64,6 +64,7 @@ const TRACKED_FIELDS = [
 export class ReferralsService {
   private static readonly URGENT_RELEASE_WINDOW_DAYS = 4;
   private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+  private static readonly EXPORT_MAX_ROWS = 10000;
 
   private static readonly VALID_STATUS_TRANSITIONS: Record<
     ReferralStatus,
@@ -246,14 +247,16 @@ export class ReferralsService {
   private maybeNotifyUrgent(referral: Referral): void {
     if (!referral.flag) return;
 
-    const region = (referral as Referral & {
-      region: {
-        managerEmail: string | null;
-        supervisorEmail: string | null;
-        assistantSupervisorEmail: string | null;
-        sharedMailboxEmail: string | null;
-      } | null;
-    }).region;
+    const region = (
+      referral as Referral & {
+        region: {
+          managerEmail: string | null;
+          supervisorEmail: string | null;
+          assistantSupervisorEmail: string | null;
+          sharedMailboxEmail: string | null;
+        } | null;
+      }
+    ).region;
 
     if (!region) {
       this.logger.warn(
@@ -338,6 +341,35 @@ export class ReferralsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findAllForExport(userId?: string): Promise<Referral[]> {
+    const rows = await this.prisma.referral.findMany({
+      take: ReferralsService.EXPORT_MAX_ROWS,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        region: true,
+        ministry: true,
+        agencyType: true,
+        assignedTo: true,
+      },
+    });
+
+    await this.auditService.logGlobal({
+      tableName: 'referral',
+      recordId: 'all',
+      action: 'EXPORT',
+      changes: [
+        {
+          field: 'rowCount',
+          oldValue: null,
+          newValue: String(rows.length),
+        },
+      ],
+      userId,
+    });
+
+    return rows;
   }
 
   async findOne(id: string): Promise<Referral> {
@@ -558,8 +590,9 @@ export class ReferralsService {
     previousAssigneeId: string | null,
     updated: Referral,
   ): void {
-    const assignee = (updated as Referral & { assignedTo: { email: string } | null })
-      .assignedTo;
+    const assignee = (
+      updated as Referral & { assignedTo: { email: string } | null }
+    ).assignedTo;
     const newAssigneeId = updated.assignedToId;
 
     if (!newAssigneeId || newAssigneeId === previousAssigneeId || !assignee) {
@@ -588,9 +621,14 @@ export class ReferralsService {
   ): void {
     if (updated.regionId === previousRegionId) return;
 
-    const region = (updated as Referral & {
-      region: { supervisorEmail: string | null; sharedMailboxEmail: string | null };
-    }).region;
+    const region = (
+      updated as Referral & {
+        region: {
+          supervisorEmail: string | null;
+          sharedMailboxEmail: string | null;
+        };
+      }
+    ).region;
 
     const recipients = [
       region.supervisorEmail?.trim(),

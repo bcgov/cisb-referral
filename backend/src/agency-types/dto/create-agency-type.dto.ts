@@ -5,7 +5,7 @@ export class CreateAgencyTypeDto {
   @ApiProperty({ description: 'Agency type name', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({
     description: 'Whether the agency type is active',

@@ -78,15 +78,13 @@ export interface Referral {
   partnerAgencyName: string | null;
   programArea: string | null;
   referrerContactName: string;
-  referrerContactEmail: string;
-  referrerContactPhone: string | null;
+  referrerEmail: string;
+  referrerPhone: string | null;
   individualFirstName: string;
   individualMiddleName: string | null;
   individualLastName: string;
   individualPreferredName: string | null;
   individualDateOfBirth: string | null;
-  individualPronouns: string | null;
-  individualEmail: string | null;
   individualPhone: string | null;
   personId: string | null;
   secondaryContact: string | null;

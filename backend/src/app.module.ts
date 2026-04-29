@@ -15,6 +15,7 @@ import { AgencyTypesModule } from './agency-types/agency-types.module';
 import { UsersModule } from './users/users.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { SettingsModule } from './settings/settings.module';
 import { AuthModule } from './auth/auth.module';
 import { AuditModule } from './audit/audit.module';
 import { MailModule } from './mail/mail.module';
@@ -35,6 +36,7 @@ import { HTTPLoggerMiddleware } from './middleware/req.res.logger';
     UsersModule,
     ReferralsModule,
     ContactsModule,
+    SettingsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

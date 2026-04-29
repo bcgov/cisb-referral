@@ -74,6 +74,26 @@ class APIService {
     return response.data;
   }
 
+  async fetchReferralsForExport(): Promise<Referral[]> {
+    const response = await this.client.get<Referral[]>("/referrals/export");
+    return response.data;
+  }
+
+  async fetchAdminColumns(): Promise<string[]> {
+    const response = await this.client.get<{ columns: string[] }>(
+      "/settings/admin-columns",
+    );
+    return response.data.columns;
+  }
+
+  async updateAdminColumns(columns: string[]): Promise<string[]> {
+    const response = await this.client.put<{ columns: string[] }>(
+      "/settings/admin-columns",
+      { columns },
+    );
+    return response.data.columns;
+  }
+
   async fetchReferral(id: string): Promise<Referral> {
     const response = await this.client.get<Referral>(`/referrals/${id}`);
     return response.data;
