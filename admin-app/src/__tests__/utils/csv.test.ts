@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { toCsv, downloadCsv } from "../../utils/csv";
 
 describe("toCsv", () => {
@@ -91,6 +91,10 @@ describe("downloadCsv", () => {
     } as unknown as HTMLAnchorElement);
 
     vi.spyOn(document.body, "appendChild").mockImplementation((node) => node);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("should create a blob with a UTF-8 BOM prefix", () => {

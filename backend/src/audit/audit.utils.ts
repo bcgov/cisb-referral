@@ -67,5 +67,6 @@ export function serializeValue(value: unknown): string | null {
     return String(value);
   }
 
-  return JSON.stringify(value);
+  const json = JSON.stringify(value);
+  return json ?? null;
 }

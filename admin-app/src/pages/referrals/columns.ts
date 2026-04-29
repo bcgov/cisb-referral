@@ -318,7 +318,11 @@ export function resolveColumns(keys: string[] | undefined): ReferralColumn[] {
   if (!keys || keys.length === 0) {
     return DEFAULT_REFERRAL_COLUMNS.map((k) => REFERRAL_COLUMNS_BY_KEY[k]);
   }
-  return keys
+  const resolved = keys
     .map((k) => REFERRAL_COLUMNS_BY_KEY[k])
     .filter((c): c is ReferralColumn => Boolean(c));
+  if (resolved.length === 0) {
+    return DEFAULT_REFERRAL_COLUMNS.map((k) => REFERRAL_COLUMNS_BY_KEY[k]);
+  }
+  return resolved;
 }

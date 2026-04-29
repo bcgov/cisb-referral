@@ -243,7 +243,7 @@ export function Referrals() {
 
       {pickerOpen ? (
         <ColumnPicker
-          selectedKeys={columnKeys ?? []}
+          selectedKeys={columns.map((c) => c.key)}
           onSave={(keys) => saveColumns.mutate(keys)}
           onClose={() => setPickerOpen(false)}
           saving={saveColumns.isPending}
