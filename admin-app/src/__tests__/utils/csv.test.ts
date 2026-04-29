@@ -78,8 +78,10 @@ describe("downloadCsv", () => {
     revokeObjectURLMock = vi.fn();
     clickSpy = vi.fn();
 
-    globalThis.URL.createObjectURL = createObjectURLMock as typeof URL.createObjectURL;
-    globalThis.URL.revokeObjectURL = revokeObjectURLMock as typeof URL.revokeObjectURL;
+    globalThis.URL.createObjectURL =
+      createObjectURLMock as typeof URL.createObjectURL;
+    globalThis.URL.revokeObjectURL =
+      revokeObjectURLMock as typeof URL.revokeObjectURL;
 
     vi.spyOn(document, "createElement").mockReturnValue({
       href: "",
