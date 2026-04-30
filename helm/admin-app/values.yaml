@@ -41,3 +41,5 @@ affinity: {}
 config:
   BACKEND_URL: "http://cisb-referral-backend:80"
   KC_URL: ""
+  KC_REALM: ""
+  KC_CLIENT_ID: ""
