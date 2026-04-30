@@ -92,15 +92,15 @@ export interface Referral {
   regionId: string | null;
   region: Region | null;
   specificCityTown: string | null;
-  currentlyHomeless: string | null;
-  losingHousing: string | null;
-  pendingRelease: string | null;
+  experiencingHomelessness: string | null;
+  losingHouse: string | null;
+  pendingOrRecentlyReleased: string | null;
   releaseDate: string | null;
   currentlyConnectedSupports: string[];
   currentlyConnectedSupportsOther: string | null;
   neededSupports: string[];
   neededSupportsOther: string | null;
-  referralSummary: string | null;
+  referralReason: string | null;
   communityPartnerName: string | null;
   assignedToId: string | null;
   assignedTo: User | null;
@@ -159,7 +159,7 @@ export interface UpdateReferralDto {
   specificCityTown?: string | null;
   neededSupports?: string[];
   neededSupportsOther?: string | null;
-  referralSummary?: string | null;
+  referralReason?: string | null;
   // Referred By Info fields
   referredBy?: string;
   ministryId?: string | null;
@@ -182,9 +182,9 @@ export interface UpdateReferralDto {
   personId?: string | null;
   secondaryContact?: string | null;
   bestWayToReach?: string | null;
-  currentlyHomeless?: string | null;
-  losingHousing?: string | null;
-  pendingRelease?: string | null;
+  experiencingHomelessness?: string | null;
+  losingHouse?: string | null;
+  pendingOrRecentlyReleased?: string | null;
   releaseDate?: string | null;
 }
 

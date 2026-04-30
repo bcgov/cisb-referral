@@ -77,7 +77,7 @@ export function ReferralDetailsTab({
       specificCityTown: referral.specificCityTown,
       neededSupports: referral.neededSupports,
       neededSupportsOther: referral.neededSupportsOther,
-      referralSummary: referral.referralSummary,
+      referralReason: referral.referralReason,
       referredBy: referral.referredBy,
       ministryId: referral.ministryId,
       ministryNameOther: referral.ministryNameOther,
@@ -423,8 +423,8 @@ export function ReferralDetailsTab({
           />
           <TextAreaInput
             label="Referral Reason"
-            value={formData.referralSummary}
-            onChange={(v) => updateField("referralSummary", v)}
+            value={formData.referralReason}
+            onChange={(v) => updateField("referralReason", v)}
             rows={5}
             fullWidth
           />

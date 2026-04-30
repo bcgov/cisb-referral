@@ -25,15 +25,15 @@ export function IndividualInfoSection({
 }: Readonly<IndividualInfoSectionProps>) {
   const { control, watch } = form;
 
-  const currentlyHomeless = watch("currentlyHomeless");
-  const pendingRelease = watch("pendingRelease");
+  const experiencingHomelessness = watch("experiencingHomelessness");
+  const pendingOrRecentlyReleased = watch("pendingOrRecentlyReleased");
   const referredBy = watch("referredBy");
 
-  // Only show losingHousing when currentlyHomeless is explicitly "NO" or "UNKNOWN"
+  // Only show losingHouse when experiencingHomelessness is explicitly "NO" or "UNKNOWN"
   const showAtRiskField =
-    currentlyHomeless === YesNoUnknown.NO ||
-    currentlyHomeless === YesNoUnknown.UNKNOWN;
-  const showReleaseDateField = !!pendingRelease;
+    experiencingHomelessness === YesNoUnknown.NO ||
+    experiencingHomelessness === YesNoUnknown.UNKNOWN;
+  const showReleaseDateField = !!pendingOrRecentlyReleased;
   const showGainFile = referredBy === ReferredByType.SDPR_INTERNAL;
 
   return (
@@ -119,7 +119,7 @@ export function IndividualInfoSection({
 
         <div className="form-field-full">
           <RadioGroupField
-            name="currentlyHomeless"
+            name="experiencingHomelessness"
             control={control}
             label="Are they currently experiencing homelessness?"
             options={YesNoUnknownOptions}
@@ -130,7 +130,7 @@ export function IndividualInfoSection({
         {showAtRiskField && (
           <div className="form-field-full">
             <RadioGroupField
-              name="losingHousing"
+              name="losingHouse"
               control={control}
               label="Are they currently at risk of losing housing?"
               options={YesNoUnknownOptions}
@@ -140,7 +140,7 @@ export function IndividualInfoSection({
         )}
 
         <SelectField
-          name="pendingRelease"
+          name="pendingOrRecentlyReleased"
           control={control}
           label="Pending release or recently released? (Optional)"
           options={ReleaseFromTypeOptions}

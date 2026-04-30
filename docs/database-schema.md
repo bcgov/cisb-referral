@@ -139,16 +139,16 @@ Contact ─────────┘
 | `specificCityTown`                | String           |                  |
 | `bestWayToReach`                  | String?          |                  |
 | `secondaryContact`                | String?          |                  |
-| `currentlyHomeless`               | YesNoUnknown     |                  |
-| `losingHousing`                   | YesNoUnknown?    |                  |
-| `pendingRelease`                  | ReleaseFromType? |                  |
+| `experiencingHomelessness`        | YesNoUnknown     |                  |
+| `losingHouse`                     | YesNoUnknown?    |                  |
+| `pendingOrRecentlyReleased`       | ReleaseFromType? |                  |
 | `releaseDate`                     | Date?            |                  |
 | `flag`                            | Boolean          | Default: `false` |
 | `currentlyConnectedSupports`      | SupportType[]    |                  |
 | `currentlyConnectedSupportsOther` | String?          |                  |
 | `neededSupports`                  | SupportType[]    |                  |
 | `neededSupportsOther`             | String?          |                  |
-| `referralSummary`                 | Text?            |                  |
+| `referralReason`                  | Text?            |                  |
 | `referralOutcome`                 | ReferralOutcome? |                  |
 | `communityPartnerName`            | String?          |                  |
 | `referralStatus`                  | ReferralStatus   | Default: `OPEN`  |

@@ -14,8 +14,8 @@ const validBase = {
   individualFirstName: 'Test',
   regionId: '00000000-0000-4000-8000-000000000001',
   specificCityTown: 'Test City',
-  currentlyHomeless: YesNoUnknown.NO,
-  losingHousing: YesNoUnknown.NO,
+  experiencingHomelessness: YesNoUnknown.NO,
+  losingHouse: YesNoUnknown.NO,
 };
 
 const toDto = (overrides: Record<string, unknown> = {}): CreateReferralDto =>
@@ -28,41 +28,41 @@ describe('CreateReferralDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  describe('losingHousing conditional validation', () => {
-    it('should require losingHousing when currentlyHomeless is NO', async () => {
+  describe('losingHouse conditional validation', () => {
+    it('should require losingHouse when experiencingHomelessness is NO', async () => {
       const dto = toDto({
-        currentlyHomeless: YesNoUnknown.NO,
-        losingHousing: undefined,
+        experiencingHomelessness: YesNoUnknown.NO,
+        losingHouse: undefined,
       });
       const errors = await validate(dto);
-      const losingErr = errors.find((e) => e.property === 'losingHousing');
+      const losingErr = errors.find((e) => e.property === 'losingHouse');
       expect(losingErr).toBeDefined();
     });
 
-    it('should require losingHousing when currentlyHomeless is UNKNOWN', async () => {
+    it('should require losingHouse when experiencingHomelessness is UNKNOWN', async () => {
       const dto = toDto({
-        currentlyHomeless: YesNoUnknown.UNKNOWN,
-        losingHousing: undefined,
+        experiencingHomelessness: YesNoUnknown.UNKNOWN,
+        losingHouse: undefined,
       });
       const errors = await validate(dto);
-      const losingErr = errors.find((e) => e.property === 'losingHousing');
+      const losingErr = errors.find((e) => e.property === 'losingHouse');
       expect(losingErr).toBeDefined();
     });
 
-    it('should not require losingHousing when currentlyHomeless is YES', async () => {
+    it('should not require losingHouse when experiencingHomelessness is YES', async () => {
       const dto = toDto({
-        currentlyHomeless: YesNoUnknown.YES,
-        losingHousing: undefined,
+        experiencingHomelessness: YesNoUnknown.YES,
+        losingHouse: undefined,
       });
       const errors = await validate(dto);
-      const losingErr = errors.find((e) => e.property === 'losingHousing');
+      const losingErr = errors.find((e) => e.property === 'losingHouse');
       expect(losingErr).toBeUndefined();
     });
 
-    it('should accept losingHousing with a valid enum value', async () => {
+    it('should accept losingHouse with a valid enum value', async () => {
       const dto = toDto({
-        currentlyHomeless: YesNoUnknown.NO,
-        losingHousing: YesNoUnknown.YES,
+        experiencingHomelessness: YesNoUnknown.NO,
+        losingHouse: YesNoUnknown.YES,
       });
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
@@ -146,17 +146,19 @@ describe('CreateReferralDto', () => {
       expect(err).toBeDefined();
     });
 
-    it('should reject invalid currentlyHomeless value', async () => {
-      const dto = toDto({ currentlyHomeless: 'MAYBE' });
+    it('should reject invalid experiencingHomelessness value', async () => {
+      const dto = toDto({ experiencingHomelessness: 'MAYBE' });
       const errors = await validate(dto);
-      const err = errors.find((e) => e.property === 'currentlyHomeless');
+      const err = errors.find((e) => e.property === 'experiencingHomelessness');
       expect(err).toBeDefined();
     });
 
-    it('should reject invalid pendingRelease value', async () => {
-      const dto = toDto({ pendingRelease: 'INVALID_RELEASE' });
+    it('should reject invalid pendingOrRecentlyReleased value', async () => {
+      const dto = toDto({ pendingOrRecentlyReleased: 'INVALID_RELEASE' });
       const errors = await validate(dto);
-      const err = errors.find((e) => e.property === 'pendingRelease');
+      const err = errors.find(
+        (e) => e.property === 'pendingOrRecentlyReleased',
+      );
       expect(err).toBeDefined();
     });
 

@@ -67,48 +67,50 @@ describe('UpdateReferralDto', () => {
     });
   });
 
-  describe('currentlyHomeless', () => {
+  describe('experiencingHomelessness', () => {
     it('should accept a valid enum value', async () => {
-      const dto = toDto({ currentlyHomeless: YesNoUnknown.YES });
+      const dto = toDto({ experiencingHomelessness: YesNoUnknown.YES });
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
 
     it('should reject an invalid string', async () => {
-      const dto = toDto({ currentlyHomeless: 'MAYBE' });
+      const dto = toDto({ experiencingHomelessness: 'MAYBE' });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].property).toBe('currentlyHomeless');
+      expect(errors[0].property).toBe('experiencingHomelessness');
     });
   });
 
-  describe('losingHousing', () => {
+  describe('losingHouse', () => {
     it('should accept a valid enum value', async () => {
-      const dto = toDto({ losingHousing: YesNoUnknown.NO });
+      const dto = toDto({ losingHouse: YesNoUnknown.NO });
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
 
     it('should reject an invalid string', async () => {
-      const dto = toDto({ losingHousing: 'MAYBE' });
+      const dto = toDto({ losingHouse: 'MAYBE' });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].property).toBe('losingHousing');
+      expect(errors[0].property).toBe('losingHouse');
     });
   });
 
-  describe('pendingRelease', () => {
+  describe('pendingOrRecentlyReleased', () => {
     it('should accept a valid enum value', async () => {
-      const dto = toDto({ pendingRelease: ReleaseFromType.CORRECTIONS });
+      const dto = toDto({
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
+      });
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
 
     it('should reject an invalid string', async () => {
-      const dto = toDto({ pendingRelease: 'SOME_FACILITY' });
+      const dto = toDto({ pendingOrRecentlyReleased: 'SOME_FACILITY' });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].property).toBe('pendingRelease');
+      expect(errors[0].property).toBe('pendingOrRecentlyReleased');
     });
   });
 

@@ -16,7 +16,7 @@ export function SupportServicesSection({
   const neededSupports = watch("neededSupports");
 
   const showCurrentSupportsOther = currentlyConnectedSupports?.includes(
-    SupportType.OTHERS
+    SupportType.OTHERS,
   );
   const showNeededSupportsOther = neededSupports?.includes(SupportType.OTHERS);
 
@@ -76,7 +76,7 @@ export function SupportServicesSection({
         <div className="form-field-full">
           <FormField>
             <TextAreaField
-              name="referralSummary"
+              name="referralReason"
               control={control}
               label="Brief summary of the reason for referral (Optional)"
               maxLength={2000}
