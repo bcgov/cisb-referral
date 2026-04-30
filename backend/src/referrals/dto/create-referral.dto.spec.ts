@@ -12,7 +12,7 @@ const validBase = {
   referrerEmail: 'test@test.com',
   referrerPhone: '0000000000',
   individualFirstName: 'Test',
-  regionId: 'region-uuid-1',
+  regionId: '00000000-0000-4000-8000-000000000001',
   specificCityTown: 'Test City',
   currentlyHomeless: YesNoUnknown.NO,
   losingHousing: YesNoUnknown.NO,
@@ -74,7 +74,7 @@ describe('CreateReferralDto', () => {
       const dto = toDto({
         referredBy: ReferredByType.PARTNER_AGENCY,
         partnerAgencyName: undefined,
-        agencyTypeId: 'agency-uuid-1',
+        agencyTypeId: '00000000-0000-4000-8000-000000000003',
       });
       const errors = await validate(dto);
       const nameErr = errors.find((e) => e.property === 'partnerAgencyName');
@@ -107,7 +107,7 @@ describe('CreateReferralDto', () => {
     it('should not require agencyTypeId when referredBy is PARTNER_MINISTRY', async () => {
       const dto = toDto({
         referredBy: ReferredByType.PARTNER_MINISTRY,
-        ministryId: 'ministry-uuid-1',
+        ministryId: '00000000-0000-4000-8000-000000000002',
         agencyTypeId: undefined,
       });
       const errors = await validate(dto);

@@ -256,6 +256,15 @@ model AuditLog {
   @@map("audit_log")
 }
 
+model AppSetting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("app_settings")
+}
+
 model ReferralAuditLog {
   id          String   @id @default(uuid())
   referralId  String

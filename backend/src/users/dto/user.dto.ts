@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsUUID,
   IsDate,
+  MaxLength,
 } from 'class-validator';
 
 export enum UserRole {
@@ -18,41 +19,45 @@ export enum UserRole {
 export class UserDto {
   @ApiProperty()
   @IsUUID()
-  id: string;
+  id!: string;
 
   @ApiProperty()
   @IsString()
-  fullName: string;
+  @MaxLength(200)
+  fullName!: string;
 
   @ApiProperty()
   @IsEmail()
-  email: string;
+  @MaxLength(254)
+  email!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   address?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   contact?: string;
 
   @ApiProperty({ enum: UserRole })
   @IsEnum(UserRole)
-  role: UserRole;
+  role!: UserRole;
 
   @ApiProperty({ default: true })
   @IsBoolean()
-  isActive: boolean;
+  isActive!: boolean;
 
   @ApiProperty()
   @IsDate()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
   @IsDate()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -62,5 +67,6 @@ export class UserDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   keycloakId?: string;
 }

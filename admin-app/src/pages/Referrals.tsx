@@ -1,35 +1,73 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { apiService } from "../services";
-import { referredByLabels, statusLabels, outcomeLabels } from "../constants";
+import { toCsv, downloadCsv } from "../utils";
 import type { Referral } from "../types";
+import { ColumnPicker } from "./referrals/ColumnPicker";
+import { resolveColumns } from "./referrals/columns";
 
 const PAGE_SIZE = 25;
 
-/**
- * Formats an ISO date string for display.
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+const ADMIN_COLUMNS_QUERY_KEY = ["settings", "admin-columns"] as const;
+
+function buildExportFilename(): string {
+  const stamp = new Date().toISOString().replaceAll(/[:.]/g, "-");
+  return `referrals-${stamp}.csv`;
 }
 
-/** Referrals list page with a scrollable data table. */
+/** Referrals list page with a configurable, exportable data table. */
 export function Referrals() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["referrals", { page, limit: PAGE_SIZE }],
     queryFn: () => apiService.fetchReferrals({ page, limit: PAGE_SIZE }),
     placeholderData: keepPreviousData,
+  });
+
+  const { data: columnKeys } = useQuery({
+    queryKey: ADMIN_COLUMNS_QUERY_KEY,
+    queryFn: () => apiService.fetchAdminColumns(),
+  });
+
+  const columns = useMemo(() => resolveColumns(columnKeys), [columnKeys]);
+
+  const saveColumns = useMutation({
+    mutationFn: (keys: string[]) => apiService.updateAdminColumns(keys),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(ADMIN_COLUMNS_QUERY_KEY, saved);
+      setPickerOpen(false);
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      const all = await apiService.fetchReferralsForExport();
+      const headers = columns.map((c) => c.label);
+      const rows = all.map((r: Referral) =>
+        columns.map((c) => {
+          const v = c.render(r);
+          return v === "—" ? "" : v;
+        }),
+      );
+      downloadCsv(buildExportFilename(), toCsv(headers, rows));
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error ? err.message : "Failed to export referrals.";
+      setExportError(message);
+    },
+    onSuccess: () => setExportError(null),
   });
 
   const referrals = data?.data ?? [];
@@ -63,7 +101,7 @@ export function Referrals() {
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
           Referrals
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             placeholder="Filter by keyword"
@@ -71,55 +109,62 @@ export function Referrals() {
               w-full sm:w-50 focus:outline-none focus:border-bcgov-blue
               focus:ring-2 focus:ring-bcgov-blue/20"
           />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="py-2 px-3 border border-bcgov-border rounded text-sm
+              bg-white hover:bg-bcgov-gray-light text-bcgov-gray-dark
+              focus:outline-none focus:ring-2 focus:ring-bcgov-blue/20"
+          >
+            Columns ({columns.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => exportMutation.mutate()}
+            disabled={exportMutation.isPending || columns.length === 0}
+            className="py-2 px-3 rounded text-sm bg-bcgov-blue text-white
+              hover:bg-bcgov-blue-dark disabled:opacity-50
+              disabled:cursor-not-allowed focus:outline-none focus:ring-2
+              focus:ring-bcgov-blue/30"
+          >
+            {exportMutation.isPending ? "Exporting..." : "Export CSV"}
+          </button>
         </div>
       </div>
 
+      {exportError ? (
+        <div
+          role="alert"
+          className="px-4 sm:px-6 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700"
+        >
+          {exportError}
+        </div>
+      ) : null}
+
       <div className="flex-1 overflow-auto bg-white">
-        <table className="w-full border-collapse text-sm table-fixed min-w-[900px]">
+        <table className="border-collapse text-sm table-fixed min-w-full">
           <thead>
             <tr>
               <th className="w-10 text-center p-3 border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10">
                 <input type="checkbox" aria-label="Select all referrals" />
               </th>
-              <th className="w-[70px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Urgent
-              </th>
-              <th className="w-[130px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Created On
-              </th>
-              <th className="w-40 p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap">
-                Referred By: Contact Name
-              </th>
-              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Referred By
-              </th>
-              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Referral Status
-              </th>
-              <th className="w-[120px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Referral Outcome
-              </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                First Name
-              </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Last Name
-              </th>
-              <th className="w-[140px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Current Region
-              </th>
-              <th className="w-[100px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                City/Town
-              </th>
-              <th className="w-[110px] p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap">
-                Team Member
-              </th>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={`${col.width} p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap`}
+                >
+                  {col.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {referrals.length === 0 ? (
               <tr>
-                <td colSpan={12} className="text-center p-8 text-bcgov-gray">
+                <td
+                  colSpan={columns.length + 1}
+                  className="text-center p-8 text-bcgov-gray"
+                >
                   No referrals found.
                 </td>
               </tr>
@@ -143,44 +188,14 @@ export function Referrals() {
                       aria-label={`Select referral ${referral.id}`}
                     />
                   </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.flag ? "Yes" : "No"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {formatDate(referral.createdAt)}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.referrerContactName}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referredByLabels[referral.referredBy] ||
-                      referral.referredBy}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {statusLabels[referral.referralStatus] ||
-                      referral.referralStatus}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.referralOutcome
-                      ? outcomeLabels[referral.referralOutcome] ||
-                        referral.referralOutcome
-                      : "—"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.individualFirstName || "—"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.individualLastName || "—"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.region?.name || "—"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.specificCityTown || "—"}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {referral.assignedTo?.fullName || "—"}
-                  </td>
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={`${col.width} p-3 border-b border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap`}
+                    >
+                      {col.render(referral)}
+                    </td>
+                  ))}
                 </tr>
               ))
             )}
@@ -225,6 +240,15 @@ export function Referrals() {
           </button>
         </div>
       </div>
+
+      {pickerOpen ? (
+        <ColumnPicker
+          selectedKeys={columns.map((c) => c.key)}
+          onSave={(keys) => saveColumns.mutate(keys)}
+          onClose={() => setPickerOpen(false)}
+          saving={saveColumns.isPending}
+        />
+      ) : null}
     </div>
   );
 }

@@ -55,9 +55,18 @@ export function serializeValue(value: unknown): string | null {
     return value.toISOString();
   }
 
-  if (typeof value === 'object' || Array.isArray(value)) {
-    return JSON.stringify(value);
+  if (typeof value === 'string') {
+    return value;
   }
 
-  return String(value);
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint'
+  ) {
+    return String(value);
+  }
+
+  const json = JSON.stringify(value);
+  return json ?? null;
 }

@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsArray,
   IsDateString,
+  IsUUID,
   ValidateIf,
   MaxLength,
   MinLength,
@@ -52,23 +53,25 @@ export class CreateReferralDto {
   // Section 1: Referrer Information
   @ApiProperty({ enum: ReferredByType })
   @IsEnum(ReferredByType)
-  referredBy: ReferredByType;
+  referredBy!: ReferredByType;
 
   @ApiProperty({ required: false })
   @ValidateIf(
     (o: CreateReferralDto) => o.referredBy === ReferredByType.PARTNER_MINISTRY,
   )
-  @IsString()
+  @IsUUID()
   ministryId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   ministryNameOther?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   programArea?: string;
 
   @ApiProperty({ required: false })
@@ -76,58 +79,68 @@ export class CreateReferralDto {
     (o: CreateReferralDto) => o.referredBy === ReferredByType.PARTNER_AGENCY,
   )
   @IsString()
+  @MaxLength(200)
   partnerAgencyName?: string;
 
   @ApiProperty({ required: false })
   @ValidateIf(
     (o: CreateReferralDto) => o.referredBy === ReferredByType.PARTNER_AGENCY,
   )
-  @IsString()
+  @IsUUID()
   agencyTypeId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   agencyTypeOther?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   personId?: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
-  referrerContactName: string;
+  @MaxLength(200)
+  referrerContactName!: string;
 
   @ApiProperty()
   @IsEmail()
-  referrerEmail: string;
+  @MaxLength(254)
+  referrerEmail!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(10)
-  referrerPhone: string;
+  @MaxLength(30)
+  referrerPhone!: string;
 
   // Section 2: Individual Information
   @ApiProperty()
   @IsString()
   @MinLength(1)
-  individualFirstName: string;
+  @MaxLength(100)
+  individualFirstName!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   individualMiddleName?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   individualLastName?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   individualPreferredName?: string;
 
   @ApiProperty({ required: false })
@@ -138,31 +151,35 @@ export class CreateReferralDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(30)
   individualPhone?: string;
 
   @ApiProperty()
-  @IsString()
-  regionId: string;
+  @IsUUID()
+  regionId!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
-  specificCityTown: string;
+  @MaxLength(200)
+  specificCityTown!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   bestWayToReach?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   secondaryContact?: string;
 
   // Section 3: Housing Status & Critical Transitions
   @ApiProperty({ enum: YesNoUnknown })
   @IsEnum(YesNoUnknown)
-  currentlyHomeless: YesNoUnknown;
+  currentlyHomeless!: YesNoUnknown;
 
   @ApiProperty({ enum: YesNoUnknown, required: false })
   @ValidateIf(
@@ -194,6 +211,7 @@ export class CreateReferralDto {
       o.currentlyConnectedSupports?.includes(SupportType.OTHERS) ?? false,
   )
   @IsString()
+  @MaxLength(500)
   currentlyConnectedSupportsOther?: string;
 
   @ApiProperty({ type: [String], enum: SupportType, required: false })
@@ -208,6 +226,7 @@ export class CreateReferralDto {
       o.neededSupports?.includes(SupportType.OTHERS) ?? false,
   )
   @IsString()
+  @MaxLength(500)
   neededSupportsOther?: string;
 
   @ApiProperty({ required: false })
