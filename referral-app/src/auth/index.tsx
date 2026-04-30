@@ -1,10 +1,17 @@
 import { Suspense, use, type ReactNode } from "react";
 import Keycloak from "keycloak-js";
 
+const appConfig =
+  (
+    globalThis as typeof globalThis & {
+      __APP_CONFIG__?: Record<string, string>;
+    }
+  ).__APP_CONFIG__ ?? {};
+
 export const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KC_URL,
-  realm: import.meta.env.VITE_KC_REALM,
-  clientId: import.meta.env.VITE_KC_CLIENT_ID,
+  url: appConfig.KC_URL ?? import.meta.env.VITE_KC_URL,
+  realm: appConfig.KC_REALM ?? import.meta.env.VITE_KC_REALM,
+  clientId: appConfig.KC_CLIENT_ID ?? import.meta.env.VITE_KC_CLIENT_ID,
 });
 
 export const init = async (): Promise<void> => {

@@ -41,6 +41,11 @@ spec:
               value: {{ .Values.config.BACKEND_URL | quote }}
             - name: KC_URL
               value: {{ .Values.config.KC_URL | quote }}
+          volumeMounts:
+            - name: app-config
+              mountPath: /srv/config.js
+              subPath: config.js
+              readOnly: true
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -75,4 +80,8 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
+      volumes:
+        - name: app-config
+          configMap:
+            name: cisb-referral-admin-app-config
       restartPolicy: Always
