@@ -1,7 +1,6 @@
 name: CI & Build
 permissions:
   contents: read
-  packages: write
 
 on:
   pull_request:
