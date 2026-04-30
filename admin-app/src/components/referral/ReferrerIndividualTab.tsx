@@ -44,9 +44,9 @@ export function ReferrerIndividualTab({
       personId: referral.personId,
       secondaryContact: referral.secondaryContact,
       bestWayToReach: referral.bestWayToReach,
-      currentlyHomeless: referral.currentlyHomeless,
-      losingHousing: referral.losingHousing,
-      pendingRelease: referral.pendingRelease,
+      experiencingHomelessness: referral.experiencingHomelessness,
+      losingHouse: referral.losingHouse,
+      pendingOrRecentlyReleased: referral.pendingOrRecentlyReleased,
       releaseDate: referral.releaseDate,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
@@ -142,8 +142,8 @@ export function ReferrerIndividualTab({
           />
           <SelectInput
             label="Experiencing Homelessness"
-            value={formData.currentlyHomeless}
-            onChange={(v) => updateField("currentlyHomeless", v)}
+            value={formData.experiencingHomelessness}
+            onChange={(v) => updateField("experiencingHomelessness", v)}
             options={YES_NO_OPTIONS}
           />
 
@@ -160,8 +160,8 @@ export function ReferrerIndividualTab({
           />
           <SelectInput
             label="At Risk of Losing Housing"
-            value={formData.losingHousing}
-            onChange={(v) => updateField("losingHousing", v)}
+            value={formData.losingHouse}
+            onChange={(v) => updateField("losingHouse", v)}
             options={YES_NO_OPTIONS}
           />
 
@@ -177,8 +177,8 @@ export function ReferrerIndividualTab({
           />
           <SelectInput
             label="Pending or Recently Released"
-            value={formData.pendingRelease}
-            onChange={(v) => updateField("pendingRelease", v)}
+            value={formData.pendingOrRecentlyReleased}
+            onChange={(v) => updateField("pendingOrRecentlyReleased", v)}
             options={RELEASE_FROM_OPTIONS}
           />
 

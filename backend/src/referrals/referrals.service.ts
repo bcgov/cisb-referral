@@ -34,7 +34,7 @@ const TRACKED_FIELDS = [
   'specificCityTown',
   'neededSupports',
   'neededSupportsOther',
-  'referralSummary',
+  'referralReason',
   'referredBy',
   'ministryId',
   'ministryNameOther',
@@ -54,9 +54,9 @@ const TRACKED_FIELDS = [
   'personId',
   'secondaryContact',
   'bestWayToReach',
-  'currentlyHomeless',
-  'losingHousing',
-  'pendingRelease',
+  'experiencingHomelessness',
+  'losingHouse',
+  'pendingOrRecentlyReleased',
   'releaseDate',
 ];
 
@@ -121,16 +121,16 @@ export class ReferralsService {
 
   private calculateFlag(
     experiencingHomelessnessResponse?: YesNoUnknown,
-    losingHousingResponse?: YesNoUnknown,
-    pendingRelease?: ReleaseFromType,
+    losingHouseResponse?: YesNoUnknown,
+    pendingOrRecentlyReleased?: ReleaseFromType,
     releaseDate?: string,
   ): boolean {
     const hasHousingUrgency =
       experiencingHomelessnessResponse === YesNoUnknown.YES ||
-      losingHousingResponse === YesNoUnknown.YES;
+      losingHouseResponse === YesNoUnknown.YES;
     const hasReleaseUrgency =
-      pendingRelease !== undefined &&
-      pendingRelease !== ReleaseFromType.NO &&
+      pendingOrRecentlyReleased !== undefined &&
+      pendingOrRecentlyReleased !== ReleaseFromType.NO &&
       this.isReleaseDateWithinDays(
         releaseDate,
         ReferralsService.URGENT_RELEASE_WINDOW_DAYS,
@@ -201,9 +201,9 @@ export class ReferralsService {
     await this.validateOtherFields(createReferralDto);
 
     const flag = this.calculateFlag(
-      createReferralDto.currentlyHomeless,
-      createReferralDto.losingHousing,
-      createReferralDto.pendingRelease,
+      createReferralDto.experiencingHomelessness,
+      createReferralDto.losingHouse,
+      createReferralDto.pendingOrRecentlyReleased,
       createReferralDto.releaseDate,
     );
 
@@ -416,7 +416,7 @@ export class ReferralsService {
       specificCityTown: dto.specificCityTown,
       neededSupports: dto.neededSupports,
       neededSupportsOther: dto.neededSupportsOther,
-      referralSummary: dto.referralSummary,
+      referralReason: dto.referralReason,
       referredBy: dto.referredBy,
       ministryId: dto.ministryId,
       ministryNameOther: dto.ministryNameOther,
@@ -436,9 +436,9 @@ export class ReferralsService {
       personId: dto.personId,
       secondaryContact: dto.secondaryContact,
       bestWayToReach: dto.bestWayToReach,
-      currentlyHomeless: dto.currentlyHomeless,
-      losingHousing: dto.losingHousing,
-      pendingRelease: dto.pendingRelease,
+      experiencingHomelessness: dto.experiencingHomelessness,
+      losingHouse: dto.losingHouse,
+      pendingOrRecentlyReleased: dto.pendingOrRecentlyReleased,
       releaseDate: this.toDateOrUndefined(dto.releaseDate),
     };
   }

@@ -179,19 +179,19 @@ export class CreateReferralDto {
   // Section 3: Housing Status & Critical Transitions
   @ApiProperty({ enum: YesNoUnknown })
   @IsEnum(YesNoUnknown)
-  currentlyHomeless!: YesNoUnknown;
+  experiencingHomelessness!: YesNoUnknown;
 
   @ApiProperty({ enum: YesNoUnknown, required: false })
   @ValidateIf(
-    (o: CreateReferralDto) => o.currentlyHomeless !== YesNoUnknown.YES,
+    (o: CreateReferralDto) => o.experiencingHomelessness !== YesNoUnknown.YES,
   )
   @IsEnum(YesNoUnknown)
-  losingHousing?: YesNoUnknown;
+  losingHouse?: YesNoUnknown;
 
   @ApiProperty({ enum: ReleaseFromType, required: false })
   @IsOptional()
   @IsEnum(ReleaseFromType)
-  pendingRelease?: ReleaseFromType;
+  pendingOrRecentlyReleased?: ReleaseFromType;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -233,5 +233,5 @@ export class CreateReferralDto {
   @IsOptional()
   @IsString()
   @MaxLength(5000)
-  referralSummary?: string;
+  referralReason?: string;
 }

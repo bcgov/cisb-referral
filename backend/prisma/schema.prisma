@@ -194,9 +194,9 @@ model Referral {
   bestWayToReach        String?
   secondaryContact      String?
   
-  currentlyHomeless     YesNoUnknown
-  losingHousing         YesNoUnknown?
-  pendingRelease        ReleaseFromType?
+  experiencingHomelessness  YesNoUnknown
+  losingHouse               YesNoUnknown?
+  pendingOrRecentlyReleased ReleaseFromType?
   releaseDate           DateTime?   @db.Date
   flag                  Boolean     @default(false)
   
@@ -204,7 +204,7 @@ model Referral {
   currentlyConnectedSupportsOther String?
   neededSupports                  SupportType[]
   neededSupportsOther             String?
-  referralSummary                 String?       @db.Text
+  referralReason                  String?       @db.Text
   
   referralOutcome       ReferralOutcome?
   communityPartnerName  String?
@@ -231,7 +231,7 @@ model Referral {
   @@index([regionId])
   @@index([ministryId])
   @@index([agencyTypeId])
-  @@index([currentlyHomeless])
+  @@index([experiencingHomelessness])
   @@index([referralStatus])
   @@index([assignedToId])
   @@index([createdAt])

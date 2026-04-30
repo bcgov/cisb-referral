@@ -131,7 +131,7 @@ export class UpdateReferralDto {
   @IsOptional()
   @IsString()
   @MaxLength(5000)
-  referralSummary?: string;
+  referralReason?: string;
 
   // Referred By Info fields
   @ApiProperty({ enum: ReferredByType, required: false })
@@ -251,17 +251,17 @@ export class UpdateReferralDto {
   @ApiProperty({ enum: YesNoUnknown, required: false })
   @IsOptional()
   @IsEnum(YesNoUnknown)
-  currentlyHomeless?: YesNoUnknown;
+  experiencingHomelessness?: YesNoUnknown;
 
   @ApiProperty({ enum: YesNoUnknown, required: false })
   @IsOptional()
   @IsEnum(YesNoUnknown)
-  losingHousing?: YesNoUnknown;
+  losingHouse?: YesNoUnknown;
 
   @ApiProperty({ enum: ReleaseFromType, required: false })
   @IsOptional()
   @IsEnum(ReleaseFromType)
-  pendingRelease?: ReleaseFromType;
+  pendingOrRecentlyReleased?: ReleaseFromType;
 
   @ApiProperty({ required: false })
   @IsOptional()

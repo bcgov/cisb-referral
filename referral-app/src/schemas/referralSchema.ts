@@ -164,9 +164,9 @@ const baseSchema = z.object({
   bestWayToReach: z.string().max(500).optional(),
 
   // Section 3: Housing Status & Critical Transitions
-  currentlyHomeless: YesNoUnknownEnum,
-  losingHousing: YesNoUnknownEnum.optional(),
-  pendingRelease: ReleaseFromEnum.optional(),
+  experiencingHomelessness: YesNoUnknownEnum,
+  losingHouse: YesNoUnknownEnum.optional(),
+  pendingOrRecentlyReleased: ReleaseFromEnum.optional(),
   releaseDate: z.string().optional(),
 
   // Section 4: Support Services
@@ -174,7 +174,7 @@ const baseSchema = z.object({
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
-  referralSummary: z.string().max(5000).optional(),
+  referralReason: z.string().max(5000).optional(),
 });
 
 // Helper type for base schema data
@@ -228,15 +228,15 @@ function validateHousingStatus(
   data: BaseSchemaData,
   ctx: z.RefinementCtx,
 ): void {
-  const requiresLosingHousingField =
-    data.currentlyHomeless === YesNoUnknown.NO ||
-    data.currentlyHomeless === YesNoUnknown.UNKNOWN;
+  const requiresLosingHouseField =
+    data.experiencingHomelessness === YesNoUnknown.NO ||
+    data.experiencingHomelessness === YesNoUnknown.UNKNOWN;
 
-  if (requiresLosingHousingField && !data.losingHousing) {
+  if (requiresLosingHouseField && !data.losingHouse) {
     ctx.addIssue({
       code: "custom",
       message: "Please indicate if they are at risk of losing housing",
-      path: ["losingHousing"],
+      path: ["losingHouse"],
     });
   }
 }
@@ -285,17 +285,17 @@ export const referralSchema = baseSchema.superRefine((data, ctx) => {
  */
 export function isUrgentReferral(data: ReferralFormData): boolean {
   // Rule 1: Currently experiencing homelessness
-  if (data.currentlyHomeless === YesNoUnknown.YES) {
+  if (data.experiencingHomelessness === YesNoUnknown.YES) {
     return true;
   }
 
   // Rule 2: At risk of losing housing
-  if (data.losingHousing === YesNoUnknown.YES) {
+  if (data.losingHouse === YesNoUnknown.YES) {
     return true;
   }
 
   // Rule 3: Pending release with discharge date within 3-4 days
-  if (data.pendingRelease && data.releaseDate) {
+  if (data.pendingOrRecentlyReleased && data.releaseDate) {
     const releaseDate = new Date(data.releaseDate);
     const today = new Date();
     const diffTime = releaseDate.getTime() - today.getTime();

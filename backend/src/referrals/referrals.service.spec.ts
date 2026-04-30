@@ -30,7 +30,7 @@ describe('ReferralsService', () => {
     individualFirstName: 'Test',
     regionId: 'region-uuid-1',
     specificCityTown: 'Test City',
-    currentlyHomeless: YesNoUnknown.NO,
+    experiencingHomelessness: YesNoUnknown.NO,
     ...overrides,
   });
 
@@ -43,7 +43,7 @@ describe('ReferralsService', () => {
     individualFirstName: 'Test',
     regionId: 'region-uuid-1',
     specificCityTown: 'Test City',
-    currentlyHomeless: YesNoUnknown.NO,
+    experiencingHomelessness: YesNoUnknown.NO,
     referralStatus: ReferralStatus.OPEN,
     flag: false,
     createdBy: 'contact-uuid-1',
@@ -143,51 +143,51 @@ describe('ReferralsService', () => {
       jest.useRealTimers();
     });
 
-    it('should flag as urgent when currentlyHomeless is YES', async () => {
+    it('should flag as urgent when experiencingHomelessness is YES', async () => {
       const dto = createReferralDto({
-        currentlyHomeless: YesNoUnknown.YES,
+        experiencingHomelessness: YesNoUnknown.YES,
       });
 
       await expectCreatedReferralFlag(dto, true);
     });
 
-    it('should not flag as urgent when currentlyHomeless is NO', async () => {
+    it('should not flag as urgent when experiencingHomelessness is NO', async () => {
       const dto = createReferralDto({
-        currentlyHomeless: YesNoUnknown.NO,
+        experiencingHomelessness: YesNoUnknown.NO,
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should not flag as urgent when currentlyHomeless is UNKNOWN', async () => {
+    it('should not flag as urgent when experiencingHomelessness is UNKNOWN', async () => {
       const dto = createReferralDto({
-        currentlyHomeless: YesNoUnknown.UNKNOWN,
+        experiencingHomelessness: YesNoUnknown.UNKNOWN,
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should flag as urgent when losingHousing is YES', async () => {
-      const dto = createReferralDto({ losingHousing: YesNoUnknown.YES });
+    it('should flag as urgent when losingHouse is YES', async () => {
+      const dto = createReferralDto({ losingHouse: YesNoUnknown.YES });
 
       await expectCreatedReferralFlag(dto, true);
     });
 
-    it('should not flag as urgent when losingHousing is NO', async () => {
-      const dto = createReferralDto({ losingHousing: YesNoUnknown.NO });
+    it('should not flag as urgent when losingHouse is NO', async () => {
+      const dto = createReferralDto({ losingHouse: YesNoUnknown.NO });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should not flag as urgent when losingHousing is UNKNOWN', async () => {
-      const dto = createReferralDto({ losingHousing: YesNoUnknown.UNKNOWN });
+    it('should not flag as urgent when losingHouse is UNKNOWN', async () => {
+      const dto = createReferralDto({ losingHouse: YesNoUnknown.UNKNOWN });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should flag as urgent when pendingRelease is not NO and releaseDate is within 4 days', async () => {
+    it('should flag as urgent when pendingOrRecentlyReleased is not NO and releaseDate is within 4 days', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(3),
       });
 
@@ -208,7 +208,7 @@ describe('ReferralsService', () => {
       for (const releaseType of urgentReleaseTypes) {
         jest.clearAllMocks();
         const dto = createReferralDto({
-          pendingRelease: releaseType,
+          pendingOrRecentlyReleased: releaseType,
           releaseDate: releaseDateStr,
         });
 
@@ -216,36 +216,36 @@ describe('ReferralsService', () => {
       }
     });
 
-    it('should not flag as urgent when pendingRelease is not NO but releaseDate is more than 4 days away', async () => {
+    it('should not flag as urgent when pendingOrRecentlyReleased is not NO but releaseDate is more than 4 days away', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(10),
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should not flag as urgent when pendingRelease is not NO but releaseDate is in the past', async () => {
+    it('should not flag as urgent when pendingOrRecentlyReleased is not NO but releaseDate is in the past', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(-5),
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should not flag as urgent when pendingRelease is not NO but releaseDate is missing', async () => {
+    it('should not flag as urgent when pendingOrRecentlyReleased is not NO but releaseDate is missing', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: undefined,
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should not flag as urgent when pendingRelease is NO even with releaseDate within 4 days', async () => {
+    it('should not flag as urgent when pendingOrRecentlyReleased is NO even with releaseDate within 4 days', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.NO,
+        pendingOrRecentlyReleased: ReleaseFromType.NO,
         releaseDate: getReleaseDateFromFixedNow(1),
       });
 
@@ -254,9 +254,9 @@ describe('ReferralsService', () => {
 
     it('should not flag as urgent when no urgency conditions are met', async () => {
       const dto = createReferralDto({
-        currentlyHomeless: YesNoUnknown.NO,
-        losingHousing: YesNoUnknown.NO,
-        pendingRelease: undefined,
+        experiencingHomelessness: YesNoUnknown.NO,
+        losingHouse: YesNoUnknown.NO,
+        pendingOrRecentlyReleased: undefined,
       });
 
       await expectCreatedReferralFlag(dto, false);
@@ -264,9 +264,9 @@ describe('ReferralsService', () => {
 
     it('should flag as urgent when multiple urgency conditions are met', async () => {
       const dto = createReferralDto({
-        currentlyHomeless: YesNoUnknown.YES,
-        losingHousing: YesNoUnknown.YES,
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        experiencingHomelessness: YesNoUnknown.YES,
+        losingHouse: YesNoUnknown.YES,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(1),
       });
 
@@ -275,7 +275,7 @@ describe('ReferralsService', () => {
 
     it('should flag as urgent on releaseDate boundary of exactly 4 days', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
+        pendingOrRecentlyReleased: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
         releaseDate: getReleaseDateFromFixedNow(4),
       });
 
@@ -284,25 +284,25 @@ describe('ReferralsService', () => {
 
     it('should not flag as urgent when releaseDate is exactly 5 days away', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
+        pendingOrRecentlyReleased: ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
         releaseDate: getReleaseDateFromFixedNow(5),
       });
 
       await expectCreatedReferralFlag(dto, false);
     });
 
-    it('should flag as urgent when releaseDate is today and pendingRelease is not NO', async () => {
+    it('should flag as urgent when releaseDate is today and pendingOrRecentlyReleased is not NO', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(0),
       });
 
       await expectCreatedReferralFlag(dto, true);
     });
 
-    it('should not flag as urgent when pendingRelease is not NO but releaseDate is yesterday', async () => {
+    it('should not flag as urgent when pendingOrRecentlyReleased is not NO but releaseDate is yesterday', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: getReleaseDateFromFixedNow(-1),
       });
 
@@ -311,7 +311,7 @@ describe('ReferralsService', () => {
 
     it('should not flag as urgent when releaseDate is invalid', async () => {
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: 'not-a-date',
       });
 
@@ -321,7 +321,7 @@ describe('ReferralsService', () => {
     it('should flag as urgent when releaseDate is a full ISO date-time string within 4 days', async () => {
       const isoDate = getReleaseDateFromFixedNow(2) + 'T00:00:00Z';
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: isoDate,
       });
 
@@ -331,7 +331,7 @@ describe('ReferralsService', () => {
     it('should not flag as urgent when releaseDate is a full ISO date-time string more than 4 days away', async () => {
       const isoDate = getReleaseDateFromFixedNow(10) + 'T12:30:00.000Z';
       const dto = createReferralDto({
-        pendingRelease: ReleaseFromType.CORRECTIONS,
+        pendingOrRecentlyReleased: ReleaseFromType.CORRECTIONS,
         releaseDate: isoDate,
       });
 
@@ -1192,11 +1192,15 @@ describe('ReferralsService', () => {
         await flushAsync();
 
         expect(mockMailService.sendAutomaticReply).toHaveBeenCalledTimes(1);
-        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledWith(created);
+        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledWith(
+          created,
+        );
       });
 
       it('fires urgent notification to all four region emails when urgent', async () => {
-        const dto = createReferralDto({ currentlyHomeless: YesNoUnknown.YES });
+        const dto = createReferralDto({
+          experiencingHomelessness: YesNoUnknown.YES,
+        });
         const created = createMockReferral({
           flag: true,
           region: regionWithEmails,
@@ -1207,7 +1211,8 @@ describe('ReferralsService', () => {
         await flushAsync();
 
         expect(mockMailService.sendUrgentNotification).toHaveBeenCalledTimes(1);
-        const [recipients] = mockMailService.sendUrgentNotification.mock.calls[0];
+        const [recipients] =
+          mockMailService.sendUrgentNotification.mock.calls[0];
         expect(recipients).toEqual([
           'mgr@test',
           'sup@test',
@@ -1229,7 +1234,9 @@ describe('ReferralsService', () => {
       });
 
       it('skips urgent notification when region has no recipient emails', async () => {
-        const dto = createReferralDto({ currentlyHomeless: YesNoUnknown.YES });
+        const dto = createReferralDto({
+          experiencingHomelessness: YesNoUnknown.YES,
+        });
         mockPrismaService.referral.create.mockResolvedValue(
           createMockReferral({
             flag: true,
@@ -1258,9 +1265,9 @@ describe('ReferralsService', () => {
         const created = createMockReferral({ region: regionWithEmails });
         mockPrismaService.referral.create.mockResolvedValue(created);
 
-        await expect(
-          service.create(dto, 'contact-uuid-1'),
-        ).resolves.toEqual(created);
+        await expect(service.create(dto, 'contact-uuid-1')).resolves.toEqual(
+          created,
+        );
         await flushAsync();
       });
     });
@@ -1287,7 +1294,9 @@ describe('ReferralsService', () => {
         await service.update('referral-uuid-1', dto);
         await flushAsync();
 
-        expect(mockMailService.sendAssignmentNotification).toHaveBeenCalledTimes(1);
+        expect(
+          mockMailService.sendAssignmentNotification,
+        ).toHaveBeenCalledTimes(1);
         const [to] = mockMailService.sendAssignmentNotification.mock.calls[0];
         expect(to).toBe('assignee@test');
       });
@@ -1305,15 +1314,19 @@ describe('ReferralsService', () => {
         });
 
         await service.update('referral-uuid-1', {
-          referralSummary: 'updated notes',
+          referralReason: 'updated notes',
         });
         await flushAsync();
 
-        expect(mockMailService.sendAssignmentNotification).not.toHaveBeenCalled();
+        expect(
+          mockMailService.sendAssignmentNotification,
+        ).not.toHaveBeenCalled();
       });
 
       it('fires region change notification when region changes', async () => {
-        mockPrismaService.referral.findUnique.mockResolvedValue(existingReferral);
+        mockPrismaService.referral.findUnique.mockResolvedValue(
+          existingReferral,
+        );
         mockPrismaService.referral.update.mockResolvedValue({
           ...existingReferral,
           regionId: 'region-uuid-2',
@@ -1328,22 +1341,28 @@ describe('ReferralsService', () => {
         await service.update('referral-uuid-1', { regionId: 'region-uuid-2' });
         await flushAsync();
 
-        expect(mockMailService.sendRegionChangeNotification).toHaveBeenCalledTimes(1);
+        expect(
+          mockMailService.sendRegionChangeNotification,
+        ).toHaveBeenCalledTimes(1);
         const [recipients] =
           mockMailService.sendRegionChangeNotification.mock.calls[0];
         expect(recipients).toEqual(['newsup@test', 'newshared@test']);
       });
 
       it('does not fire region change notification when region is unchanged', async () => {
-        mockPrismaService.referral.findUnique.mockResolvedValue(existingReferral);
+        mockPrismaService.referral.findUnique.mockResolvedValue(
+          existingReferral,
+        );
         mockPrismaService.referral.update.mockResolvedValue(existingReferral);
 
         await service.update('referral-uuid-1', {
-          referralSummary: 'updated notes',
+          referralReason: 'updated notes',
         });
         await flushAsync();
 
-        expect(mockMailService.sendRegionChangeNotification).not.toHaveBeenCalled();
+        expect(
+          mockMailService.sendRegionChangeNotification,
+        ).not.toHaveBeenCalled();
       });
     });
   });
