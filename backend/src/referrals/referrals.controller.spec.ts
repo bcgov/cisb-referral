@@ -85,6 +85,16 @@ describe('ReferralsController', () => {
 
       expect(mockReferralsService.findAll).toHaveBeenCalledWith({});
     });
+
+    it('should pass the search param through to the service', async () => {
+      mockReferralsService.findAll.mockResolvedValue(mockPaginatedResult);
+
+      const query = { page: 1, limit: 10, search: 'Jane' };
+      const result = await controller.findAll(query);
+
+      expect(result).toEqual(mockPaginatedResult);
+      expect(mockReferralsService.findAll).toHaveBeenCalledWith(query);
+    });
   });
 
   describe('findOne', () => {

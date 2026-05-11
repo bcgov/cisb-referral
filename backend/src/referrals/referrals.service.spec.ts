@@ -506,6 +506,45 @@ describe('ReferralsService', () => {
         }),
       );
     });
+
+    it('should filter by referrerContactName startsWith when search is provided', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'Jane' });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            referrerContactName: { startsWith: 'Jane', mode: 'insensitive' },
+          },
+        }),
+      );
+      expect(mockPrismaService.referral.count).toHaveBeenCalledWith({
+        where: {
+          referrerContactName: { startsWith: 'Jane', mode: 'insensitive' },
+        },
+      });
+    });
+
+    it('should combine search with other filters', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        status: ReferralStatus.OPEN,
+        search: 'Smith',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            referralStatus: ReferralStatus.OPEN,
+            referrerContactName: { startsWith: 'Smith', mode: 'insensitive' },
+          },
+        }),
+      );
+    });
   });
 
   describe('findOne', () => {
