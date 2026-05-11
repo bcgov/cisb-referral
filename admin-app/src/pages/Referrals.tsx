@@ -116,7 +116,14 @@ export function Referrals() {
             type="text"
             placeholder="Filter by keyword"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearch(val);
+              if (!val.trim() && activeSearch) {
+                setActiveSearch("");
+                setPage(1);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 setActiveSearch(search.trim());
