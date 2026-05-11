@@ -83,6 +83,12 @@ export class ReferralsController {
     type: String,
     description: 'Filter by assigned user',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Filter by referrer contact name (starts with)',
+  })
   @ApiResponse({ status: 200, description: 'List of referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Query() query: FindAllReferralsDto) {

@@ -75,6 +75,26 @@ describe("APIService methods", () => {
       expect(result).toEqual(mockData);
     });
 
+    it("should fetch referrals with search param", async () => {
+      // Arrange
+      const mockData = { data: [{ id: "1" }], total: 1 };
+      mockGet.mockResolvedValue({ data: mockData });
+      const { apiService } = await import("../../services/api");
+
+      // Act
+      const result = await apiService.fetchReferrals({
+        page: 1,
+        limit: 25,
+        search: "Jane",
+      });
+
+      // Assert
+      expect(mockGet).toHaveBeenCalledWith("/referrals", {
+        params: { page: 1, limit: 25, search: "Jane" },
+      });
+      expect(result).toEqual(mockData);
+    });
+
     it("should fetch a single referral by id", async () => {
       // Arrange
       const mockReferral = { id: "abc-123" };

@@ -26,12 +26,22 @@ export function Referrals() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["referrals", { page, limit: PAGE_SIZE }],
-    queryFn: () => apiService.fetchReferrals({ page, limit: PAGE_SIZE }),
+    queryKey: [
+      "referrals",
+      { page, limit: PAGE_SIZE, search: activeSearch || undefined },
+    ],
+    queryFn: () =>
+      apiService.fetchReferrals({
+        page,
+        limit: PAGE_SIZE,
+        search: activeSearch || undefined,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -105,6 +115,14 @@ export function Referrals() {
           <input
             type="text"
             placeholder="Filter by keyword"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setActiveSearch(search.trim());
+                setPage(1);
+              }
+            }}
             className="py-2 px-3 border border-bcgov-border rounded text-sm
               w-full sm:w-50 focus:outline-none focus:border-bcgov-blue
               focus:ring-2 focus:ring-bcgov-blue/20"

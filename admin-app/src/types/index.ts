@@ -203,6 +203,7 @@ export interface FetchReferralsParams {
   limit?: number;
   status?: string;
   regionId?: string;
+  search?: string;
 }
 
 export const UserRole = {

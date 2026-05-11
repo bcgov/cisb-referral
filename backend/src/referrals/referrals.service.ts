@@ -301,17 +301,31 @@ export class ReferralsService {
     status?: ReferralStatus;
     regionId?: string;
     assignedToId?: string;
+    search?: string;
   }): Promise<{
     data: Referral[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
-    const { page = 1, limit = 10, status, regionId, assignedToId } = params;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      regionId,
+      assignedToId,
+      search,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where = {
       ...(status && { referralStatus: status }),
       ...(regionId && { regionId }),
       ...(assignedToId && { assignedToId }),
+      ...(search && {
+        referrerContactName: {
+          startsWith: search,
+          mode: 'insensitive' as const,
+        },
+      }),
     };
 
     const [data, total] = await Promise.all([

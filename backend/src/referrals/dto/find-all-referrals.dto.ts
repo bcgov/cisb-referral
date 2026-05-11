@@ -1,6 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { ReferralStatus } from './update-referral.dto';
 
 export class FindAllReferralsDto {
@@ -33,4 +43,13 @@ export class FindAllReferralsDto {
   @IsOptional()
   @IsUUID()
   assignedToId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by referrer contact name (starts with)',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  search?: string;
 }
