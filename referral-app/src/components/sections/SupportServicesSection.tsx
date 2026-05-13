@@ -79,7 +79,7 @@ export function SupportServicesSection({
               name="referralReason"
               control={control}
               label="Brief summary of the reason for referral (Optional)"
-              maxLength={2000}
+              maxLength={5000}
             />
           </FormField>
         </div>

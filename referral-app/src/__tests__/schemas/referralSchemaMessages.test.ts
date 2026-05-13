@@ -123,4 +123,53 @@ describe("referralSchema human-friendly validation messages", () => {
       expect(messages).toContain("Please enter a valid 10-digit phone number");
     }
   });
+
+  it("enforces backend-aligned max length for bestWayToReach (200)", () => {
+    const result = referralSchema.safeParse({
+      ...validBaseData,
+      bestWayToReach: "a".repeat(201),
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain("Please use 200 characters or fewer");
+    }
+  });
+
+  it("enforces backend-aligned max length for secondaryContact (200)", () => {
+    const result = referralSchema.safeParse({
+      ...validBaseData,
+      secondaryContact: "a".repeat(201),
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain(
+        "Secondary contact must be 200 characters or fewer",
+      );
+    }
+  });
+
+  it("allows referralReason up to 5000 characters and rejects 5001", () => {
+    const validResult = referralSchema.safeParse({
+      ...validBaseData,
+      referralReason: "a".repeat(5000),
+    });
+    expect(validResult.success).toBe(true);
+
+    const invalidResult = referralSchema.safeParse({
+      ...validBaseData,
+      referralReason: "a".repeat(5001),
+    });
+    expect(invalidResult.success).toBe(false);
+
+    if (!invalidResult.success) {
+      const messages = invalidResult.error.issues.map((issue) => issue.message);
+      expect(messages).toContain("Please use 5,000 characters or fewer");
+    }
+  });
 });

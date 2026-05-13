@@ -248,11 +248,11 @@ const baseSchema = z.object({
   }),
   secondaryContact: z
     .string()
-    .max(100, "Secondary contact must be 100 characters or fewer")
+    .max(200, "Secondary contact must be 200 characters or fewer")
     .optional(),
   bestWayToReach: z
     .string()
-    .max(500, "Please use 500 characters or fewer")
+    .max(200, "Please use 200 characters or fewer")
     .optional(),
 
   // Section 3: Housing Status & Critical Transitions
@@ -268,7 +268,7 @@ const baseSchema = z.object({
   neededSupportsOther: z.string().optional(),
   referralReason: z
     .string()
-    .max(2000, "Please use 2,000 characters or fewer")
+    .max(5000, "Please use 5,000 characters or fewer")
     .optional(),
 });
 

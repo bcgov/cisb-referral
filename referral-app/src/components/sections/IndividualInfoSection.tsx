@@ -114,6 +114,7 @@ export function IndividualInfoSection({
             name="bestWayToReach"
             control={control}
             label="Best way to reach the individual (Optional)"
+            maxLength={200}
           />
         </div>
 
