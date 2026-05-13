@@ -1,5 +1,5 @@
 import type { UseFormReturn } from "react-hook-form";
-import type { ReferralFormData } from "../../schemas/referralSchema";
+import type { ReferralFormInput } from "../../schemas/referralSchema";
 import {
   ReferredByType,
   ReferredByTypeOptions,
@@ -8,7 +8,7 @@ import { SelectField, TextInput } from "../form";
 import type { Ministry, AgencyType } from "../../types";
 
 interface ReferralDetailsSectionProps {
-  readonly form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormInput>;
   readonly ministries: Ministry[];
   readonly agencyTypes: AgencyType[];
 }
@@ -32,6 +32,40 @@ export function ReferralDetailsSection({
 
   const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
   const isOtherAgencyType = selectedAgencyType?.name?.toLowerCase() === "other";
+
+  const ministryIdRules = {
+    validate: (value: unknown) => {
+      if (referredBy !== ReferredByType.PARTNER_MINISTRY) {
+        return true;
+      }
+
+      return value ? true : "Please select a ministry";
+    },
+  };
+
+  const partnerAgencyNameRules = {
+    validate: (value: unknown) => {
+      if (referredBy !== ReferredByType.PARTNER_AGENCY) {
+        return true;
+      }
+
+      if (typeof value === "string" && value.trim().length > 0) {
+        return true;
+      }
+
+      return "Please enter the partner agency name";
+    },
+  };
+
+  const agencyTypeIdRules = {
+    validate: (value: unknown) => {
+      if (referredBy !== ReferredByType.PARTNER_AGENCY) {
+        return true;
+      }
+
+      return value ? true : "Please select the type of agency";
+    },
+  };
 
   const setRequiredOtherError = (
     field: "ministryNameOther" | "agencyTypeOther",
@@ -176,6 +210,7 @@ export function ReferralDetailsSection({
             label="Name of Ministry"
             options={ministries}
             isRequired
+            rules={ministryIdRules}
             onChangeCallback={handleMinistryChange}
           />
 
@@ -202,6 +237,7 @@ export function ReferralDetailsSection({
             control={control}
             label="Partner Agency Name"
             isRequired
+            rules={partnerAgencyNameRules}
           />
 
           <SelectField
@@ -210,6 +246,7 @@ export function ReferralDetailsSection({
             label="Type of Agency"
             options={agencyTypes}
             isRequired
+            rules={agencyTypeIdRules}
             onChangeCallback={handleAgencyTypeChange}
           />
 

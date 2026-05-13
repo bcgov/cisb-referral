@@ -4,6 +4,7 @@ import {
   type Control,
   type FieldPath,
   type FieldValues,
+  type RegisterOptions,
 } from "react-hook-form";
 import type { Key } from "react-aria-components";
 import { isStringArray, type OptionsType } from "../../utils/formHelpers";
@@ -17,6 +18,7 @@ interface SelectFieldProps<T extends FieldValues> {
   readonly placeholder?: string;
   readonly description?: string;
   readonly isRequired?: boolean;
+  readonly rules?: RegisterOptions<T, FieldPath<T>>;
   readonly onChangeCallback?: (key: Key | null) => void;
 }
 
@@ -28,12 +30,13 @@ export function SelectField<T extends FieldValues>({
   placeholder = "Select an option",
   description,
   isRequired = false,
+  rules,
   onChangeCallback,
 }: Readonly<SelectFieldProps<T>>) {
   const {
     field,
     fieldState: { error },
-  } = useController({ name, control });
+  } = useController({ name, control, rules });
 
   const items = isStringArray(options)
     ? options.map((opt) => ({ id: opt, label: opt }))

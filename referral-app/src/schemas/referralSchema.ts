@@ -132,6 +132,78 @@ const SupportTypeEnum = z.enum([
   SupportType.OTHERS,
 ]);
 
+function requiredTextField(requiredMessage: string) {
+  return z.preprocess(
+    (value: string | undefined) =>
+      typeof value === "string" ? value.trim() : "",
+    z.string().min(1, requiredMessage),
+  ) as z.ZodType<string>;
+}
+
+function requiredNameField(fieldLabel: string) {
+  return requiredTextField(`Please enter ${fieldLabel.toLowerCase()}`).refine(
+    (value: string) => !/\d/.test(value),
+    { message: `${fieldLabel} cannot include numbers` },
+  );
+}
+
+function optionalNameField(fieldLabel: string) {
+  return z
+    .string()
+    .optional()
+    .refine((value: string | undefined) => !value || !/\d/.test(value), {
+      message: `${fieldLabel} cannot include numbers`,
+    });
+}
+
+function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) => isValidPhoneNumber(value),
+    { message: invalidMessage },
+  );
+}
+
+function optionalPhoneField(invalidMessage: string) {
+  return z
+    .string()
+    .optional()
+    .refine(
+      (value: string | undefined) =>
+        !value || value.trim().length === 0 || isValidPhoneNumber(value),
+      {
+        message: invalidMessage,
+      },
+    );
+}
+
+function isValidPhoneNumber(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  // Allow common phone formatting only.
+  if (!/^[0-9\s().-]+$/.test(trimmed)) {
+    return false;
+  }
+
+  return trimmed.replace(/\D/g, "").length === 10;
+}
+
+function requiredSelectionField(requiredMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) => value.length === 0 || z.uuid().safeParse(value).success,
+    { message: requiredMessage },
+  );
+}
+
+function requiredEmailField(requiredMessage: string, invalidMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) => value.length === 0 || z.email().safeParse(value).success,
+    { message: invalidMessage },
+  );
+}
+
 // Base schema for all fields
 const baseSchema = z.object({
   // Section 1: Referrer Information
@@ -148,61 +220,39 @@ const baseSchema = z.object({
   agencyTypeOther: z.string().optional(),
 
   // Common referrer fields
-  referrerContactName: z
-    .string()
-    .min(1, "Contact name is required")
-    .regex(/[a-zA-Z]/, "Contact name must contain at least one letter"),
-  referrerEmail: z.email({ message: "Please enter a valid email" }),
-  referrerPhone: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine((val) => val.replace(/\D/g, "").length === 10, {
-      message: "Phone number must be exactly 10 digits",
-    }),
+  referrerContactName: requiredNameField("Contact name"),
+  referrerEmail: requiredEmailField(
+    "Please enter an email address",
+    "Please enter a valid email address",
+  ),
+  referrerPhone: requiredPhoneField(
+    "Please enter a phone number",
+    "Please enter a valid 10-digit phone number",
+  ),
 
   // Section 2: Individual Information
-  individualFirstName: z
-    .string()
-    .min(1, "First name is required")
-    .regex(/[a-zA-Z]/, "First name must contain at least one letter"),
-  individualMiddleName: z
-    .string()
-    .optional()
-    .refine((val) => !val || /[a-zA-Z]/.test(val), {
-      message: "Middle name must contain at least one letter",
-    }),
-  individualLastName: z
-    .string()
-    .optional()
-    .refine((val) => !val || /[a-zA-Z]/.test(val), {
-      message: "Last name must contain at least one letter",
-    }),
-  individualPreferredName: z
-    .string()
-    .optional()
-    .refine((val) => !val || /[a-zA-Z]/.test(val), {
-      message: "Preferred name must contain at least one letter",
-    }),
+  individualFirstName: requiredNameField("First name"),
+  individualMiddleName: optionalNameField("Middle name"),
+  individualLastName: optionalNameField("Last name"),
+  individualPreferredName: optionalNameField("Preferred name"),
   personId: z.string().optional(),
-  individualPhone: z
-    .string()
-    .optional()
-    .refine((val) => !val || val.replace(/\D/g, "").length === 10, {
-      message: "Individual's phone must be exactly 10 digits",
-    }),
+  individualPhone: optionalPhoneField(
+    "Please enter a valid 10-digit phone number",
+  ),
   individualDateOfBirth: z.string().optional(),
-  regionId: z.uuid({ message: "Please select a region" }),
-  specificCityTown: z
-    .string()
-    .min(1, "Current city is required")
-    .regex(/[a-zA-Z]/, "City must contain at least one letter"),
+  regionId: requiredSelectionField("Please select a region"),
+  specificCityTown: requiredTextField(
+    "Please enter the current city or town",
+  ).refine((value: string) => /[a-zA-Z]/.test(value), {
+    message: "Please enter a valid city or town name",
+  }),
   secondaryContact: z
     .string()
-    .max(100, "Secondary contact must be 100 characters or less")
+    .max(100, "Secondary contact must be 100 characters or fewer")
     .optional(),
   bestWayToReach: z
     .string()
-    .max(500, "Must be 500 characters or less")
+    .max(500, "Please use 500 characters or fewer")
     .optional(),
 
   // Section 3: Housing Status & Critical Transitions
@@ -218,7 +268,7 @@ const baseSchema = z.object({
   neededSupportsOther: z.string().optional(),
   referralReason: z
     .string()
-    .max(2000, "Must be 2,000 characters or less")
+    .max(2000, "Please use 2,000 characters or fewer")
     .optional(),
 });
 
@@ -237,7 +287,7 @@ function validatePartnerMinistry(
   if (!data.ministryId) {
     ctx.addIssue({
       code: "custom",
-      message: "Ministry is required when referred by Partner Ministry",
+      message: "Please select a ministry",
       path: ["ministryId"],
     });
   }
@@ -254,8 +304,7 @@ function validatePartnerAgency(
   if (!data.partnerAgencyName) {
     ctx.addIssue({
       code: "custom",
-      message:
-        "Partner agency name is required when referred by Partner Agency",
+      message: "Please enter the partner agency name",
       path: ["partnerAgencyName"],
     });
   }
@@ -263,7 +312,7 @@ function validatePartnerAgency(
   if (!data.agencyTypeId) {
     ctx.addIssue({
       code: "custom",
-      message: "Type of agency is required when referred by Partner Agency",
+      message: "Please select the type of agency",
       path: ["agencyTypeId"],
     });
   }
@@ -355,4 +404,5 @@ export function isUrgentReferral(data: ReferralFormData): boolean {
   return false;
 }
 
-export type ReferralFormData = z.infer<typeof referralSchema>;
+export type ReferralFormInput = z.input<typeof referralSchema>;
+export type ReferralFormData = z.output<typeof referralSchema>;

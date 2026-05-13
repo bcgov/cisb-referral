@@ -1,10 +1,10 @@
 import type { UseFormReturn } from "react-hook-form";
-import type { ReferralFormData } from "../../schemas/referralSchema";
+import type { ReferralFormInput } from "../../schemas/referralSchema";
 import { SupportType, SupportTypeOptions } from "../../schemas/referralSchema";
 import { FormField, TextInput, TextAreaField, MultiSelectField } from "../form";
 
 interface SupportServicesSectionProps {
-  readonly form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormInput>;
 }
 
 export function SupportServicesSection({
