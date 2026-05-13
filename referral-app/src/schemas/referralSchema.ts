@@ -132,6 +132,17 @@ const SupportTypeEnum = z.enum([
   SupportType.OTHERS,
 ]);
 
+const RequiredYesNoUnknownField = z
+  .preprocess(
+    (value: unknown) => (typeof value === "string" ? value.trim() : ""),
+    z.string(),
+  )
+  .refine(
+    (value): value is (typeof YesNoUnknown)[keyof typeof YesNoUnknown] =>
+      YesNoUnknownEnum.safeParse(value).success,
+    { message: "Please select an option" },
+  ) as z.ZodType<(typeof YesNoUnknown)[keyof typeof YesNoUnknown]>;
+
 function requiredTextField(requiredMessage: string) {
   return z.preprocess(
     (value: string | undefined) =>
@@ -197,6 +208,28 @@ function requiredSelectionField(requiredMessage: string) {
   );
 }
 
+function optionalSelectionField() {
+  return z.preprocess((value: string | undefined) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.uuid().optional()) as z.ZodType<string | undefined>;
+}
+
+function optionalTrimmedTextField() {
+  return z.preprocess((value: string | undefined) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.string().optional()) as z.ZodType<string | undefined>;
+}
+
 function requiredEmailField(requiredMessage: string, invalidMessage: string) {
   return requiredTextField(requiredMessage).refine(
     (value: string) => value.length === 0 || z.email().safeParse(value).success,
@@ -210,14 +243,14 @@ const baseSchema = z.object({
   referredBy: ReferredByEnum,
 
   // Conditional fields for Partner Ministry (now using ID reference)
-  ministryId: z.uuid().optional(),
-  ministryNameOther: z.string().optional(),
-  programArea: z.string().optional(),
+  ministryId: optionalSelectionField(),
+  ministryNameOther: optionalTrimmedTextField(),
+  programArea: optionalTrimmedTextField(),
 
   // Conditional fields for Partner Agency
-  partnerAgencyName: z.string().optional(),
-  agencyTypeId: z.uuid().optional(),
-  agencyTypeOther: z.string().optional(),
+  partnerAgencyName: optionalTrimmedTextField(),
+  agencyTypeId: optionalSelectionField(),
+  agencyTypeOther: optionalTrimmedTextField(),
 
   // Common referrer fields
   referrerContactName: requiredNameField("Contact name"),
@@ -235,7 +268,7 @@ const baseSchema = z.object({
   individualMiddleName: optionalNameField("Middle name"),
   individualLastName: optionalNameField("Last name"),
   individualPreferredName: optionalNameField("Preferred name"),
-  personId: z.string().optional(),
+  personId: optionalTrimmedTextField(),
   individualPhone: optionalPhoneField(
     "Please enter a valid 10-digit phone number",
   ),
@@ -256,7 +289,7 @@ const baseSchema = z.object({
     .optional(),
 
   // Section 3: Housing Status & Critical Transitions
-  experiencingHomelessness: YesNoUnknownEnum,
+  experiencingHomelessness: RequiredYesNoUnknownField,
   losingHouse: YesNoUnknownEnum.optional(),
   pendingOrRecentlyReleased: ReleaseFromEnum.optional(),
   releaseDate: z.string().optional(),

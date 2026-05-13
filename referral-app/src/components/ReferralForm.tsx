@@ -6,7 +6,6 @@ import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
   referralSchema,
-  ReferredByType,
   type ReferralFormData,
   type ReferralFormInput,
 } from "../schemas/referralSchema";
@@ -44,33 +43,6 @@ export function ReferralForm() {
 
   const onInvalid = () => {
     setSubmitStatus({ type: "idle" });
-
-    const values = form.getValues();
-
-    if (values.referredBy === ReferredByType.PARTNER_MINISTRY) {
-      if (!values.ministryId) {
-        form.setError("ministryId", {
-          type: "manual",
-          message: "Please select a ministry",
-        });
-      }
-    }
-
-    if (values.referredBy === ReferredByType.PARTNER_AGENCY) {
-      if (!values.partnerAgencyName?.trim()) {
-        form.setError("partnerAgencyName", {
-          type: "manual",
-          message: "Please enter the partner agency name",
-        });
-      }
-
-      if (!values.agencyTypeId) {
-        form.setError("agencyTypeId", {
-          type: "manual",
-          message: "Please select the type of agency",
-        });
-      }
-    }
   };
 
   const onSubmit = async (data: ReferralFormData) => {

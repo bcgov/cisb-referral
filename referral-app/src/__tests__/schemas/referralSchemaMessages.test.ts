@@ -7,7 +7,7 @@ const validBaseData = {
   referrerEmail: "jordan.smith@example.com",
   referrerPhone: "2505551234",
   individualFirstName: "Casey",
-  regionId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  regionId: "a1b2c3d4-e5f6-4a90-8bcd-ef1234567890",
   specificCityTown: "100 Mile House",
   experiencingHomelessness: "YES",
   currentlyConnectedSupports: [],
@@ -93,6 +93,31 @@ describe("referralSchema human-friendly validation messages", () => {
     if (!result.success) {
       const messages = result.error.issues.map((issue) => issue.message);
       expect(messages).toContain("Please enter a valid 10-digit phone number");
+    }
+  });
+
+  it("shows partner agency conditional errors from schema even when other required fields are missing", () => {
+    const result = referralSchema.safeParse({
+      referredBy: "PARTNER_AGENCY",
+      partnerAgencyName: "   ",
+      agencyTypeId: "",
+      referrerContactName: "",
+      referrerEmail: "",
+      referrerPhone: "",
+      individualFirstName: "",
+      regionId: "",
+      specificCityTown: "",
+      experiencingHomelessness: "",
+      currentlyConnectedSupports: [],
+      neededSupports: [],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain("Please enter the partner agency name");
+      expect(messages).toContain("Please select the type of agency");
     }
   });
 

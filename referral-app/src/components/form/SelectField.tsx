@@ -43,7 +43,7 @@ export function SelectField<T extends FieldValues>({
     : options.map((opt) => ({ id: opt.id, label: opt.name }));
 
   const handleSelectionChange = (key: Key | null) => {
-    field.onChange(key ?? "");
+    field.onChange(key ?? undefined);
     onChangeCallback?.(key);
   };
 
