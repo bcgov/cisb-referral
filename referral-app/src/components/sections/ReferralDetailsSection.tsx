@@ -18,7 +18,7 @@ export function ReferralDetailsSection({
   ministries,
   agencyTypes,
 }: Readonly<ReferralDetailsSectionProps>) {
-  const { control, watch, setValue, setError, clearErrors, getValues } = form;
+  const { control, watch, setValue, clearErrors } = form;
 
   const referredBy = watch("referredBy");
   const ministryId = watch("ministryId");
@@ -33,27 +33,13 @@ export function ReferralDetailsSection({
   const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
   const isOtherAgencyType = selectedAgencyType?.name?.toLowerCase() === "other";
 
-  const setRequiredOtherError = (
-    field: "ministryNameOther" | "agencyTypeOther",
+  const validateRequiredOtherField = (
+    value: unknown,
+    isRequired: boolean,
     message: string,
-  ) => {
-    setError(field, {
-      type: "custom",
-      message,
-    });
-  };
-
-  const clearOrSetRequiredOtherError = (
-    field: "ministryNameOther" | "agencyTypeOther",
-    value: string,
-    message: string,
-  ) => {
-    if (value.trim()) {
-      clearErrors(field);
-      return;
-    }
-
-    setRequiredOtherError(field, message);
+  ): true | string => {
+    const trimmedValue = typeof value === "string" ? value.trim() : "";
+    return !isRequired || trimmedValue.length > 0 ? true : message;
   };
 
   const handleReferredByChange = () => {
@@ -76,11 +62,6 @@ export function ReferralDetailsSection({
     const selected = ministries.find((m) => m.id === key);
     const isOther = selected?.name?.toLowerCase() === "other";
     if (isOther) {
-      clearOrSetRequiredOtherError(
-        "ministryNameOther",
-        getValues("ministryNameOther") ?? "",
-        "Please specify the ministry name",
-      );
       return;
     }
 
@@ -92,11 +73,6 @@ export function ReferralDetailsSection({
     const selected = agencyTypes.find((a) => a.id === key);
     const isOther = selected?.name?.toLowerCase() === "other";
     if (isOther) {
-      clearOrSetRequiredOtherError(
-        "agencyTypeOther",
-        getValues("agencyTypeOther") ?? "",
-        "Please specify the agency type",
-      );
       return;
     }
 
@@ -105,29 +81,15 @@ export function ReferralDetailsSection({
   };
 
   const handleMinistryOtherInputChange = (value: string) => {
-    if (!isOtherMinistry) {
+    if (!isOtherMinistry || value.trim()) {
       clearErrors("ministryNameOther");
-      return;
     }
-
-    clearOrSetRequiredOtherError(
-      "ministryNameOther",
-      value,
-      "Please specify the ministry name",
-    );
   };
 
   const handleAgencyTypeOtherInputChange = (value: string) => {
-    if (!isOtherAgencyType) {
+    if (!isOtherAgencyType || value.trim()) {
       clearErrors("agencyTypeOther");
-      return;
     }
-
-    clearOrSetRequiredOtherError(
-      "agencyTypeOther",
-      value,
-      "Please specify the agency type",
-    );
   };
 
   return (
@@ -184,6 +146,14 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Ministry (if not listed)"
             isRequired={isOtherMinistry}
+            rules={{
+              validate: (value) =>
+                validateRequiredOtherField(
+                  value,
+                  isOtherMinistry,
+                  "Please specify the ministry name",
+                ),
+            }}
             onChangeCallback={handleMinistryOtherInputChange}
           />
 
@@ -218,6 +188,14 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Agency Type (if not listed)"
             isRequired={isOtherAgencyType}
+            rules={{
+              validate: (value) =>
+                validateRequiredOtherField(
+                  value,
+                  isOtherAgencyType,
+                  "Please specify the agency type",
+                ),
+            }}
             onChangeCallback={handleAgencyTypeOtherInputChange}
           />
         </div>

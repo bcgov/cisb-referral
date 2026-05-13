@@ -5,6 +5,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
+  ReferredByType,
   referralSchema,
   type ReferralFormData,
   type ReferralFormInput,
@@ -45,7 +46,52 @@ export function ReferralForm() {
     setSubmitStatus({ type: "idle" });
   };
 
+  const validateOtherDetailsForSubmit = (data: ReferralFormData): boolean => {
+    let hasErrors = false;
+
+    const selectedMinistry = ministries.find((ministry) => {
+      return ministry.id === data.ministryId;
+    });
+    const isOtherMinistry =
+      data.referredBy === ReferredByType.PARTNER_MINISTRY &&
+      selectedMinistry?.name?.trim().toLowerCase() === "other";
+
+    if (isOtherMinistry && !data.ministryNameOther?.trim()) {
+      form.setError("ministryNameOther", {
+        type: "manual",
+        message: "Please specify the ministry name",
+      });
+      hasErrors = true;
+    } else {
+      form.clearErrors("ministryNameOther");
+    }
+
+    const selectedAgencyType = agencyTypes.find((agencyType) => {
+      return agencyType.id === data.agencyTypeId;
+    });
+    const isOtherAgencyType =
+      data.referredBy === ReferredByType.PARTNER_AGENCY &&
+      selectedAgencyType?.name?.trim().toLowerCase() === "other";
+
+    if (isOtherAgencyType && !data.agencyTypeOther?.trim()) {
+      form.setError("agencyTypeOther", {
+        type: "manual",
+        message: "Please specify the agency type",
+      });
+      hasErrors = true;
+    } else {
+      form.clearErrors("agencyTypeOther");
+    }
+
+    return !hasErrors;
+  };
+
   const onSubmit = async (data: ReferralFormData) => {
+    if (!validateOtherDetailsForSubmit(data)) {
+      setSubmitStatus({ type: "idle" });
+      return;
+    }
+
     setSubmitStatus({ type: "loading" });
 
     try {

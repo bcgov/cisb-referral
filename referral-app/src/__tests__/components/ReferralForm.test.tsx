@@ -139,15 +139,38 @@ vi.mock("../../components/sections", async () => {
 
   function ReferralDetailsSection({
     form,
+    ministries,
     agencyTypes,
   }: {
     readonly form: { control: unknown };
+    readonly ministries: SelectOption[];
     readonly agencyTypes: SelectOption[];
   }) {
     const referredBy = useWatch({
       control: form.control as never,
       name: "referredBy",
     }) as string | undefined;
+
+    const agencyTypeId = useWatch({
+      control: form.control as never,
+      name: "agencyTypeId",
+    }) as string | undefined;
+
+    const selectedAgencyType = agencyTypes.find((agencyType) => {
+      return agencyType.id === agencyTypeId;
+    });
+    const isOtherAgencyType =
+      selectedAgencyType?.name?.toLowerCase() === "other";
+
+    const ministryId = useWatch({
+      control: form.control as never,
+      name: "ministryId",
+    }) as string | undefined;
+
+    const selectedMinistry = ministries.find((ministry) => {
+      return ministry.id === ministryId;
+    });
+    const isOtherMinistry = selectedMinistry?.name?.toLowerCase() === "other";
 
     return (
       <section>
@@ -181,6 +204,24 @@ vi.mock("../../components/sections", async () => {
           control={form.control}
         />
 
+        {referredBy === "PARTNER_MINISTRY" && (
+          <>
+            <SelectField
+              name="ministryId"
+              label="Name of Ministry"
+              control={form.control}
+              options={ministries}
+            />
+            {isOtherMinistry && (
+              <TextInput
+                name="ministryNameOther"
+                label="Specify Ministry (if not listed)"
+                control={form.control}
+              />
+            )}
+          </>
+        )}
+
         {referredBy === "PARTNER_AGENCY" && (
           <>
             <TextInput
@@ -194,6 +235,13 @@ vi.mock("../../components/sections", async () => {
               control={form.control}
               options={agencyTypes}
             />
+            {isOtherAgencyType && (
+              <TextInput
+                name="agencyTypeOther"
+                label="Specify Agency Type (if not listed)"
+                control={form.control}
+              />
+            )}
           </>
         )}
       </section>
@@ -365,6 +413,75 @@ describe("ReferralForm", () => {
     ).toBeInTheDocument();
     expect(
       await screen.findByText("Please select the type of agency"),
+    ).toBeInTheDocument();
+    expect(mockCreateReferral).not.toHaveBeenCalled();
+  });
+
+  it("blocks submit when Other ministry is selected without details", async () => {
+    // Arrange
+    mockUseLookupData.mockReturnValue({
+      ...defaultLookupData,
+      ministries: [
+        {
+          id: "22222222-2222-4222-8222-222222222223",
+          name: "Other",
+          active: true,
+        },
+      ],
+    });
+
+    render(<ReferralForm />);
+
+    fireEvent.change(screen.getByLabelText("Referred By"), {
+      target: { value: "PARTNER_MINISTRY" },
+    });
+    fireEvent.change(screen.getByLabelText("Name of Ministry"), {
+      target: { value: "22222222-2222-4222-8222-222222222223" },
+    });
+    fillMinimumRequiredIndividualFields();
+
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Submit Referral" }));
+
+    // Assert
+    expect(
+      await screen.findByText("Please specify the ministry name"),
+    ).toBeInTheDocument();
+    expect(mockCreateReferral).not.toHaveBeenCalled();
+  });
+
+  it("blocks submit when Other agency type is selected without details", async () => {
+    // Arrange
+    mockUseLookupData.mockReturnValue({
+      ...defaultLookupData,
+      agencyTypes: [
+        {
+          id: "33333333-3333-4333-8333-333333333334",
+          name: "Other",
+          active: true,
+        },
+      ],
+    });
+
+    render(<ReferralForm />);
+
+    fireEvent.change(screen.getByLabelText("Referred By"), {
+      target: { value: "PARTNER_AGENCY" },
+    });
+    fireEvent.change(screen.getByLabelText("Partner Agency Name"), {
+      target: { value: "Community Agency" },
+    });
+    fireEvent.change(screen.getByLabelText("Type of Agency"), {
+      target: { value: "33333333-3333-4333-8333-333333333334" },
+    });
+    fillMinimumRequiredIndividualFields();
+
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Submit Referral" }));
+
+    // Assert
+    expect(
+      await screen.findByText("Please specify the agency type"),
     ).toBeInTheDocument();
     expect(mockCreateReferral).not.toHaveBeenCalled();
   });
