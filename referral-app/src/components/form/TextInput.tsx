@@ -14,6 +14,7 @@ interface TextInputProps<T extends FieldValues> {
   readonly label: string;
   readonly type?: "text" | "email" | "tel" | "password" | "url" | "date";
   readonly description?: string;
+  readonly maxLength?: number;
   readonly isRequired?: boolean;
   readonly rules?: RegisterOptions<T, FieldPath<T>>;
   readonly onChangeCallback?: (value: string) => void;
@@ -25,6 +26,7 @@ export function TextInput<T extends FieldValues>({
   label,
   type = "text",
   description,
+  maxLength,
   isRequired = false,
   rules,
   onChangeCallback,
@@ -49,6 +51,7 @@ export function TextInput<T extends FieldValues>({
         onBlur={field.onBlur}
         name={field.name}
         description={description}
+        maxLength={maxLength}
         isRequired={isRequired}
         isInvalid={!!error}
       />

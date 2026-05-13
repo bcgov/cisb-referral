@@ -107,6 +107,7 @@ export function IndividualInfoSection({
           name="secondaryContact"
           control={control}
           label="Secondary Contact (Optional)"
+          maxLength={200}
         />
 
         <div className="form-field-full">

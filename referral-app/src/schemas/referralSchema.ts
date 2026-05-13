@@ -199,7 +199,7 @@ function isValidPhoneNumber(value: string): boolean {
 
 function requiredSelectionField(requiredMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => value.length === 0 || z.uuid().safeParse(value).success,
+    (value: string) => z.uuid().safeParse(value).success,
     { message: requiredMessage },
   );
 }
@@ -228,7 +228,7 @@ function optionalTrimmedTextField() {
 
 function requiredEmailField(requiredMessage: string, invalidMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => value.length === 0 || z.email().safeParse(value).success,
+    (value: string) => z.email().safeParse(value).success,
     { message: invalidMessage },
   );
 }
