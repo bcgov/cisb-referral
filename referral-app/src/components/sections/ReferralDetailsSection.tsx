@@ -27,11 +27,14 @@ export function ReferralDetailsSection({
   const showMinistryFields = referredBy === ReferredByType.PARTNER_MINISTRY;
   const showAgencyFields = referredBy === ReferredByType.PARTNER_AGENCY;
 
+  const isOtherOption = (name: string | undefined): boolean =>
+    name?.trim().toLowerCase() === "other";
+
   const selectedMinistry = ministries.find((m) => m.id === ministryId);
-  const isOtherMinistry = selectedMinistry?.name?.toLowerCase() === "other";
+  const isOtherMinistry = isOtherOption(selectedMinistry?.name);
 
   const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
-  const isOtherAgencyType = selectedAgencyType?.name?.toLowerCase() === "other";
+  const isOtherAgencyType = isOtherOption(selectedAgencyType?.name);
 
   const validateRequiredOtherField = (
     value: unknown,
@@ -60,7 +63,7 @@ export function ReferralDetailsSection({
 
   const handleMinistryChange = (key: unknown) => {
     const selected = ministries.find((m) => m.id === key);
-    const isOther = selected?.name?.toLowerCase() === "other";
+    const isOther = isOtherOption(selected?.name);
     if (isOther) {
       return;
     }
@@ -71,7 +74,7 @@ export function ReferralDetailsSection({
 
   const handleAgencyTypeChange = (key: unknown) => {
     const selected = agencyTypes.find((a) => a.id === key);
-    const isOther = selected?.name?.toLowerCase() === "other";
+    const isOther = isOtherOption(selected?.name);
     if (isOther) {
       return;
     }

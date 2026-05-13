@@ -169,7 +169,7 @@ function optionalNameField(fieldLabel: string) {
 
 function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => isValidPhoneNumber(value),
+    (value: string) => value.trim().length === 0 || isValidPhoneNumber(value),
     { message: invalidMessage },
   );
 }
@@ -199,7 +199,8 @@ function isValidPhoneNumber(value: string): boolean {
 
 function requiredSelectionField(requiredMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => z.uuid().safeParse(value).success,
+    (value: string) =>
+      value.trim().length === 0 || z.uuid().safeParse(value).success,
     { message: requiredMessage },
   );
 }
@@ -228,7 +229,8 @@ function optionalTrimmedTextField() {
 
 function requiredEmailField(requiredMessage: string, invalidMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => z.email().safeParse(value).success,
+    (value: string) =>
+      value.trim().length === 0 || z.email().safeParse(value).success,
     { message: invalidMessage },
   );
 }
