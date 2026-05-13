@@ -6,6 +6,7 @@ import {
 } from "../../schemas/referralSchema";
 import { SelectField, TextInput } from "../form";
 import type { Ministry, AgencyType } from "../../types";
+import { isOtherLookupOption } from "../../utils/formHelpers";
 
 interface ReferralDetailsSectionProps {
   readonly form: UseFormReturn<ReferralFormInput>;
@@ -27,23 +28,11 @@ export function ReferralDetailsSection({
   const showMinistryFields = referredBy === ReferredByType.PARTNER_MINISTRY;
   const showAgencyFields = referredBy === ReferredByType.PARTNER_AGENCY;
 
-  const isOtherOption = (name: string | undefined): boolean =>
-    name?.trim().toLowerCase() === "other";
-
   const selectedMinistry = ministries.find((m) => m.id === ministryId);
-  const isOtherMinistry = isOtherOption(selectedMinistry?.name);
+  const isOtherMinistry = isOtherLookupOption(selectedMinistry?.name);
 
   const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
-  const isOtherAgencyType = isOtherOption(selectedAgencyType?.name);
-
-  const validateRequiredOtherField = (
-    value: unknown,
-    isRequired: boolean,
-    message: string,
-  ): true | string => {
-    const trimmedValue = typeof value === "string" ? value.trim() : "";
-    return !isRequired || trimmedValue.length > 0 ? true : message;
-  };
+  const isOtherAgencyType = isOtherLookupOption(selectedAgencyType?.name);
 
   const handleReferredByChange = () => {
     setValue("ministryId", undefined);
@@ -63,7 +52,7 @@ export function ReferralDetailsSection({
 
   const handleMinistryChange = (key: unknown) => {
     const selected = ministries.find((m) => m.id === key);
-    const isOther = isOtherOption(selected?.name);
+    const isOther = isOtherLookupOption(selected?.name);
     if (isOther) {
       return;
     }
@@ -74,7 +63,7 @@ export function ReferralDetailsSection({
 
   const handleAgencyTypeChange = (key: unknown) => {
     const selected = agencyTypes.find((a) => a.id === key);
-    const isOther = isOtherOption(selected?.name);
+    const isOther = isOtherLookupOption(selected?.name);
     if (isOther) {
       return;
     }
@@ -149,14 +138,6 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Ministry (if not listed)"
             isRequired={isOtherMinistry}
-            rules={{
-              validate: (value) =>
-                validateRequiredOtherField(
-                  value,
-                  isOtherMinistry,
-                  "Please specify the ministry name",
-                ),
-            }}
             onChangeCallback={handleMinistryOtherInputChange}
           />
 
@@ -191,14 +172,6 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Agency Type (if not listed)"
             isRequired={isOtherAgencyType}
-            rules={{
-              validate: (value) =>
-                validateRequiredOtherField(
-                  value,
-                  isOtherAgencyType,
-                  "Please specify the agency type",
-                ),
-            }}
             onChangeCallback={handleAgencyTypeOtherInputChange}
           />
         </div>

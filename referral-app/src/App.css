@@ -221,7 +221,7 @@
 }
 
 /* Field-level validation error */
-.field-error {
+.referral-form-container .field-error {
   display: block;
   color: #d8292f;
   font-size: 0.875rem;

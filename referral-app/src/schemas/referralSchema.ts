@@ -169,7 +169,7 @@ function optionalNameField(fieldLabel: string) {
 
 function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
   return requiredTextField(requiredMessage).refine(
-    (value: string) => value.trim().length === 0 || isValidPhoneNumber(value),
+    (value: string) => isValidPhoneNumber(value),
     { message: invalidMessage },
   );
 }

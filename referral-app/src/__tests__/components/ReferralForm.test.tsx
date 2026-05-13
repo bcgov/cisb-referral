@@ -51,6 +51,7 @@ vi.mock("../../services", () => ({
 
 vi.mock("../../components/sections", async () => {
   const { useController, useWatch } = await import("react-hook-form");
+  const { isOtherLookupOption } = await import("../../utils/formHelpers");
 
   interface BaseFieldProps {
     readonly name: string;
@@ -159,8 +160,7 @@ vi.mock("../../components/sections", async () => {
     const selectedAgencyType = agencyTypes.find((agencyType) => {
       return agencyType.id === agencyTypeId;
     });
-    const isOtherAgencyType =
-      selectedAgencyType?.name?.toLowerCase() === "other";
+    const isOtherAgencyType = isOtherLookupOption(selectedAgencyType?.name);
 
     const ministryId = useWatch({
       control: form.control as never,
@@ -170,7 +170,7 @@ vi.mock("../../components/sections", async () => {
     const selectedMinistry = ministries.find((ministry) => {
       return ministry.id === ministryId;
     });
-    const isOtherMinistry = selectedMinistry?.name?.toLowerCase() === "other";
+    const isOtherMinistry = isOtherLookupOption(selectedMinistry?.name);
 
     return (
       <section>

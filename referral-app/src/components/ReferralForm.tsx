@@ -17,6 +17,7 @@ import {
 } from "./sections";
 import { useLookupData, useProfile } from "../hooks";
 import { apiService } from "../services";
+import { isOtherLookupOption } from "../utils/formHelpers";
 
 export function ReferralForm() {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ export function ReferralForm() {
     });
     const isOtherMinistry =
       data.referredBy === ReferredByType.PARTNER_MINISTRY &&
-      selectedMinistry?.name?.trim().toLowerCase() === "other";
+      isOtherLookupOption(selectedMinistry?.name);
 
     if (isOtherMinistry && !data.ministryNameOther?.trim()) {
       form.setError("ministryNameOther", {
@@ -71,7 +72,7 @@ export function ReferralForm() {
     });
     const isOtherAgencyType =
       data.referredBy === ReferredByType.PARTNER_AGENCY &&
-      selectedAgencyType?.name?.trim().toLowerCase() === "other";
+      isOtherLookupOption(selectedAgencyType?.name);
 
     if (isOtherAgencyType && !data.agencyTypeOther?.trim()) {
       form.setError("agencyTypeOther", {
