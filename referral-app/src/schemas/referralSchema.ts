@@ -151,20 +151,27 @@ function requiredTextField(requiredMessage: string) {
   ) as z.ZodType<string>;
 }
 
-function requiredNameField(fieldLabel: string) {
-  return requiredTextField(`Please enter ${fieldLabel.toLowerCase()}`).refine(
-    (value: string) => !/\d/.test(value),
-    { message: `${fieldLabel} cannot include numbers` },
-  );
+function requiredNameField(fieldLabel: string, maxLength: number) {
+  return requiredTextField(`Please enter ${fieldLabel.toLowerCase()}`)
+    .refine((value: string) => value.length <= maxLength, {
+      message: `${fieldLabel} must be ${maxLength} characters or fewer`,
+    })
+    .refine((value: string) => !/\d/.test(value), {
+      message: `${fieldLabel} cannot include numbers`,
+    });
 }
 
-function optionalNameField(fieldLabel: string) {
-  return optionalTrimmedTextField().refine(
-    (value: string | undefined) => !value || !/\d/.test(value),
-    {
+function optionalNameField(fieldLabel: string, maxLength: number) {
+  return optionalTrimmedTextField()
+    .refine(
+      (value: string | undefined) => !value || value.length <= maxLength,
+      {
+        message: `${fieldLabel} must be ${maxLength} characters or fewer`,
+      },
+    )
+    .refine((value: string | undefined) => !value || !/\d/.test(value), {
       message: `${fieldLabel} cannot include numbers`,
-    },
-  );
+    });
 }
 
 function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
@@ -251,7 +258,7 @@ const baseSchema = z.object({
   agencyTypeOther: optionalTrimmedTextField(),
 
   // Common referrer fields
-  referrerContactName: requiredNameField("Contact name"),
+  referrerContactName: requiredNameField("Contact name", 200),
   referrerEmail: requiredEmailField(
     "Please enter an email address",
     "Please enter a valid email address",
@@ -262,10 +269,10 @@ const baseSchema = z.object({
   ),
 
   // Section 2: Individual Information
-  individualFirstName: requiredNameField("First name"),
-  individualMiddleName: optionalNameField("Middle name"),
-  individualLastName: optionalNameField("Last name"),
-  individualPreferredName: optionalNameField("Preferred name"),
+  individualFirstName: requiredNameField("First name", 100),
+  individualMiddleName: optionalNameField("Middle name", 100),
+  individualLastName: optionalNameField("Last name", 100),
+  individualPreferredName: optionalNameField("Preferred name", 100),
   personId: optionalTrimmedTextField(),
   individualPhone: optionalPhoneField(
     "Please enter a valid 10-digit phone number",

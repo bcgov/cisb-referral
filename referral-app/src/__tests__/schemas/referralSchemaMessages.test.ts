@@ -57,6 +57,44 @@ describe("referralSchema human-friendly validation messages", () => {
     }
   });
 
+  it("enforces backend-aligned max length for required name fields", () => {
+    const result = referralSchema.safeParse({
+      ...validBaseData,
+      referrerContactName: "a".repeat(201),
+      individualFirstName: "a".repeat(101),
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain(
+        "Contact name must be 200 characters or fewer",
+      );
+      expect(messages).toContain("First name must be 100 characters or fewer");
+    }
+  });
+
+  it("enforces backend-aligned max length for optional name fields", () => {
+    const result = referralSchema.safeParse({
+      ...validBaseData,
+      individualMiddleName: "a".repeat(101),
+      individualLastName: "a".repeat(101),
+      individualPreferredName: "a".repeat(101),
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain("Middle name must be 100 characters or fewer");
+      expect(messages).toContain("Last name must be 100 characters or fewer");
+      expect(messages).toContain(
+        "Preferred name must be 100 characters or fewer",
+      );
+    }
+  });
+
   it("accepts optional name fields when left blank", () => {
     const result = referralSchema.safeParse({
       ...validBaseData,
