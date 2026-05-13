@@ -62,10 +62,29 @@ describe("referralSchema human-friendly validation messages", () => {
       ...validBaseData,
       individualMiddleName: "",
       individualLastName: "   ",
-      individualPreferredName: "",
+      individualPreferredName: "  Alex  ",
     });
 
     expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.individualMiddleName).toBeUndefined();
+      expect(result.data.individualLastName).toBeUndefined();
+      expect(result.data.individualPreferredName).toBe("Alex");
+    }
+  });
+
+  it("normalizes optional individual phone when left blank", () => {
+    const result = referralSchema.safeParse({
+      ...validBaseData,
+      individualPhone: "   ",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.individualPhone).toBeUndefined();
+    }
   });
 
   it("shows a clear message when referrer phone is missing", () => {

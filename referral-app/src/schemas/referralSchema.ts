@@ -159,12 +159,12 @@ function requiredNameField(fieldLabel: string) {
 }
 
 function optionalNameField(fieldLabel: string) {
-  return z
-    .string()
-    .optional()
-    .refine((value: string | undefined) => !value || !/\d/.test(value), {
+  return optionalTrimmedTextField().refine(
+    (value: string | undefined) => !value || !/\d/.test(value),
+    {
       message: `${fieldLabel} cannot include numbers`,
-    });
+    },
+  );
 }
 
 function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
@@ -175,16 +175,12 @@ function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
 }
 
 function optionalPhoneField(invalidMessage: string) {
-  return z
-    .string()
-    .optional()
-    .refine(
-      (value: string | undefined) =>
-        !value || value.trim().length === 0 || isValidPhoneNumber(value),
-      {
-        message: invalidMessage,
-      },
-    );
+  return optionalTrimmedTextField().refine(
+    (value: string | undefined) => !value || isValidPhoneNumber(value),
+    {
+      message: invalidMessage,
+    },
+  );
 }
 
 function isValidPhoneNumber(value: string): boolean {
