@@ -18,7 +18,7 @@ export function ReferralDetailsSection({
   ministries,
   agencyTypes,
 }: Readonly<ReferralDetailsSectionProps>) {
-  const { control, watch, setValue, setError, clearErrors } = form;
+  const { control, watch, setValue, setError, clearErrors, getValues } = form;
 
   const referredBy = watch("referredBy");
   const ministryId = watch("ministryId");
@@ -32,6 +32,29 @@ export function ReferralDetailsSection({
 
   const selectedAgencyType = agencyTypes.find((a) => a.id === agencyTypeId);
   const isOtherAgencyType = selectedAgencyType?.name?.toLowerCase() === "other";
+
+  const setRequiredOtherError = (
+    field: "ministryNameOther" | "agencyTypeOther",
+    message: string,
+  ) => {
+    setError(field, {
+      type: "custom",
+      message,
+    });
+  };
+
+  const clearOrSetRequiredOtherError = (
+    field: "ministryNameOther" | "agencyTypeOther",
+    value: string,
+    message: string,
+  ) => {
+    if (value.trim()) {
+      clearErrors(field);
+      return;
+    }
+
+    setRequiredOtherError(field, message);
+  };
 
   const handleReferredByChange = () => {
     setValue("ministryId", undefined);
@@ -51,28 +74,60 @@ export function ReferralDetailsSection({
 
   const handleMinistryChange = (key: unknown) => {
     const selected = ministries.find((m) => m.id === key);
-    if (selected?.name?.toLowerCase() === "other") {
-      setError("ministryNameOther", {
-        type: "custom",
-        message: "Please specify the ministry name",
-      });
-    } else {
-      clearErrors("ministryNameOther");
-      setValue("ministryNameOther", undefined);
+    const isOther = selected?.name?.toLowerCase() === "other";
+    if (isOther) {
+      clearOrSetRequiredOtherError(
+        "ministryNameOther",
+        getValues("ministryNameOther") ?? "",
+        "Please specify the ministry name",
+      );
+      return;
     }
+
+    clearErrors("ministryNameOther");
+    setValue("ministryNameOther", undefined);
   };
 
   const handleAgencyTypeChange = (key: unknown) => {
     const selected = agencyTypes.find((a) => a.id === key);
-    if (selected?.name?.toLowerCase() === "other") {
-      setError("agencyTypeOther", {
-        type: "custom",
-        message: "Please specify the agency type",
-      });
-    } else {
-      clearErrors("agencyTypeOther");
-      setValue("agencyTypeOther", undefined);
+    const isOther = selected?.name?.toLowerCase() === "other";
+    if (isOther) {
+      clearOrSetRequiredOtherError(
+        "agencyTypeOther",
+        getValues("agencyTypeOther") ?? "",
+        "Please specify the agency type",
+      );
+      return;
     }
+
+    clearErrors("agencyTypeOther");
+    setValue("agencyTypeOther", undefined);
+  };
+
+  const handleMinistryOtherInputChange = (value: string) => {
+    if (!isOtherMinistry) {
+      clearErrors("ministryNameOther");
+      return;
+    }
+
+    clearOrSetRequiredOtherError(
+      "ministryNameOther",
+      value,
+      "Please specify the ministry name",
+    );
+  };
+
+  const handleAgencyTypeOtherInputChange = (value: string) => {
+    if (!isOtherAgencyType) {
+      clearErrors("agencyTypeOther");
+      return;
+    }
+
+    clearOrSetRequiredOtherError(
+      "agencyTypeOther",
+      value,
+      "Please specify the agency type",
+    );
   };
 
   return (
@@ -129,6 +184,7 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Ministry (if not listed)"
             isRequired={isOtherMinistry}
+            onChangeCallback={handleMinistryOtherInputChange}
           />
 
           <TextInput
@@ -162,6 +218,7 @@ export function ReferralDetailsSection({
             control={control}
             label="Specify Agency Type (if not listed)"
             isRequired={isOtherAgencyType}
+            onChangeCallback={handleAgencyTypeOtherInputChange}
           />
         </div>
       )}
