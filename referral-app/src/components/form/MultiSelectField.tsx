@@ -2,6 +2,7 @@ import Select from "react-select";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { useController } from "react-hook-form";
 import { isStringArray, type OptionsType } from "../../utils/formHelpers";
+import { FieldError } from "./FieldError";
 
 interface Option {
   readonly value: string;
@@ -31,7 +32,7 @@ function getControlBorderColor(hasError: boolean, isFocused: boolean): string {
 
 function getOptionBackgroundColor(
   isSelected: boolean,
-  isFocused: boolean
+  isFocused: boolean,
 ): string {
   if (isSelected) {
     return "var(--surface-color-primary-button-default)";
@@ -65,7 +66,7 @@ export function MultiSelectField<T extends FieldValues>({
     : options.map((opt) => ({ value: opt.id, label: opt.name }));
 
   const selectedValues = selectOptions.filter((opt) =>
-    (value as string[] | undefined)?.includes(opt.value)
+    (value as string[] | undefined)?.includes(opt.value),
   );
 
   return (
@@ -122,7 +123,7 @@ export function MultiSelectField<T extends FieldValues>({
             ...base,
             backgroundColor: getOptionBackgroundColor(
               state.isSelected,
-              state.isFocused
+              state.isFocused,
             ),
           }),
         }}
@@ -139,18 +140,7 @@ export function MultiSelectField<T extends FieldValues>({
           {description}
         </span>
       )}
-      {error && (
-        <span
-          style={{
-            font: "var(--typography-regular-small-body)",
-            color: "var(--typography-color-danger)",
-            padding: "var(--layout-padding-xsmall) var(--layout-padding-none)",
-            display: "block",
-          }}
-        >
-          {error.message}
-        </span>
-      )}
+      <FieldError message={error?.message} />
     </div>
   );
 }

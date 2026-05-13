@@ -94,17 +94,19 @@ export const SupportTypeOptions = Object.entries(SupportTypeLabels).map(
 );
 
 // Zod enums using backend values
-const ReferredByEnum = z.enum([
-  ReferredByType.PARTNER_MINISTRY,
-  ReferredByType.SDPR_INTERNAL,
-  ReferredByType.PARTNER_AGENCY,
-]);
+const ReferredByEnum = z.enum(
+  [
+    ReferredByType.PARTNER_MINISTRY,
+    ReferredByType.SDPR_INTERNAL,
+    ReferredByType.PARTNER_AGENCY,
+  ],
+  { message: "Please select how the individual was referred" },
+);
 
-const YesNoUnknownEnum = z.enum([
-  YesNoUnknown.YES,
-  YesNoUnknown.NO,
-  YesNoUnknown.UNKNOWN,
-]);
+const YesNoUnknownEnum = z.enum(
+  [YesNoUnknown.YES, YesNoUnknown.NO, YesNoUnknown.UNKNOWN],
+  { message: "Please select an option" },
+);
 
 const ReleaseFromEnum = z.enum([
   ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
@@ -130,41 +132,169 @@ const SupportTypeEnum = z.enum([
   SupportType.OTHERS,
 ]);
 
+const RequiredYesNoUnknownField = z
+  .preprocess(
+    (value: unknown) => (typeof value === "string" ? value.trim() : ""),
+    z.string(),
+  )
+  .refine(
+    (value): value is (typeof YesNoUnknown)[keyof typeof YesNoUnknown] =>
+      YesNoUnknownEnum.safeParse(value).success,
+    { message: "Please select an option" },
+  ) as z.ZodType<(typeof YesNoUnknown)[keyof typeof YesNoUnknown]>;
+
+function requiredTextField(requiredMessage: string) {
+  return z.preprocess(
+    (value: string | undefined) =>
+      typeof value === "string" ? value.trim() : "",
+    z.string().min(1, requiredMessage),
+  ) as z.ZodType<string>;
+}
+
+function requiredNameField(fieldLabel: string, maxLength: number) {
+  return requiredTextField(`Please enter ${fieldLabel.toLowerCase()}`)
+    .refine((value: string) => value.length <= maxLength, {
+      message: `${fieldLabel} must be ${maxLength} characters or fewer`,
+    })
+    .refine((value: string) => !/\d/.test(value), {
+      message: `${fieldLabel} cannot include numbers`,
+    });
+}
+
+function optionalNameField(fieldLabel: string, maxLength: number) {
+  return optionalTrimmedTextField()
+    .refine(
+      (value: string | undefined) => !value || value.length <= maxLength,
+      {
+        message: `${fieldLabel} must be ${maxLength} characters or fewer`,
+      },
+    )
+    .refine((value: string | undefined) => !value || !/\d/.test(value), {
+      message: `${fieldLabel} cannot include numbers`,
+    });
+}
+
+function requiredPhoneField(requiredMessage: string, invalidMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) => isValidPhoneNumber(value),
+    { message: invalidMessage },
+  );
+}
+
+function optionalPhoneField(invalidMessage: string) {
+  return optionalTrimmedTextField().refine(
+    (value: string | undefined) => !value || isValidPhoneNumber(value),
+    {
+      message: invalidMessage,
+    },
+  );
+}
+
+function isValidPhoneNumber(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  // Allow common phone formatting only.
+  if (!/^[0-9\s().-]+$/.test(trimmed)) {
+    return false;
+  }
+
+  return trimmed.replace(/\D/g, "").length === 10;
+}
+
+function requiredSelectionField(requiredMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) =>
+      value.trim().length === 0 || z.uuid().safeParse(value).success,
+    { message: requiredMessage },
+  );
+}
+
+function optionalSelectionField() {
+  return z.preprocess((value: string | undefined) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.uuid().optional()) as z.ZodType<string | undefined>;
+}
+
+function optionalTrimmedTextField() {
+  return z.preprocess((value: string | undefined) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.string().optional()) as z.ZodType<string | undefined>;
+}
+
+function requiredEmailField(requiredMessage: string, invalidMessage: string) {
+  return requiredTextField(requiredMessage).refine(
+    (value: string) =>
+      value.trim().length === 0 || z.email().safeParse(value).success,
+    { message: invalidMessage },
+  );
+}
+
 // Base schema for all fields
 const baseSchema = z.object({
   // Section 1: Referrer Information
   referredBy: ReferredByEnum,
 
   // Conditional fields for Partner Ministry (now using ID reference)
-  ministryId: z.uuid().optional(),
-  ministryNameOther: z.string().optional(),
-  programArea: z.string().optional(),
+  ministryId: optionalSelectionField(),
+  ministryNameOther: optionalTrimmedTextField(),
+  programArea: optionalTrimmedTextField(),
 
   // Conditional fields for Partner Agency
-  partnerAgencyName: z.string().optional(),
-  agencyTypeId: z.uuid().optional(),
-  agencyTypeOther: z.string().optional(),
+  partnerAgencyName: optionalTrimmedTextField(),
+  agencyTypeId: optionalSelectionField(),
+  agencyTypeOther: optionalTrimmedTextField(),
 
   // Common referrer fields
-  referrerContactName: z.string().min(1, "Contact name is required"),
-  referrerEmail: z.email({ message: "Please enter a valid email" }),
-  referrerPhone: z.string().min(10, "Please enter a valid phone number"),
+  referrerContactName: requiredNameField("Contact name", 200),
+  referrerEmail: requiredEmailField(
+    "Please enter an email address",
+    "Please enter a valid email address",
+  ),
+  referrerPhone: requiredPhoneField(
+    "Please enter a phone number",
+    "Please enter a valid 10-digit phone number",
+  ),
 
   // Section 2: Individual Information
-  individualFirstName: z.string().min(1, "First name is required"),
-  individualMiddleName: z.string().optional(),
-  individualLastName: z.string().optional(),
-  individualPreferredName: z.string().optional(),
-  personId: z.string().optional(),
-  individualPhone: z.string().optional(),
+  individualFirstName: requiredNameField("First name", 100),
+  individualMiddleName: optionalNameField("Middle name", 100),
+  individualLastName: optionalNameField("Last name", 100),
+  individualPreferredName: optionalNameField("Preferred name", 100),
+  personId: optionalTrimmedTextField(),
+  individualPhone: optionalPhoneField(
+    "Please enter a valid 10-digit phone number",
+  ),
   individualDateOfBirth: z.string().optional(),
-  regionId: z.uuid({ message: "Please select a region" }),
-  specificCityTown: z.string().min(1, "Current city is required"),
-  secondaryContact: z.string().max(100).optional(),
-  bestWayToReach: z.string().max(500).optional(),
+  regionId: requiredSelectionField("Please select a region"),
+  specificCityTown: requiredTextField(
+    "Please enter the current city or town",
+  ).refine((value: string) => /[a-zA-Z]/.test(value), {
+    message: "Please enter a valid city or town name",
+  }),
+  secondaryContact: z
+    .string()
+    .max(200, "Secondary contact must be 200 characters or fewer")
+    .optional(),
+  bestWayToReach: z
+    .string()
+    .max(200, "Please use 200 characters or fewer")
+    .optional(),
 
   // Section 3: Housing Status & Critical Transitions
-  experiencingHomelessness: YesNoUnknownEnum,
+  experiencingHomelessness: RequiredYesNoUnknownField,
   losingHouse: YesNoUnknownEnum.optional(),
   pendingOrRecentlyReleased: ReleaseFromEnum.optional(),
   releaseDate: z.string().optional(),
@@ -174,7 +304,10 @@ const baseSchema = z.object({
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
-  referralReason: z.string().max(5000).optional(),
+  referralReason: z
+    .string()
+    .max(5000, "Please use 5,000 characters or fewer")
+    .optional(),
 });
 
 // Helper type for base schema data
@@ -192,7 +325,7 @@ function validatePartnerMinistry(
   if (!data.ministryId) {
     ctx.addIssue({
       code: "custom",
-      message: "Ministry is required when referred by Partner Ministry",
+      message: "Please select a ministry",
       path: ["ministryId"],
     });
   }
@@ -209,8 +342,7 @@ function validatePartnerAgency(
   if (!data.partnerAgencyName) {
     ctx.addIssue({
       code: "custom",
-      message:
-        "Partner agency name is required when referred by Partner Agency",
+      message: "Please enter the partner agency name",
       path: ["partnerAgencyName"],
     });
   }
@@ -218,7 +350,7 @@ function validatePartnerAgency(
   if (!data.agencyTypeId) {
     ctx.addIssue({
       code: "custom",
-      message: "Type of agency is required when referred by Partner Agency",
+      message: "Please select the type of agency",
       path: ["agencyTypeId"],
     });
   }
@@ -310,4 +442,5 @@ export function isUrgentReferral(data: ReferralFormData): boolean {
   return false;
 }
 
-export type ReferralFormData = z.infer<typeof referralSchema>;
+export type ReferralFormInput = z.input<typeof referralSchema>;
+export type ReferralFormData = z.output<typeof referralSchema>;

@@ -1,10 +1,10 @@
 import type { UseFormReturn } from "react-hook-form";
-import type { ReferralFormData } from "../../schemas/referralSchema";
+import type { ReferralFormInput } from "../../schemas/referralSchema";
 import { SupportType, SupportTypeOptions } from "../../schemas/referralSchema";
 import { FormField, TextInput, TextAreaField, MultiSelectField } from "../form";
 
 interface SupportServicesSectionProps {
-  readonly form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormInput>;
 }
 
 export function SupportServicesSection({
@@ -79,7 +79,7 @@ export function SupportServicesSection({
               name="referralReason"
               control={control}
               label="Brief summary of the reason for referral (Optional)"
-              maxLength={2000}
+              maxLength={5000}
             />
           </FormField>
         </div>

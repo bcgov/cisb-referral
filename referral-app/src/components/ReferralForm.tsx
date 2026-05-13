@@ -5,8 +5,10 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
+  ReferredByType,
   referralSchema,
   type ReferralFormData,
+  type ReferralFormInput,
 } from "../schemas/referralSchema";
 import {
   ReferralDetailsSection,
@@ -15,6 +17,7 @@ import {
 } from "./sections";
 import { useLookupData, useProfile } from "../hooks";
 import { apiService } from "../services";
+import { isOtherLookupOption } from "../utils/formHelpers";
 
 export function ReferralForm() {
   const navigate = useNavigate();
@@ -27,8 +30,10 @@ export function ReferralForm() {
     message?: string;
   }>({ type: "idle" });
 
-  const form = useForm<ReferralFormData>({
+  const form = useForm<ReferralFormInput, unknown, ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
     defaultValues: {
       referrerContactName: profile?.fullName ?? "",
       referrerPhone: profile?.phone ?? "",
@@ -38,7 +43,56 @@ export function ReferralForm() {
     },
   });
 
+  const onInvalid = () => {
+    setSubmitStatus({ type: "idle" });
+  };
+
+  const validateOtherDetailsForSubmit = (data: ReferralFormData): boolean => {
+    let hasErrors = false;
+
+    const selectedMinistry = ministries.find((ministry) => {
+      return ministry.id === data.ministryId;
+    });
+    const isOtherMinistry =
+      data.referredBy === ReferredByType.PARTNER_MINISTRY &&
+      isOtherLookupOption(selectedMinistry?.name);
+
+    if (isOtherMinistry && !data.ministryNameOther?.trim()) {
+      form.setError("ministryNameOther", {
+        type: "manual",
+        message: "Please specify the ministry name",
+      });
+      hasErrors = true;
+    } else {
+      form.clearErrors("ministryNameOther");
+    }
+
+    const selectedAgencyType = agencyTypes.find((agencyType) => {
+      return agencyType.id === data.agencyTypeId;
+    });
+    const isOtherAgencyType =
+      data.referredBy === ReferredByType.PARTNER_AGENCY &&
+      isOtherLookupOption(selectedAgencyType?.name);
+
+    if (isOtherAgencyType && !data.agencyTypeOther?.trim()) {
+      form.setError("agencyTypeOther", {
+        type: "manual",
+        message: "Please specify the agency type",
+      });
+      hasErrors = true;
+    } else {
+      form.clearErrors("agencyTypeOther");
+    }
+
+    return !hasErrors;
+  };
+
   const onSubmit = async (data: ReferralFormData) => {
+    if (!validateOtherDetailsForSubmit(data)) {
+      setSubmitStatus({ type: "idle" });
+      return;
+    }
+
     setSubmitStatus({ type: "loading" });
 
     try {
@@ -73,7 +127,7 @@ export function ReferralForm() {
         <div className="alert alert-error">{submitStatus.message}</div>
       )}
 
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <ReferralDetailsSection
           form={form}
           ministries={ministries}

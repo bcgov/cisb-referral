@@ -9,6 +9,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import { isStringArray, type OptionsType } from "../../utils/formHelpers";
+import { FieldError } from "./FieldError";
 
 interface RadioGroupFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -39,21 +40,23 @@ export function RadioGroupField<T extends FieldValues>({
     : options.map((opt) => ({ id: opt.id, label: opt.name }));
 
   return (
-    <BCGovRadioGroup
-      label={label}
-      value={field.value ?? ""}
-      onChange={field.onChange}
-      orientation={orientation}
-      description={description}
-      isRequired={isRequired}
-      isInvalid={!!error}
-      errorMessage={error?.message}
-    >
-      {items.map((item) => (
-        <Radio key={item.id} value={item.id}>
-          {item.label}
-        </Radio>
-      ))}
-    </BCGovRadioGroup>
+    <div>
+      <BCGovRadioGroup
+        label={label}
+        value={field.value ?? ""}
+        onChange={field.onChange}
+        orientation={orientation}
+        description={description}
+        isRequired={isRequired}
+        isInvalid={!!error}
+      >
+        {items.map((item) => (
+          <Radio key={item.id} value={item.id}>
+            {item.label}
+          </Radio>
+        ))}
+      </BCGovRadioGroup>
+      <FieldError message={error?.message} />
+    </div>
   );
 }

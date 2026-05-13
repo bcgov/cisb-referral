@@ -4,7 +4,9 @@ import {
   type Control,
   type FieldPath,
   type FieldValues,
+  type RegisterOptions,
 } from "react-hook-form";
+import { FieldError } from "./FieldError";
 
 interface TextInputProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -12,7 +14,10 @@ interface TextInputProps<T extends FieldValues> {
   readonly label: string;
   readonly type?: "text" | "email" | "tel" | "password" | "url" | "date";
   readonly description?: string;
+  readonly maxLength?: number;
   readonly isRequired?: boolean;
+  readonly rules?: RegisterOptions<T, FieldPath<T>>;
+  readonly onChangeCallback?: (value: string) => void;
 }
 
 export function TextInput<T extends FieldValues>({
@@ -21,25 +26,36 @@ export function TextInput<T extends FieldValues>({
   label,
   type = "text",
   description,
+  maxLength,
   isRequired = false,
+  rules,
+  onChangeCallback,
 }: Readonly<TextInputProps<T>>) {
   const {
     field,
     fieldState: { error },
-  } = useController({ name, control });
+  } = useController({ name, control, rules });
+
+  const handleChange = (value: string) => {
+    field.onChange(value);
+    onChangeCallback?.(value);
+  };
 
   return (
-    <TextField
-      label={label}
-      type={type}
-      value={field.value ?? ""}
-      onChange={field.onChange}
-      onBlur={field.onBlur}
-      name={field.name}
-      description={description}
-      isRequired={isRequired}
-      isInvalid={!!error}
-      errorMessage={error?.message}
-    />
+    <div>
+      <TextField
+        label={label}
+        type={type}
+        value={field.value ?? ""}
+        onChange={handleChange}
+        onBlur={field.onBlur}
+        name={field.name}
+        description={description}
+        maxLength={maxLength}
+        isRequired={isRequired}
+        isInvalid={!!error}
+      />
+      <FieldError message={error?.message} />
+    </div>
   );
 }

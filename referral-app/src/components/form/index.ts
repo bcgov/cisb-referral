@@ -1,3 +1,4 @@
+export { FieldError } from "./FieldError";
 export { FormField } from "./FormField";
 export { SelectField } from "./SelectField";
 export { TextInput } from "./TextInput";

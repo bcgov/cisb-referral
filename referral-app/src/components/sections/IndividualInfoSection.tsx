@@ -1,5 +1,5 @@
 import type { UseFormReturn } from "react-hook-form";
-import type { ReferralFormData } from "../../schemas/referralSchema";
+import type { ReferralFormInput } from "../../schemas/referralSchema";
 import {
   YesNoUnknown,
   YesNoUnknownOptions,
@@ -15,7 +15,7 @@ import {
 import type { Region } from "../../types";
 
 interface IndividualInfoSectionProps {
-  readonly form: UseFormReturn<ReferralFormData>;
+  readonly form: UseFormReturn<ReferralFormInput>;
   readonly regions: Region[];
 }
 
@@ -107,6 +107,7 @@ export function IndividualInfoSection({
           name="secondaryContact"
           control={control}
           label="Secondary Contact (Optional)"
+          maxLength={200}
         />
 
         <div className="form-field-full">
@@ -114,6 +115,7 @@ export function IndividualInfoSection({
             name="bestWayToReach"
             control={control}
             label="Best way to reach the individual (Optional)"
+            maxLength={200}
           />
         </div>
 
