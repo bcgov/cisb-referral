@@ -29,6 +29,8 @@ export function ReferralForm() {
 
   const form = useForm<ReferralFormData>({
     resolver: standardSchemaResolver(referralSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       referrerContactName: profile?.fullName ?? "",
       referrerPhone: profile?.phone ?? "",
@@ -37,6 +39,10 @@ export function ReferralForm() {
       neededSupports: [],
     },
   });
+
+  const onInvalid = () => {
+    setSubmitStatus({ type: "idle" });
+  };
 
   const onSubmit = async (data: ReferralFormData) => {
     setSubmitStatus({ type: "loading" });
@@ -73,7 +79,7 @@ export function ReferralForm() {
         <div className="alert alert-error">{submitStatus.message}</div>
       )}
 
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <ReferralDetailsSection
           form={form}
           ministries={ministries}

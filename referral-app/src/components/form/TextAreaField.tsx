@@ -5,6 +5,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { FieldError } from "./FieldError";
 
 interface TextAreaFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -29,17 +30,19 @@ export function TextAreaField<T extends FieldValues>({
   } = useController({ name, control });
 
   return (
-    <TextArea
-      label={label}
-      value={field.value ?? ""}
-      onChange={field.onChange}
-      onBlur={field.onBlur}
-      name={field.name}
-      description={description}
-      maxLength={maxLength}
-      isRequired={isRequired}
-      isInvalid={!!error}
-      errorMessage={error?.message}
-    />
+    <div>
+      <TextArea
+        label={label}
+        value={field.value ?? ""}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
+        name={field.name}
+        description={description}
+        maxLength={maxLength}
+        isRequired={isRequired}
+        isInvalid={!!error}
+      />
+      <FieldError message={error?.message} />
+    </div>
   );
 }

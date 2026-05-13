@@ -7,6 +7,7 @@ import {
 } from "react-hook-form";
 import type { Key } from "react-aria-components";
 import { isStringArray, type OptionsType } from "../../utils/formHelpers";
+import { FieldError } from "./FieldError";
 
 interface SelectFieldProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -44,18 +45,20 @@ export function SelectField<T extends FieldValues>({
   };
 
   return (
-    <Select
-      label={label}
-      items={items}
-      value={field.value ?? null}
-      onChange={handleSelectionChange}
-      onBlur={field.onBlur}
-      name={field.name}
-      placeholder={placeholder}
-      description={description}
-      isRequired={isRequired}
-      isInvalid={!!error}
-      errorMessage={error?.message}
-    />
+    <div>
+      <Select
+        label={label}
+        items={items}
+        value={field.value ?? null}
+        onChange={handleSelectionChange}
+        onBlur={field.onBlur}
+        name={field.name}
+        placeholder={placeholder}
+        description={description}
+        isRequired={isRequired}
+        isInvalid={!!error}
+      />
+      <FieldError message={error?.message} />
+    </div>
   );
 }

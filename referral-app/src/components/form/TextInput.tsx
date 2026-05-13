@@ -5,6 +5,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { FieldError } from "./FieldError";
 
 interface TextInputProps<T extends FieldValues> {
   readonly name: FieldPath<T>;
@@ -36,17 +37,19 @@ export function TextInput<T extends FieldValues>({
   };
 
   return (
-    <TextField
-      label={label}
-      type={type}
-      value={field.value ?? ""}
-      onChange={handleChange}
-      onBlur={field.onBlur}
-      name={field.name}
-      description={description}
-      isRequired={isRequired}
-      isInvalid={!!error}
-      errorMessage={error?.message}
-    />
+    <div>
+      <TextField
+        label={label}
+        type={type}
+        value={field.value ?? ""}
+        onChange={handleChange}
+        onBlur={field.onBlur}
+        name={field.name}
+        description={description}
+        isRequired={isRequired}
+        isInvalid={!!error}
+      />
+      <FieldError message={error?.message} />
+    </div>
   );
 }

@@ -219,3 +219,11 @@
 .success-actions button {
   width: 100%;
 }
+
+/* Field-level validation error */
+.field-error {
+  display: block;
+  color: #d8292f;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

@@ -94,17 +94,19 @@ export const SupportTypeOptions = Object.entries(SupportTypeLabels).map(
 );
 
 // Zod enums using backend values
-const ReferredByEnum = z.enum([
-  ReferredByType.PARTNER_MINISTRY,
-  ReferredByType.SDPR_INTERNAL,
-  ReferredByType.PARTNER_AGENCY,
-]);
+const ReferredByEnum = z.enum(
+  [
+    ReferredByType.PARTNER_MINISTRY,
+    ReferredByType.SDPR_INTERNAL,
+    ReferredByType.PARTNER_AGENCY,
+  ],
+  { message: "Please select how the individual was referred" },
+);
 
-const YesNoUnknownEnum = z.enum([
-  YesNoUnknown.YES,
-  YesNoUnknown.NO,
-  YesNoUnknown.UNKNOWN,
-]);
+const YesNoUnknownEnum = z.enum(
+  [YesNoUnknown.YES, YesNoUnknown.NO, YesNoUnknown.UNKNOWN],
+  { message: "Please select an option" },
+);
 
 const ReleaseFromEnum = z.enum([
   ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
@@ -146,22 +148,62 @@ const baseSchema = z.object({
   agencyTypeOther: z.string().optional(),
 
   // Common referrer fields
-  referrerContactName: z.string().min(1, "Contact name is required"),
+  referrerContactName: z
+    .string()
+    .min(1, "Contact name is required")
+    .regex(/[a-zA-Z]/, "Contact name must contain at least one letter"),
   referrerEmail: z.email({ message: "Please enter a valid email" }),
-  referrerPhone: z.string().min(10, "Please enter a valid phone number"),
+  referrerPhone: z
+    .string()
+    .min(1, "Phone number is required")
+    .refine((val) => val.replace(/\D/g, "").length === 10, {
+      message: "Phone number must be exactly 10 digits",
+    }),
 
   // Section 2: Individual Information
-  individualFirstName: z.string().min(1, "First name is required"),
-  individualMiddleName: z.string().optional(),
-  individualLastName: z.string().optional(),
-  individualPreferredName: z.string().optional(),
+  individualFirstName: z
+    .string()
+    .min(1, "First name is required")
+    .regex(/[a-zA-Z]/, "First name must contain at least one letter"),
+  individualMiddleName: z
+    .string()
+    .optional()
+    .refine((val) => !val || /[a-zA-Z]/.test(val), {
+      message: "Middle name must contain at least one letter",
+    }),
+  individualLastName: z
+    .string()
+    .optional()
+    .refine((val) => !val || /[a-zA-Z]/.test(val), {
+      message: "Last name must contain at least one letter",
+    }),
+  individualPreferredName: z
+    .string()
+    .optional()
+    .refine((val) => !val || /[a-zA-Z]/.test(val), {
+      message: "Preferred name must contain at least one letter",
+    }),
   personId: z.string().optional(),
-  individualPhone: z.string().optional(),
+  individualPhone: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.replace(/\D/g, "").length === 10, {
+      message: "Individual's phone must be exactly 10 digits",
+    }),
   individualDateOfBirth: z.string().optional(),
   regionId: z.uuid({ message: "Please select a region" }),
-  specificCityTown: z.string().min(1, "Current city is required"),
-  secondaryContact: z.string().max(100).optional(),
-  bestWayToReach: z.string().max(500).optional(),
+  specificCityTown: z
+    .string()
+    .min(1, "Current city is required")
+    .regex(/[a-zA-Z]/, "City must contain at least one letter"),
+  secondaryContact: z
+    .string()
+    .max(100, "Secondary contact must be 100 characters or less")
+    .optional(),
+  bestWayToReach: z
+    .string()
+    .max(500, "Must be 500 characters or less")
+    .optional(),
 
   // Section 3: Housing Status & Critical Transitions
   experiencingHomelessness: YesNoUnknownEnum,
@@ -174,7 +216,10 @@ const baseSchema = z.object({
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
-  referralReason: z.string().max(5000).optional(),
+  referralReason: z
+    .string()
+    .max(2000, "Must be 2,000 characters or less")
+    .optional(),
 });
 
 // Helper type for base schema data
