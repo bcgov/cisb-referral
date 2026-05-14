@@ -57,7 +57,7 @@ export class UsersService {
   async findAll(
     role?: UserRole,
     isActive?: boolean,
-    currentUserRole?: UserRole,
+    currentUserRole: UserRole = UserRole.USER,
   ): Promise<User[]> {
     const isRestrictedCaller =
       currentUserRole !== UserRole.SYSTEM_ADMINISTRATOR;
@@ -108,6 +108,14 @@ export class UsersService {
   ): Promise<User> {
     const existing = await this.findOne(id);
 
+    if (
+      currentUser.id === id &&
+      updateUserDto.role &&
+      updateUserDto.role !== existing.role
+    ) {
+      throw new ForbiddenException('Cannot change your own role');
+    }
+
     this.assertCanManageUser(currentUser.role, existing.role);
 
     if (updateUserDto.role) {
@@ -143,6 +151,10 @@ export class UsersService {
     id: string,
     currentUser: Pick<User, 'id' | 'role'>,
   ): Promise<User> {
+    if (currentUser.id === id) {
+      throw new ForbiddenException('Cannot delete your own account');
+    }
+
     const existing = await this.findOne(id);
 
     this.assertCanManageUser(currentUser.role, existing.role);

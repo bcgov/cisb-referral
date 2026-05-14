@@ -66,7 +66,10 @@ export class UsersController {
     @Body() createUserDto: CreateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.create(createUserDto, currentUser);
+    return this.usersService.create(createUserDto, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 
   @Get()
@@ -128,7 +131,10 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto, currentUser);
+    return this.usersService.update(id, updateUserDto, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 
   @Delete(':id')
@@ -145,6 +151,9 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.remove(id, currentUser);
+    return this.usersService.remove(id, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 }

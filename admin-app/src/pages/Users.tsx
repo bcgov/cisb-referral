@@ -66,10 +66,11 @@ export function Users() {
       formData: CreateUserDto & Partial<UpdateUserDto>;
     }) => {
       if (data.editing) {
+        const isLocked = !assignableRoles.includes(data.editing.role);
         const updateData: UpdateUserDto = {
           fullName: data.formData.fullName,
           email: data.formData.email,
-          role: data.formData.role,
+          ...(isLocked ? {} : { role: data.formData.role }),
         };
         return apiService.updateUser(data.editing.id, updateData);
       }
