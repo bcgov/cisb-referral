@@ -179,14 +179,6 @@ describe('UsersService', () => {
   });
 
   describe('findAll', () => {
-    it('should throw BadRequestException when current user role is missing', async () => {
-      await expect(
-        service.findAll(undefined, undefined, undefined as any),
-      ).rejects.toThrow(BadRequestException);
-
-      expect(mockPrismaService.user.findMany).not.toHaveBeenCalled();
-    });
-
     it('should return all active users ordered by name', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 

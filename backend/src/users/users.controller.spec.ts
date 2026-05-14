@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { UserRole } from '../generated/prisma/client';
 
 const mockUsersService = {
   create: jest.fn(),
@@ -14,7 +15,7 @@ const mockUser = {
   id: 'user-1',
   fullName: 'Test User',
   email: 'test@test.com',
-  role: 'ADMIN',
+  role: UserRole.ADMIN,
   isActive: true,
 };
 
@@ -22,13 +23,13 @@ const mockCurrentUser = {
   id: 'admin-1',
   fullName: 'Current Admin',
   email: 'admin@test.com',
-  role: 'ADMIN',
+  role: UserRole.ADMIN,
   isActive: true,
 };
 
 const mockCurrentUserContext = {
   id: 'admin-1',
-  role: 'ADMIN',
+  role: UserRole.ADMIN,
 };
 
 describe('UsersController', () => {
@@ -74,12 +75,16 @@ describe('UsersController', () => {
     it('should parse isActive true string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll('ADMIN' as any, 'true', mockCurrentUser as any);
+      await controller.findAll(
+        UserRole.ADMIN as any,
+        'true',
+        mockCurrentUser as any,
+      );
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
-        'ADMIN',
+        UserRole.ADMIN,
         true,
-        'ADMIN',
+        UserRole.ADMIN,
       );
     });
 
@@ -91,7 +96,7 @@ describe('UsersController', () => {
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
         false,
-        'ADMIN',
+        UserRole.ADMIN,
       );
     });
 
@@ -103,7 +108,7 @@ describe('UsersController', () => {
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
         undefined,
-        'ADMIN',
+        UserRole.ADMIN,
       );
     });
   });

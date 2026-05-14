@@ -38,10 +38,13 @@ export function Users() {
   const [error, setError] = useState<string | null>(null);
   const isCurrentUserResolved = !isCurrentUserLoading;
 
-  const assignableRoles =
-    currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR
-      ? SYSTEM_ADMIN_ASSIGNABLE_ROLES
-      : ADMIN_ASSIGNABLE_ROLES;
+  let assignableRoles: UserRole[] = [];
+
+  if (currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR) {
+    assignableRoles = SYSTEM_ADMIN_ASSIGNABLE_ROLES;
+  } else if (currentUser?.role === UserRole.ADMIN) {
+    assignableRoles = ADMIN_ASSIGNABLE_ROLES;
+  }
 
   const isUsersPageForbidden =
     isCurrentUserResolved &&
@@ -120,7 +123,7 @@ export function Users() {
     setFormData({
       fullName: "",
       email: "",
-      role: assignableRoles[0],
+      role: assignableRoles[0] ?? UserRole.USER,
     });
     setError(null);
     setDialogOpen(true);

@@ -59,10 +59,6 @@ export class UsersService {
     isActive: boolean | undefined,
     currentUserRole: UserRole,
   ): Promise<User[]> {
-    if (!currentUserRole) {
-      throw new BadRequestException('Current user role is required');
-    }
-
     const isRestrictedCaller =
       currentUserRole !== UserRole.SYSTEM_ADMINISTRATOR;
 
