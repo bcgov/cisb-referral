@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -52,7 +56,13 @@ describe('UsersService', () => {
       };
       mockPrismaService.user.create.mockResolvedValue(mockUser);
 
-      const result = await service.create(dto as any, 'admin-1');
+      const result = await service.create(
+        dto as any,
+        {
+          id: 'admin-1',
+          role: 'ADMIN',
+        } as any,
+      );
 
       expect(result).toEqual(mockUser);
       expect(mockPrismaService.user.create).toHaveBeenCalledWith({
@@ -79,9 +89,77 @@ describe('UsersService', () => {
     it('should throw BadRequestException when email is missing', async () => {
       const dto = { fullName: 'Test User' };
 
-      await expect(service.create(dto as any)).rejects.toThrow(
-        BadRequestException,
+      await expect(
+        service.create(dto as any, { id: 'admin-1', role: 'ADMIN' } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw ForbiddenException when admin creates system administrator', async () => {
+      const dto = {
+        fullName: 'System Admin User',
+        email: 'sysadmin@test.com',
+        role: 'SYSTEM_ADMINISTRATOR',
+      };
+
+      await expect(
+        service.create(dto as any, { id: 'admin-1', role: 'ADMIN' } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.create).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
+    });
+
+    it('should allow system admin to create system administrator', async () => {
+      const dto = {
+        fullName: 'System Admin User',
+        email: 'sysadmin@test.com',
+        role: 'SYSTEM_ADMINISTRATOR',
+      };
+      const createdUser = {
+        ...mockUser,
+        id: 'user-2',
+        fullName: 'System Admin User',
+        email: 'sysadmin@test.com',
+        role: 'SYSTEM_ADMINISTRATOR',
+      };
+      mockPrismaService.user.create.mockResolvedValue(createdUser);
+
+      const result = await service.create(
+        dto as any,
+        {
+          id: 'sysadmin-1',
+          role: 'SYSTEM_ADMINISTRATOR',
+        } as any,
       );
+
+      expect(result).toEqual(createdUser);
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: {
+          fullName: 'System Admin User',
+          email: 'sysadmin@test.com',
+          role: 'SYSTEM_ADMINISTRATOR',
+          isActive: true,
+        },
+      });
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
+        tableName: 'user',
+        recordId: 'user-2',
+        action: 'CREATE',
+        changes: [
+          {
+            field: 'fullName',
+            oldValue: null,
+            newValue: 'System Admin User',
+          },
+          { field: 'email', oldValue: null, newValue: 'sysadmin@test.com' },
+          {
+            field: 'role',
+            oldValue: null,
+            newValue: 'SYSTEM_ADMINISTRATOR',
+          },
+        ],
+        userId: 'sysadmin-1',
+      });
     });
   });
 
@@ -89,7 +167,11 @@ describe('UsersService', () => {
     it('should return all active users ordered by name', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      const result = await service.findAll();
+      const result = await service.findAll(
+        undefined,
+        undefined,
+        'SYSTEM_ADMINISTRATOR',
+      );
 
       expect(result).toEqual([mockUser]);
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
@@ -105,7 +187,7 @@ describe('UsersService', () => {
     it('should filter by role', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      await service.findAll('ADMIN' as any);
+      await service.findAll('ADMIN' as any, undefined, 'SYSTEM_ADMINISTRATOR');
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -117,13 +199,39 @@ describe('UsersService', () => {
     it('should filter by isActive', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      await service.findAll(undefined, true);
+      await service.findAll(undefined, true, 'SYSTEM_ADMINISTRATOR');
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isActive: true }),
         }),
       );
+    });
+
+    it('should exclude system administrators for admin callers', async () => {
+      mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
+
+      await service.findAll(undefined, undefined, 'ADMIN');
+
+      expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+        where: {
+          role: { in: ['USER', 'ADMIN'] },
+          isActive: undefined,
+          deletedAt: null,
+        },
+        orderBy: { fullName: 'asc' },
+      });
+    });
+
+    it('should return empty result when admin requests system administrators', async () => {
+      const result = await service.findAll(
+        'SYSTEM_ADMINISTRATOR' as any,
+        undefined,
+        'ADMIN',
+      );
+
+      expect(result).toEqual([]);
+      expect(mockPrismaService.user.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -159,7 +267,7 @@ describe('UsersService', () => {
         {
           fullName: 'Updated User',
         } as any,
-        'admin-1',
+        { id: 'admin-1', role: 'ADMIN' } as any,
       );
 
       expect(result.fullName).toBe('Updated User');
@@ -186,9 +294,16 @@ describe('UsersService', () => {
       mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
       mockPrismaService.user.update.mockResolvedValue(mockUser);
 
-      await service.update('user-1', {
-        fullName: 'Test User',
-      } as any);
+      await service.update(
+        'user-1',
+        {
+          fullName: 'Test User',
+        } as any,
+        {
+          id: 'admin-1',
+          role: 'ADMIN',
+        } as any,
+      );
 
       expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
@@ -196,9 +311,31 @@ describe('UsersService', () => {
     it('should throw NotFoundException for nonexistent user', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.update('nonexistent', {} as any)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.update(
+          'nonexistent',
+          {} as any,
+          {
+            id: 'admin-1',
+            role: 'ADMIN',
+          } as any,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when admin updates role to system administrator', async () => {
+      mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
+
+      await expect(
+        service.update(
+          'user-1',
+          { role: 'SYSTEM_ADMINISTRATOR' } as any,
+          { id: 'admin-1', role: 'ADMIN' } as any,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
   });
 

@@ -47,7 +47,7 @@ describe('UsersController', () => {
       const result = await controller.create(dto as any, mockUser as any);
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.create).toHaveBeenCalledWith(dto, 'user-1');
+      expect(mockUsersService.create).toHaveBeenCalledWith(dto, mockUser);
     });
   });
 
@@ -55,27 +55,36 @@ describe('UsersController', () => {
     it('should parse isActive true string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll('ADMIN' as any, 'true');
+      await controller.findAll('ADMIN' as any, 'true', mockUser as any);
 
-      expect(mockUsersService.findAll).toHaveBeenCalledWith('ADMIN', true);
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(
+        'ADMIN',
+        true,
+        'ADMIN',
+      );
     });
 
     it('should parse isActive false string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([]);
 
-      await controller.findAll(undefined, 'false');
+      await controller.findAll(undefined, 'false', mockUser as any);
 
-      expect(mockUsersService.findAll).toHaveBeenCalledWith(undefined, false);
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(
+        undefined,
+        false,
+        'ADMIN',
+      );
     });
 
     it('should pass undefined when isActive not provided', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll();
+      await controller.findAll(undefined, undefined, mockUser as any);
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
         undefined,
+        'ADMIN',
       );
     });
   });
@@ -109,7 +118,7 @@ describe('UsersController', () => {
       expect(mockUsersService.update).toHaveBeenCalledWith(
         'user-1',
         dto,
-        'user-1',
+        mockUser,
       );
     });
   });

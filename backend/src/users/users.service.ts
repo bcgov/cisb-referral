@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -20,10 +21,15 @@ export class UsersService {
     private readonly auditService: AuditService,
   ) {}
 
-  async create(createUserDto: CreateUserDto, userId?: string): Promise<User> {
+  async create(
+    createUserDto: CreateUserDto,
+    currentUser: Pick<User, 'id' | 'role'>,
+  ): Promise<User> {
     if (!createUserDto.email) {
       throw new BadRequestException('Email is required');
     }
+
+    this.assertCanAssignRole(currentUser.role, createUserDto.role);
 
     const user = await this.prisma.user.create({
       data: {
@@ -43,16 +49,35 @@ export class UsersService {
         { field: 'email', oldValue: null, newValue: user.email },
         { field: 'role', oldValue: null, newValue: user.role },
       ],
-      userId,
+      userId: currentUser.id,
     });
 
     return user;
   }
 
-  async findAll(role?: UserRole, isActive?: boolean): Promise<User[]> {
+  async findAll(
+    role?: UserRole,
+    isActive?: boolean,
+    currentUserRole?: string,
+  ): Promise<User[]> {
+    if (
+      currentUserRole === UserRole.ADMIN &&
+      role === UserRole.SYSTEM_ADMINISTRATOR
+    ) {
+      return [];
+    }
+
+    const roleFilter =
+      role ??
+      (currentUserRole === UserRole.ADMIN
+        ? {
+            in: [UserRole.USER, UserRole.ADMIN],
+          }
+        : undefined);
+
     return this.prisma.user.findMany({
       where: {
-        role,
+        role: roleFilter,
         isActive,
         deletedAt: null,
       },
@@ -80,20 +105,20 @@ export class UsersService {
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
-    userId?: string,
+    currentUser: Pick<User, 'id' | 'role'>,
   ): Promise<User> {
     const existing = await this.findOne(id);
+
+    if (updateUserDto.role) {
+      this.assertCanAssignRole(currentUser.role, updateUserDto.role);
+    }
 
     const data = { ...updateUserDto };
     if (data.email) {
       data.email = data.email.toLowerCase();
     }
 
-    const changes = diffObjects(
-      existing as unknown as Record<string, unknown>,
-      data as unknown as Record<string, unknown>,
-      TRACKED_FIELDS,
-    );
+    const changes = diffObjects(existing, data, TRACKED_FIELDS);
 
     const updated = await this.prisma.user.update({
       where: { id },
@@ -106,7 +131,7 @@ export class UsersService {
         recordId: id,
         action: 'UPDATE',
         changes,
-        userId,
+        userId: currentUser.id,
       });
     }
 
@@ -133,5 +158,22 @@ export class UsersService {
     });
 
     return removed;
+  }
+
+  private assertCanAssignRole(actingRole: string, targetRole: UserRole): void {
+    if (actingRole === UserRole.SYSTEM_ADMINISTRATOR) {
+      return;
+    }
+
+    if (
+      actingRole === UserRole.ADMIN &&
+      [UserRole.ADMIN, UserRole.USER].includes(targetRole)
+    ) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'Insufficient permissions to assign the requested role',
+    );
   }
 }

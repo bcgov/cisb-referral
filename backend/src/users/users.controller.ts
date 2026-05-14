@@ -63,7 +63,7 @@ export class UsersController {
     @Body() createUserDto: CreateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.create(createUserDto, currentUser.id);
+    return this.usersService.create(createUserDto, currentUser);
   }
 
   @Get()
@@ -85,6 +85,7 @@ export class UsersController {
   async findAll(
     @Query('role') role?: UserRole,
     @Query('isActive') isActive?: string,
+    @CurrentUser() currentUser?: User,
   ): Promise<User[]> {
     let active: boolean | undefined;
     if (isActive === 'true') {
@@ -92,7 +93,7 @@ export class UsersController {
     } else if (isActive === 'false') {
       active = false;
     }
-    return this.usersService.findAll(role, active);
+    return this.usersService.findAll(role, active, currentUser?.role);
   }
 
   @Get(':id')
@@ -124,7 +125,7 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto, currentUser.id);
+    return this.usersService.update(id, updateUserDto, currentUser);
   }
 
   @Delete(':id')

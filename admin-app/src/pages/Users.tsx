@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AccessDenied } from "../components";
 import { Table, Dialog } from "../components/ui";
+import { useCurrentUser } from "../hooks";
 import { apiService } from "../services";
 import type { User, CreateUserDto, UpdateUserDto } from "../types";
 import { UserRole } from "../types";
@@ -11,7 +13,16 @@ const USER_ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMINISTRATOR]: "System Administrator",
 };
 
+const ADMIN_ASSIGNABLE_ROLES: UserRole[] = [UserRole.USER, UserRole.ADMIN];
+
+const SYSTEM_ADMIN_ASSIGNABLE_ROLES: UserRole[] = [
+  UserRole.USER,
+  UserRole.ADMIN,
+  UserRole.SYSTEM_ADMINISTRATOR,
+];
+
 export function Users() {
+  const { currentUser, isLoading: isCurrentUserLoading } = useCurrentUser();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -26,9 +37,18 @@ export function Users() {
   });
   const [error, setError] = useState<string | null>(null);
 
+  const assignableRoles =
+    currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR
+      ? SYSTEM_ADMIN_ASSIGNABLE_ROLES
+      : ADMIN_ASSIGNABLE_ROLES;
+
+  const isUsersPageForbidden =
+    !isCurrentUserLoading && currentUser?.role === UserRole.USER;
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => apiService.fetchUsers(),
+    enabled: !isUsersPageForbidden,
   });
 
   const saveMutation = useMutation({
@@ -79,7 +99,7 @@ export function Users() {
     setFormData({
       fullName: "",
       email: "",
-      role: UserRole.USER,
+      role: assignableRoles[0],
     });
     setError(null);
     setDialogOpen(true);
@@ -175,6 +195,10 @@ export function Users() {
     },
   ];
 
+  if (isUsersPageForbidden) {
+    return <AccessDenied />;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
@@ -260,9 +284,9 @@ export function Users() {
               className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
               required
             >
-              {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
+              {assignableRoles.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {USER_ROLE_LABELS[value]}
                 </option>
               ))}
             </select>
