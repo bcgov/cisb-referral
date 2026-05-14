@@ -86,9 +86,9 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'List of users', type: [UserDto] })
   async findAll(
+    @Query('role') role: UserRole | undefined,
+    @Query('isActive') isActive: string | undefined,
     @CurrentUser() currentUser: User,
-    @Query('role') role?: UserRole,
-    @Query('isActive') isActive?: string,
   ): Promise<User[]> {
     let active: boolean | undefined;
     if (isActive === 'true') {

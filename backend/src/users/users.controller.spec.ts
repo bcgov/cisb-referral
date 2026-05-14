@@ -133,7 +133,7 @@ describe('UsersController', () => {
       const result = await controller.remove('user-1', mockUser as any);
 
       expect(result.isActive).toBe(false);
-      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1', 'user-1');
+      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1', mockUser);
     });
   });
 });
