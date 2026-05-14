@@ -7,6 +7,7 @@ import {
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { UserRole } from '../generated/prisma/client';
 
 const mockPrismaService = {
   user: {
@@ -25,7 +26,7 @@ const mockUser = {
   id: 'user-1',
   fullName: 'Test User',
   email: 'test@test.com',
-  role: 'ADMIN',
+  role: UserRole.ADMIN,
   isActive: true,
   deletedAt: null,
   createdAt: new Date(),
@@ -52,7 +53,7 @@ describe('UsersService', () => {
       const dto = {
         fullName: 'Test User',
         email: 'test@test.com',
-        role: 'ADMIN',
+        role: UserRole.ADMIN,
       };
       mockPrismaService.user.create.mockResolvedValue(mockUser);
 
@@ -60,7 +61,7 @@ describe('UsersService', () => {
         dto as any,
         {
           id: 'admin-1',
-          role: 'ADMIN',
+          role: UserRole.ADMIN,
         } as any,
       );
 
@@ -69,7 +70,7 @@ describe('UsersService', () => {
         data: {
           fullName: 'Test User',
           email: 'test@test.com',
-          role: 'ADMIN',
+          role: UserRole.ADMIN,
           isActive: true,
         },
       });
@@ -80,7 +81,7 @@ describe('UsersService', () => {
         changes: [
           { field: 'fullName', oldValue: null, newValue: 'Test User' },
           { field: 'email', oldValue: null, newValue: 'test@test.com' },
-          { field: 'role', oldValue: null, newValue: 'ADMIN' },
+          { field: 'role', oldValue: null, newValue: UserRole.ADMIN },
         ],
         userId: 'admin-1',
       });
@@ -90,7 +91,10 @@ describe('UsersService', () => {
       const dto = { fullName: 'Test User' };
 
       await expect(
-        service.create(dto as any, { id: 'admin-1', role: 'ADMIN' } as any),
+        service.create(
+          dto as any,
+          { id: 'admin-1', role: UserRole.ADMIN } as any,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -98,11 +102,14 @@ describe('UsersService', () => {
       const dto = {
         fullName: 'System Admin User',
         email: 'sysadmin@test.com',
-        role: 'SYSTEM_ADMINISTRATOR',
+        role: UserRole.SYSTEM_ADMINISTRATOR,
       };
 
       await expect(
-        service.create(dto as any, { id: 'admin-1', role: 'ADMIN' } as any),
+        service.create(
+          dto as any,
+          { id: 'admin-1', role: UserRole.ADMIN } as any,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPrismaService.user.create).not.toHaveBeenCalled();
@@ -113,14 +120,14 @@ describe('UsersService', () => {
       const dto = {
         fullName: 'System Admin User',
         email: 'sysadmin@test.com',
-        role: 'SYSTEM_ADMINISTRATOR',
+        role: UserRole.SYSTEM_ADMINISTRATOR,
       };
       const createdUser = {
         ...mockUser,
         id: 'user-2',
         fullName: 'System Admin User',
         email: 'sysadmin@test.com',
-        role: 'SYSTEM_ADMINISTRATOR',
+        role: UserRole.SYSTEM_ADMINISTRATOR,
       };
       mockPrismaService.user.create.mockResolvedValue(createdUser);
 
@@ -128,7 +135,7 @@ describe('UsersService', () => {
         dto as any,
         {
           id: 'sysadmin-1',
-          role: 'SYSTEM_ADMINISTRATOR',
+          role: UserRole.SYSTEM_ADMINISTRATOR,
         } as any,
       );
 
@@ -137,7 +144,7 @@ describe('UsersService', () => {
         data: {
           fullName: 'System Admin User',
           email: 'sysadmin@test.com',
-          role: 'SYSTEM_ADMINISTRATOR',
+          role: UserRole.SYSTEM_ADMINISTRATOR,
           isActive: true,
         },
       });
@@ -155,7 +162,7 @@ describe('UsersService', () => {
           {
             field: 'role',
             oldValue: null,
-            newValue: 'SYSTEM_ADMINISTRATOR',
+            newValue: UserRole.SYSTEM_ADMINISTRATOR,
           },
         ],
         userId: 'sysadmin-1',
@@ -170,7 +177,7 @@ describe('UsersService', () => {
       const result = await service.findAll(
         undefined,
         undefined,
-        'SYSTEM_ADMINISTRATOR',
+        UserRole.SYSTEM_ADMINISTRATOR,
       );
 
       expect(result).toEqual([mockUser]);
@@ -187,11 +194,15 @@ describe('UsersService', () => {
     it('should filter by role', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      await service.findAll('ADMIN' as any, undefined, 'SYSTEM_ADMINISTRATOR');
+      await service.findAll(
+        UserRole.ADMIN,
+        undefined,
+        UserRole.SYSTEM_ADMINISTRATOR,
+      );
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ role: 'ADMIN' }),
+          where: expect.objectContaining({ role: UserRole.ADMIN }),
         }),
       );
     });
@@ -199,7 +210,7 @@ describe('UsersService', () => {
     it('should filter by isActive', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      await service.findAll(undefined, true, 'SYSTEM_ADMINISTRATOR');
+      await service.findAll(undefined, true, UserRole.SYSTEM_ADMINISTRATOR);
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -211,11 +222,26 @@ describe('UsersService', () => {
     it('should exclude system administrators for admin callers', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
-      await service.findAll(undefined, undefined, 'ADMIN');
+      await service.findAll(undefined, undefined, UserRole.ADMIN);
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
         where: {
-          role: { in: ['USER', 'ADMIN'] },
+          role: { in: [UserRole.USER, UserRole.ADMIN] },
+          isActive: undefined,
+          deletedAt: null,
+        },
+        orderBy: { fullName: 'asc' },
+      });
+    });
+
+    it('should exclude system administrators for non-system-admin callers', async () => {
+      mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
+
+      await service.findAll(undefined, undefined, UserRole.USER);
+
+      expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+        where: {
+          role: { in: [UserRole.USER, UserRole.ADMIN] },
           isActive: undefined,
           deletedAt: null,
         },
@@ -225,9 +251,9 @@ describe('UsersService', () => {
 
     it('should return empty result when admin requests system administrators', async () => {
       const result = await service.findAll(
-        'SYSTEM_ADMINISTRATOR' as any,
+        UserRole.SYSTEM_ADMINISTRATOR,
         undefined,
-        'ADMIN',
+        UserRole.ADMIN,
       );
 
       expect(result).toEqual([]);
@@ -267,7 +293,7 @@ describe('UsersService', () => {
         {
           fullName: 'Updated User',
         } as any,
-        { id: 'admin-1', role: 'ADMIN' } as any,
+        { id: 'admin-1', role: UserRole.ADMIN } as any,
       );
 
       expect(result.fullName).toBe('Updated User');
@@ -301,7 +327,7 @@ describe('UsersService', () => {
         } as any,
         {
           id: 'admin-1',
-          role: 'ADMIN',
+          role: UserRole.ADMIN,
         } as any,
       );
 
@@ -317,7 +343,7 @@ describe('UsersService', () => {
           {} as any,
           {
             id: 'admin-1',
-            role: 'ADMIN',
+            role: UserRole.ADMIN,
           } as any,
         ),
       ).rejects.toThrow(NotFoundException);
@@ -329,8 +355,27 @@ describe('UsersService', () => {
       await expect(
         service.update(
           'user-1',
-          { role: 'SYSTEM_ADMINISTRATOR' } as any,
-          { id: 'admin-1', role: 'ADMIN' } as any,
+          { role: UserRole.SYSTEM_ADMINISTRATOR } as any,
+          { id: 'admin-1', role: UserRole.ADMIN } as any,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when admin updates a system administrator without role change', async () => {
+      const systemAdmin = {
+        ...mockUser,
+        role: UserRole.SYSTEM_ADMINISTRATOR,
+      };
+      mockPrismaService.user.findFirst.mockResolvedValue(systemAdmin);
+
+      await expect(
+        service.update(
+          'user-1',
+          { fullName: 'Updated User' } as any,
+          { id: 'admin-1', role: UserRole.ADMIN } as any,
         ),
       ).rejects.toThrow(ForbiddenException);
 
@@ -345,7 +390,10 @@ describe('UsersService', () => {
       mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
       mockPrismaService.user.update.mockResolvedValue(deleted);
 
-      const result = await service.remove('user-1', 'admin-1');
+      const result = await service.remove('user-1', {
+        id: 'admin-1',
+        role: UserRole.ADMIN,
+      } as any);
 
       expect(result.isActive).toBe(false);
       expect(result.deletedAt).toBeDefined();
@@ -365,12 +413,33 @@ describe('UsersService', () => {
       });
     });
 
+    it('should throw ForbiddenException when admin deletes a system administrator', async () => {
+      const systemAdmin = {
+        ...mockUser,
+        role: UserRole.SYSTEM_ADMINISTRATOR,
+      };
+      mockPrismaService.user.findFirst.mockResolvedValue(systemAdmin);
+
+      await expect(
+        service.remove('user-1', {
+          id: 'admin-1',
+          role: UserRole.ADMIN,
+        } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFoundException for nonexistent user', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.remove('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.remove('nonexistent', {
+          id: 'admin-1',
+          role: UserRole.ADMIN,
+        } as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -36,6 +36,7 @@ export function Users() {
     role: UserRole.USER,
   });
   const [error, setError] = useState<string | null>(null);
+  const isCurrentUserResolved = !isCurrentUserLoading;
 
   const assignableRoles =
     currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR
@@ -43,12 +44,20 @@ export function Users() {
       : ADMIN_ASSIGNABLE_ROLES;
 
   const isUsersPageForbidden =
-    !isCurrentUserLoading && currentUser?.role === UserRole.USER;
+    isCurrentUserResolved &&
+    (!currentUser || currentUser.role === UserRole.USER);
+
+  const isRoleLocked =
+    editingUser != null && !assignableRoles.includes(editingUser.role);
+
+  const roleOptions = isRoleLocked
+    ? [editingUser.role, ...assignableRoles]
+    : assignableRoles;
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => apiService.fetchUsers(),
-    enabled: !isUsersPageForbidden,
+    enabled: isCurrentUserResolved && !isUsersPageForbidden,
   });
 
   const saveMutation = useMutation({
@@ -195,6 +204,10 @@ export function Users() {
     },
   ];
 
+  if (!isCurrentUserResolved) {
+    return <div className="p-6 text-bcgov-gray-dark">Loading user...</div>;
+  }
+
   if (isUsersPageForbidden) {
     return <AccessDenied />;
   }
@@ -282,14 +295,24 @@ export function Users() {
                 setFormData({ ...formData, role: e.target.value as UserRole })
               }
               className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+              disabled={isRoleLocked}
               required
             >
-              {assignableRoles.map((value) => (
-                <option key={value} value={value}>
+              {roleOptions.map((value) => (
+                <option
+                  key={value}
+                  value={value}
+                  disabled={isRoleLocked && editingUser?.role === value}
+                >
                   {USER_ROLE_LABELS[value]}
                 </option>
               ))}
             </select>
+            {isRoleLocked && (
+              <p className="mt-1 text-xs text-bcgov-gray-dark">
+                You cannot change the role for this user.
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button

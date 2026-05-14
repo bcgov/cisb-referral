@@ -9,8 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import { diffObjects } from '../audit/audit.utils';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRole } from './dto/user.dto';
-import { User } from '../generated/prisma/client';
+import { User, UserRole } from '../generated/prisma/client';
 
 const TRACKED_FIELDS = ['fullName', 'email', 'role', 'isActive'];
 
@@ -58,18 +57,18 @@ export class UsersService {
   async findAll(
     role?: UserRole,
     isActive?: boolean,
-    currentUserRole?: string,
+    currentUserRole?: UserRole,
   ): Promise<User[]> {
-    if (
-      currentUserRole === UserRole.ADMIN &&
-      role === UserRole.SYSTEM_ADMINISTRATOR
-    ) {
+    const isRestrictedCaller =
+      currentUserRole !== UserRole.SYSTEM_ADMINISTRATOR;
+
+    if (isRestrictedCaller && role === UserRole.SYSTEM_ADMINISTRATOR) {
       return [];
     }
 
     const roleFilter =
       role ??
-      (currentUserRole === UserRole.ADMIN
+      (isRestrictedCaller
         ? {
             in: [UserRole.USER, UserRole.ADMIN],
           }
@@ -109,6 +108,8 @@ export class UsersService {
   ): Promise<User> {
     const existing = await this.findOne(id);
 
+    this.assertCanManageUser(currentUser.role, existing.role);
+
     if (updateUserDto.role) {
       this.assertCanAssignRole(currentUser.role, updateUserDto.role);
     }
@@ -138,8 +139,13 @@ export class UsersService {
     return updated;
   }
 
-  async remove(id: string, userId?: string): Promise<User> {
-    await this.findOne(id);
+  async remove(
+    id: string,
+    currentUser: Pick<User, 'id' | 'role'>,
+  ): Promise<User> {
+    const existing = await this.findOne(id);
+
+    this.assertCanManageUser(currentUser.role, existing.role);
 
     const removed = await this.prisma.user.update({
       where: { id },
@@ -154,26 +160,46 @@ export class UsersService {
       recordId: id,
       action: 'DELETE',
       changes: [],
-      userId,
+      userId: currentUser.id,
     });
 
     return removed;
   }
 
-  private assertCanAssignRole(actingRole: string, targetRole: UserRole): void {
+  private assertCanAssignRole(
+    actingRole: UserRole,
+    targetRole: UserRole,
+  ): void {
     if (actingRole === UserRole.SYSTEM_ADMINISTRATOR) {
       return;
     }
 
     if (
       actingRole === UserRole.ADMIN &&
-      [UserRole.ADMIN, UserRole.USER].includes(targetRole)
+      (targetRole === UserRole.ADMIN || targetRole === UserRole.USER)
     ) {
       return;
     }
 
     throw new ForbiddenException(
       'Insufficient permissions to assign the requested role',
+    );
+  }
+
+  private assertCanManageUser(
+    actingRole: UserRole,
+    targetRole: UserRole,
+  ): void {
+    if (targetRole !== UserRole.SYSTEM_ADMINISTRATOR) {
+      return;
+    }
+
+    if (actingRole === UserRole.SYSTEM_ADMINISTRATOR) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'Insufficient permissions to manage the target user',
     );
   }
 }

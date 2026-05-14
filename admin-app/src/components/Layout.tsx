@@ -37,9 +37,9 @@ export function Layout() {
   }
 
   const navItems =
-    currentUser?.role === UserRole.USER
-      ? NAV_ITEMS
-      : [...NAV_ITEMS, USER_MANAGEMENT_NAV_ITEM];
+    currentUser && currentUser.role !== UserRole.USER
+      ? [...NAV_ITEMS, USER_MANAGEMENT_NAV_ITEM]
+      : NAV_ITEMS;
 
   return (
     <div className="flex flex-col min-h-screen">
