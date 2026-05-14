@@ -18,6 +18,19 @@ const mockUser = {
   isActive: true,
 };
 
+const mockCurrentUser = {
+  id: 'admin-1',
+  fullName: 'Current Admin',
+  email: 'admin@test.com',
+  role: 'ADMIN',
+  isActive: true,
+};
+
+const mockCurrentUserContext = {
+  id: 'admin-1',
+  role: 'ADMIN',
+};
+
 describe('UsersController', () => {
   let controller: UsersController;
 
@@ -33,9 +46,9 @@ describe('UsersController', () => {
 
   describe('me', () => {
     it('should return the current user', () => {
-      const result = controller.me(mockUser as any);
+      const result = controller.me(mockCurrentUser as any);
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockCurrentUser);
     });
   });
 
@@ -44,10 +57,16 @@ describe('UsersController', () => {
       mockUsersService.create.mockResolvedValue(mockUser);
       const dto = { fullName: 'Test User', email: 'test@test.com' };
 
-      const result = await controller.create(dto as any, mockUser as any);
+      const result = await controller.create(
+        dto as any,
+        mockCurrentUser as any,
+      );
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.create).toHaveBeenCalledWith(dto, mockUser);
+      expect(mockUsersService.create).toHaveBeenCalledWith(
+        dto,
+        mockCurrentUserContext,
+      );
     });
   });
 
@@ -55,7 +74,7 @@ describe('UsersController', () => {
     it('should parse isActive true string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll('ADMIN' as any, 'true', mockUser as any);
+      await controller.findAll('ADMIN' as any, 'true', mockCurrentUser as any);
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         'ADMIN',
@@ -67,7 +86,7 @@ describe('UsersController', () => {
     it('should parse isActive false string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([]);
 
-      await controller.findAll(undefined, 'false', mockUser as any);
+      await controller.findAll(undefined, 'false', mockCurrentUser as any);
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
@@ -79,7 +98,7 @@ describe('UsersController', () => {
     it('should pass undefined when isActive not provided', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll(undefined, undefined, mockUser as any);
+      await controller.findAll(undefined, undefined, mockCurrentUser as any);
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
@@ -111,14 +130,14 @@ describe('UsersController', () => {
       const result = await controller.update(
         'user-1',
         dto as any,
-        mockUser as any,
+        mockCurrentUser as any,
       );
 
       expect(result.fullName).toBe('Updated User');
       expect(mockUsersService.update).toHaveBeenCalledWith(
         'user-1',
         dto,
-        mockUser,
+        mockCurrentUserContext,
       );
     });
   });
@@ -130,10 +149,13 @@ describe('UsersController', () => {
         isActive: false,
       });
 
-      const result = await controller.remove('user-1', mockUser as any);
+      const result = await controller.remove('user-1', mockCurrentUser as any);
 
       expect(result.isActive).toBe(false);
-      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1', mockUser);
+      expect(mockUsersService.remove).toHaveBeenCalledWith(
+        'user-1',
+        mockCurrentUserContext,
+      );
     });
   });
 });

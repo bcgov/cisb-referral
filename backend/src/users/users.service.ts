@@ -55,10 +55,14 @@ export class UsersService {
   }
 
   async findAll(
-    role?: UserRole,
-    isActive?: boolean,
-    currentUserRole: UserRole = UserRole.USER,
+    role: UserRole | undefined,
+    isActive: boolean | undefined,
+    currentUserRole: UserRole,
   ): Promise<User[]> {
+    if (!currentUserRole) {
+      throw new BadRequestException('Current user role is required');
+    }
+
     const isRestrictedCaller =
       currentUserRole !== UserRole.SYSTEM_ADMINISTRATOR;
 
@@ -202,11 +206,15 @@ export class UsersService {
     actingRole: UserRole,
     targetRole: UserRole,
   ): void {
-    if (targetRole !== UserRole.SYSTEM_ADMINISTRATOR) {
+    if (actingRole === UserRole.SYSTEM_ADMINISTRATOR) {
       return;
     }
 
-    if (actingRole === UserRole.SYSTEM_ADMINISTRATOR) {
+    if (actingRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Insufficient permissions to manage users');
+    }
+
+    if (targetRole !== UserRole.SYSTEM_ADMINISTRATOR) {
       return;
     }
 

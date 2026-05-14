@@ -49,7 +49,7 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    it('should create a user with correct data', async () => {
+    it('should allow admin to create admin users', async () => {
       const dto = {
         fullName: 'Test User',
         email: 'test@test.com',
@@ -87,6 +87,43 @@ describe('UsersService', () => {
       });
     });
 
+    it.each([UserRole.USER, UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR])(
+      'should allow system admin to create %s users',
+      async (targetRole) => {
+        const dto = {
+          fullName: 'Created User',
+          email: 'created@test.com',
+          role: targetRole,
+        };
+        const createdUser = {
+          ...mockUser,
+          id: `user-${targetRole}`,
+          fullName: 'Created User',
+          email: 'created@test.com',
+          role: targetRole,
+        };
+        mockPrismaService.user.create.mockResolvedValue(createdUser);
+
+        const result = await service.create(
+          dto as any,
+          {
+            id: 'sysadmin-1',
+            role: UserRole.SYSTEM_ADMINISTRATOR,
+          } as any,
+        );
+
+        expect(result).toEqual(createdUser);
+        expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+          data: {
+            fullName: 'Created User',
+            email: 'created@test.com',
+            role: targetRole,
+            isActive: true,
+          },
+        });
+      },
+    );
+
     it('should throw BadRequestException when email is missing', async () => {
       const dto = { fullName: 'Test User' };
 
@@ -116,61 +153,40 @@ describe('UsersService', () => {
       expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
 
-    it('should allow system admin to create system administrator', async () => {
-      const dto = {
-        fullName: 'System Admin User',
-        email: 'sysadmin@test.com',
-        role: UserRole.SYSTEM_ADMINISTRATOR,
-      };
-      const createdUser = {
-        ...mockUser,
-        id: 'user-2',
-        fullName: 'System Admin User',
-        email: 'sysadmin@test.com',
-        role: UserRole.SYSTEM_ADMINISTRATOR,
-      };
-      mockPrismaService.user.create.mockResolvedValue(createdUser);
+    it.each([UserRole.USER, UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR])(
+      'should throw ForbiddenException when user creates %s users',
+      async (targetRole) => {
+        const dto = {
+          fullName: 'Regular User Create Attempt',
+          email: 'user-attempt@test.com',
+          role: targetRole,
+        };
 
-      const result = await service.create(
-        dto as any,
-        {
-          id: 'sysadmin-1',
-          role: UserRole.SYSTEM_ADMINISTRATOR,
-        } as any,
-      );
+        await expect(
+          service.create(
+            dto as any,
+            {
+              id: 'user-actor-1',
+              role: UserRole.USER,
+            } as any,
+          ),
+        ).rejects.toThrow(ForbiddenException);
 
-      expect(result).toEqual(createdUser);
-      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-        data: {
-          fullName: 'System Admin User',
-          email: 'sysadmin@test.com',
-          role: UserRole.SYSTEM_ADMINISTRATOR,
-          isActive: true,
-        },
-      });
-      expect(mockAuditService.logGlobal).toHaveBeenCalledWith({
-        tableName: 'user',
-        recordId: 'user-2',
-        action: 'CREATE',
-        changes: [
-          {
-            field: 'fullName',
-            oldValue: null,
-            newValue: 'System Admin User',
-          },
-          { field: 'email', oldValue: null, newValue: 'sysadmin@test.com' },
-          {
-            field: 'role',
-            oldValue: null,
-            newValue: UserRole.SYSTEM_ADMINISTRATOR,
-          },
-        ],
-        userId: 'sysadmin-1',
-      });
-    });
+        expect(mockPrismaService.user.create).not.toHaveBeenCalled();
+        expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('findAll', () => {
+    it('should throw BadRequestException when current user role is missing', async () => {
+      await expect(
+        service.findAll(undefined, undefined, undefined as any),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.user.findMany).not.toHaveBeenCalled();
+    });
+
     it('should return all active users ordered by name', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
 
@@ -419,6 +435,26 @@ describe('UsersService', () => {
 
       expect(mockPrismaService.user.update).not.toHaveBeenCalled();
     });
+
+    it('should throw ForbiddenException when non-admin updates another user', async () => {
+      const targetUser = {
+        ...mockUser,
+        id: 'user-2',
+        role: UserRole.USER,
+      };
+      mockPrismaService.user.findFirst.mockResolvedValue(targetUser);
+
+      await expect(
+        service.update(
+          'user-2',
+          { fullName: 'Updated User' } as any,
+          { id: 'user-1', role: UserRole.USER } as any,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -514,6 +550,25 @@ describe('UsersService', () => {
           role: UserRole.ADMIN,
         } as any),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when non-admin deletes another user', async () => {
+      const targetUser = {
+        ...mockUser,
+        id: 'user-2',
+        role: UserRole.USER,
+      };
+      mockPrismaService.user.findFirst.mockResolvedValue(targetUser);
+
+      await expect(
+        service.remove('user-2', {
+          id: 'user-1',
+          role: UserRole.USER,
+        } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockAuditService.logGlobal).not.toHaveBeenCalled();
     });
   });
 });

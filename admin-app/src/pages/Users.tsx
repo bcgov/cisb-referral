@@ -47,10 +47,16 @@ export function Users() {
     isCurrentUserResolved &&
     (!currentUser || currentUser.role === UserRole.USER);
 
-  const isRoleLocked =
+  const isEditingSelf =
+    editingUser != null && editingUser.id === currentUser?.id;
+
+  const isEditingRestrictedRole =
     editingUser != null && !assignableRoles.includes(editingUser.role);
 
-  const roleOptions = isRoleLocked
+  const isRoleLocked =
+    editingUser != null && (isEditingSelf || isEditingRestrictedRole);
+
+  const roleOptions = isEditingRestrictedRole
     ? [editingUser.role, ...assignableRoles]
     : assignableRoles;
 
@@ -66,7 +72,12 @@ export function Users() {
       formData: CreateUserDto & Partial<UpdateUserDto>;
     }) => {
       if (data.editing) {
-        const isLocked = !assignableRoles.includes(data.editing.role);
+        const isSelfEdit = data.editing.id === currentUser?.id;
+        const isEditingOutsideAssignableRoles = !assignableRoles.includes(
+          data.editing.role,
+        );
+        const isLocked = isSelfEdit || isEditingOutsideAssignableRoles;
+
         const updateData: UpdateUserDto = {
           fullName: data.formData.fullName,
           email: data.formData.email,
@@ -300,18 +311,16 @@ export function Users() {
               required
             >
               {roleOptions.map((value) => (
-                <option
-                  key={value}
-                  value={value}
-                  disabled={isRoleLocked && editingUser?.role === value}
-                >
+                <option key={value} value={value}>
                   {USER_ROLE_LABELS[value]}
                 </option>
               ))}
             </select>
             {isRoleLocked && (
               <p className="mt-1 text-xs text-bcgov-gray-dark">
-                You cannot change the role for this user.
+                {isEditingSelf
+                  ? "You cannot change your own role."
+                  : "You cannot change the role for this user."}
               </p>
             )}
           </div>
