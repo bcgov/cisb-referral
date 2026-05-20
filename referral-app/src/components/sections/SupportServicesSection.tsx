@@ -22,8 +22,6 @@ export function SupportServicesSection({
 
   return (
     <section>
-      <h2>Support Services</h2>
-
       <div className="form-grid">
         <div className="form-field-full">
           <FormField>
