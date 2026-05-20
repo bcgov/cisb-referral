@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -117,5 +118,37 @@ describe("Users page RBAC", () => {
 
     const updatePayload = (mockApiService.updateUser as Mock).mock.calls[0][1];
     expect(updatePayload).not.toHaveProperty("role");
+  });
+
+  it("redirects USER role to /referrals instead of rendering the page", () => {
+    mockUseCurrentUser.mockReturnValue({
+      currentUser: buildUser({ role: UserRole.USER }),
+      isLoading: false,
+      isSystemAdmin: false,
+      isForbidden: false,
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <Users />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("heading", { name: "Users" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Add User" }),
+    ).not.toBeInTheDocument();
+    expect(mockApiService.fetchUsers).not.toHaveBeenCalled();
   });
 });
