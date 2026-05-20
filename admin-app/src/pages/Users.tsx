@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AccessDenied } from "../components";
 import { Table, Dialog } from "../components/ui";
 import { useCurrentUser } from "../hooks";
 import { apiService } from "../services";
@@ -20,6 +20,12 @@ const SYSTEM_ADMIN_ASSIGNABLE_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.SYSTEM_ADMINISTRATOR,
 ];
+
+type RoleEditState = {
+  isEditingSelf: boolean;
+  isEditingRestrictedRole: boolean;
+  isRoleLocked: boolean;
+};
 
 export function Users() {
   const { currentUser, isLoading: isCurrentUserLoading } = useCurrentUser();
@@ -50,18 +56,32 @@ export function Users() {
     isCurrentUserResolved &&
     (!currentUser || currentUser.role === UserRole.USER);
 
-  const isEditingSelf =
-    editingUser != null && editingUser.id === currentUser?.id;
+  const getRoleEditState = (editing: User | null): RoleEditState => {
+    if (!editing) {
+      return {
+        isEditingSelf: false,
+        isEditingRestrictedRole: false,
+        isRoleLocked: false,
+      };
+    }
 
-  const isEditingRestrictedRole =
-    editingUser != null && !assignableRoles.includes(editingUser.role);
+    const isEditingSelf = editing.id === currentUser?.id;
+    const isEditingRestrictedRole = !assignableRoles.includes(editing.role);
 
-  const isRoleLocked =
-    editingUser != null && (isEditingSelf || isEditingRestrictedRole);
+    return {
+      isEditingSelf,
+      isEditingRestrictedRole,
+      isRoleLocked: isEditingSelf || isEditingRestrictedRole,
+    };
+  };
 
-  const roleOptions = isEditingRestrictedRole
-    ? [editingUser.role, ...assignableRoles]
-    : assignableRoles;
+  const { isEditingSelf, isEditingRestrictedRole, isRoleLocked } =
+    getRoleEditState(editingUser);
+
+  const roleOptions =
+    isEditingRestrictedRole && editingUser != null
+      ? [editingUser.role, ...assignableRoles]
+      : assignableRoles;
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
@@ -75,16 +95,12 @@ export function Users() {
       formData: CreateUserDto & Partial<UpdateUserDto>;
     }) => {
       if (data.editing) {
-        const isSelfEdit = data.editing.id === currentUser?.id;
-        const isEditingOutsideAssignableRoles = !assignableRoles.includes(
-          data.editing.role,
-        );
-        const isLocked = isSelfEdit || isEditingOutsideAssignableRoles;
+        const { isRoleLocked } = getRoleEditState(data.editing);
 
         const updateData: UpdateUserDto = {
           fullName: data.formData.fullName,
           email: data.formData.email,
-          ...(isLocked ? {} : { role: data.formData.role }),
+          ...(isRoleLocked ? {} : { role: data.formData.role }),
         };
         return apiService.updateUser(data.editing.id, updateData);
       }
@@ -224,7 +240,7 @@ export function Users() {
   }
 
   if (isUsersPageForbidden) {
-    return <AccessDenied />;
+    return <Navigate to="/referrals" replace />;
   }
 
   return (
