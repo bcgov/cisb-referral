@@ -1,0 +1,95 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Ministries } from "../../pages/Ministries";
+import { UserRole } from "../../types";
+import type { Ministry } from "../../types";
+
+const { mockUseCurrentUser, mockApiService } = vi.hoisted(() => ({
+  mockUseCurrentUser: vi.fn(),
+  mockApiService: {
+    fetchMinistries: vi.fn(),
+  },
+}));
+
+vi.mock("../../hooks", () => ({
+  useCurrentUser: mockUseCurrentUser,
+}));
+
+vi.mock("../../services", () => ({
+  apiService: mockApiService,
+}));
+
+const testMinistry: Ministry = {
+  id: "ministry-1",
+  name: "Finance",
+  isActive: true,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+
+function renderMinistries() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <Ministries />
+    </QueryClientProvider>,
+  );
+}
+
+describe("Ministries page RBAC", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApiService.fetchMinistries.mockResolvedValue([testMinistry]);
+  });
+
+  it("hides add/edit/delete controls for USER role", async () => {
+    mockUseCurrentUser.mockReturnValue({
+      currentUser: { id: "user-1", role: UserRole.USER },
+      isLoading: false,
+    });
+
+    renderMinistries();
+
+    expect(
+      screen.queryByRole("button", { name: "Add Ministry" }),
+    ).not.toBeInTheDocument();
+
+    await screen.findByText("Finance");
+
+    // EditableCell's Edit button should not be rendered
+    expect(
+      screen.queryByRole("button", { name: "Edit" }),
+    ).not.toBeInTheDocument();
+    // Table's Delete button should not be rendered
+    expect(
+      screen.queryByRole("button", { name: "Delete" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([UserRole.ADMIN, UserRole.SYSTEM_ADMINISTRATOR])(
+    "shows add/edit/delete controls for %s role",
+    async (role) => {
+      mockUseCurrentUser.mockReturnValue({
+        currentUser: { id: "admin-1", role },
+        isLoading: false,
+      });
+
+      renderMinistries();
+
+      expect(
+        screen.getByRole("button", { name: "Add Ministry" }),
+      ).toBeInTheDocument();
+
+      await screen.findByText("Finance");
+
+      expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Delete" }),
+      ).toBeInTheDocument();
+    },
+  );
+});

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Table } from "../components/ui";
+import { useCurrentUser } from "../hooks";
 import { apiService } from "../services";
 import type { Region, CreateRegionDto, UpdateRegionDto } from "../types";
+import { UserRole } from "../types";
 
 /** Fields that can be edited on a region row */
 type RegionEditValues = {
@@ -24,7 +26,11 @@ const INPUT_CLASS =
  * @returns Regions admin page component
  */
 export function Regions() {
+  const { currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
+  const canManage =
+    currentUser?.role === UserRole.ADMIN ||
+    currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR;
   const [isAdding, setIsAdding] = useState(false);
   const [newRegion, setNewRegion] = useState<CreateRegionDto>({
     name: "",
@@ -256,83 +262,89 @@ export function Regions() {
           </span>
         ),
     },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (region: Region) =>
-        editingId === region.id ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSaveRow}
-                disabled={isSaving || !editValues.name.trim()}
-                className="px-3 py-1 text-sm font-medium text-white bg-bcgov-blue
+    ...(canManage
+      ? [
+          {
+            key: "actions",
+            header: "Actions",
+            render: (region: Region) =>
+              editingId === region.id ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveRow}
+                      disabled={isSaving || !editValues.name.trim()}
+                      className="px-3 py-1 text-sm font-medium text-white bg-bcgov-blue
                   rounded hover:bg-bcgov-blue-dark
                   transition-colors duration-150 disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="px-3 py-1 text-sm font-medium text-bcgov-gray-dark
+                    >
+                      {isSaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                      className="px-3 py-1 text-sm font-medium text-bcgov-gray-dark
                   border border-bcgov-border rounded hover:bg-gray-100
                   transition-colors duration-150 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-            {updateMutation.isError && (
-              <span className="text-red-600 text-sm">
-                Failed to save changes
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => handleEdit(region)}
-              className="px-3 py-1 text-sm font-medium text-bcgov-blue
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {updateMutation.isError && (
+                    <span className="text-red-600 text-sm">
+                      Failed to save changes
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(region)}
+                    className="px-3 py-1 text-sm font-medium text-bcgov-blue
                 border border-bcgov-border rounded hover:bg-blue-50
                 hover:border-bcgov-blue transition-colors duration-150"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(region);
-              }}
-              className="px-3 py-1 text-sm font-medium text-red-600
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(region);
+                    }}
+                    className="px-3 py-1 text-sm font-medium text-red-600
                 border border-bcgov-border rounded hover:bg-red-50
                 hover:border-red-400 transition-colors duration-150"
-            >
-              Delete
-            </button>
-          </div>
-        ),
-    },
+                  >
+                    Delete
+                  </button>
+                </div>
+              ),
+          },
+        ]
+      : []),
   ];
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">Regions</h1>
-        <button
-          onClick={() => setIsAdding(true)}
-          disabled={isAdding}
-          className="px-4 py-2 bg-bcgov-blue text-white rounded
-            hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
-        >
-          Add Region
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setIsAdding(true)}
+            disabled={isAdding}
+            className="px-4 py-2 bg-bcgov-blue text-white rounded
+              hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
+          >
+            Add Region
+          </button>
+        )}
       </div>
       <div className="p-4 sm:p-6">
-        {isAdding && (
+        {canManage && isAdding && (
           <div className="mb-4 p-4 bg-white border border-bcgov-border rounded space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <input

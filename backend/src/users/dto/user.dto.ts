@@ -9,12 +9,7 @@ import {
   IsDate,
   MaxLength,
 } from 'class-validator';
-
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  SYSTEM_ADMINISTRATOR = 'SYSTEM_ADMINISTRATOR',
-}
+import { UserRole } from '../../generated/prisma/client';
 
 export class UserDto {
   @ApiProperty()

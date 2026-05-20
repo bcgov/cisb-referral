@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { UserRole } from '../generated/prisma/client';
 
 const mockUsersService = {
   create: jest.fn(),
@@ -14,8 +15,21 @@ const mockUser = {
   id: 'user-1',
   fullName: 'Test User',
   email: 'test@test.com',
-  role: 'ADMIN',
+  role: UserRole.ADMIN,
   isActive: true,
+};
+
+const mockCurrentUser = {
+  id: 'admin-1',
+  fullName: 'Current Admin',
+  email: 'admin@test.com',
+  role: UserRole.ADMIN,
+  isActive: true,
+};
+
+const mockCurrentUserContext = {
+  id: 'admin-1',
+  role: UserRole.ADMIN,
 };
 
 describe('UsersController', () => {
@@ -33,9 +47,9 @@ describe('UsersController', () => {
 
   describe('me', () => {
     it('should return the current user', () => {
-      const result = controller.me(mockUser as any);
+      const result = controller.me(mockCurrentUser as any);
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockCurrentUser);
     });
   });
 
@@ -44,10 +58,16 @@ describe('UsersController', () => {
       mockUsersService.create.mockResolvedValue(mockUser);
       const dto = { fullName: 'Test User', email: 'test@test.com' };
 
-      const result = await controller.create(dto as any, mockUser as any);
+      const result = await controller.create(
+        dto as any,
+        mockCurrentUser as any,
+      );
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.create).toHaveBeenCalledWith(dto, 'user-1');
+      expect(mockUsersService.create).toHaveBeenCalledWith(
+        dto,
+        mockCurrentUserContext,
+      );
     });
   });
 
@@ -55,27 +75,40 @@ describe('UsersController', () => {
     it('should parse isActive true string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll('ADMIN' as any, 'true');
+      await controller.findAll(
+        UserRole.ADMIN as any,
+        'true',
+        mockCurrentUser as any,
+      );
 
-      expect(mockUsersService.findAll).toHaveBeenCalledWith('ADMIN', true);
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(
+        UserRole.ADMIN,
+        true,
+        UserRole.ADMIN,
+      );
     });
 
     it('should parse isActive false string to boolean', async () => {
       mockUsersService.findAll.mockResolvedValue([]);
 
-      await controller.findAll(undefined, 'false');
+      await controller.findAll(undefined, 'false', mockCurrentUser as any);
 
-      expect(mockUsersService.findAll).toHaveBeenCalledWith(undefined, false);
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(
+        undefined,
+        false,
+        UserRole.ADMIN,
+      );
     });
 
     it('should pass undefined when isActive not provided', async () => {
       mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      await controller.findAll();
+      await controller.findAll(undefined, undefined, mockCurrentUser as any);
 
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         undefined,
         undefined,
+        UserRole.ADMIN,
       );
     });
   });
@@ -102,14 +135,14 @@ describe('UsersController', () => {
       const result = await controller.update(
         'user-1',
         dto as any,
-        mockUser as any,
+        mockCurrentUser as any,
       );
 
       expect(result.fullName).toBe('Updated User');
       expect(mockUsersService.update).toHaveBeenCalledWith(
         'user-1',
         dto,
-        'user-1',
+        mockCurrentUserContext,
       );
     });
   });
@@ -121,10 +154,13 @@ describe('UsersController', () => {
         isActive: false,
       });
 
-      const result = await controller.remove('user-1', mockUser as any);
+      const result = await controller.remove('user-1', mockCurrentUser as any);
 
       expect(result.isActive).toBe(false);
-      expect(mockUsersService.remove).toHaveBeenCalledWith('user-1', 'user-1');
+      expect(mockUsersService.remove).toHaveBeenCalledWith(
+        'user-1',
+        mockCurrentUserContext,
+      );
     });
   });
 });

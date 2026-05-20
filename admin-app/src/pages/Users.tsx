@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Table, Dialog } from "../components/ui";
+import { useCurrentUser } from "../hooks";
 import { apiService } from "../services";
 import type { User, CreateUserDto, UpdateUserDto } from "../types";
 import { UserRole } from "../types";
@@ -11,7 +13,22 @@ const USER_ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMINISTRATOR]: "System Administrator",
 };
 
+const ADMIN_ASSIGNABLE_ROLES: UserRole[] = [UserRole.USER, UserRole.ADMIN];
+
+const SYSTEM_ADMIN_ASSIGNABLE_ROLES: UserRole[] = [
+  UserRole.USER,
+  UserRole.ADMIN,
+  UserRole.SYSTEM_ADMINISTRATOR,
+];
+
+type RoleEditState = {
+  isEditingSelf: boolean;
+  isEditingRestrictedRole: boolean;
+  isRoleLocked: boolean;
+};
+
 export function Users() {
+  const { currentUser, isLoading: isCurrentUserLoading } = useCurrentUser();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -25,10 +42,51 @@ export function Users() {
     role: UserRole.USER,
   });
   const [error, setError] = useState<string | null>(null);
+  const isCurrentUserResolved = !isCurrentUserLoading;
+
+  let assignableRoles: UserRole[] = [];
+
+  if (currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR) {
+    assignableRoles = SYSTEM_ADMIN_ASSIGNABLE_ROLES;
+  } else if (currentUser?.role === UserRole.ADMIN) {
+    assignableRoles = ADMIN_ASSIGNABLE_ROLES;
+  }
+
+  const isUsersPageForbidden =
+    isCurrentUserResolved &&
+    (!currentUser || currentUser.role === UserRole.USER);
+
+  const getRoleEditState = (editing: User | null): RoleEditState => {
+    if (!editing) {
+      return {
+        isEditingSelf: false,
+        isEditingRestrictedRole: false,
+        isRoleLocked: false,
+      };
+    }
+
+    const isEditingSelf = editing.id === currentUser?.id;
+    const isEditingRestrictedRole = !assignableRoles.includes(editing.role);
+
+    return {
+      isEditingSelf,
+      isEditingRestrictedRole,
+      isRoleLocked: isEditingSelf || isEditingRestrictedRole,
+    };
+  };
+
+  const { isEditingSelf, isEditingRestrictedRole, isRoleLocked } =
+    getRoleEditState(editingUser);
+
+  const roleOptions =
+    isEditingRestrictedRole && editingUser != null
+      ? [editingUser.role, ...assignableRoles]
+      : assignableRoles;
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => apiService.fetchUsers(),
+    enabled: isCurrentUserResolved && !isUsersPageForbidden,
   });
 
   const saveMutation = useMutation({
@@ -37,10 +95,12 @@ export function Users() {
       formData: CreateUserDto & Partial<UpdateUserDto>;
     }) => {
       if (data.editing) {
+        const { isRoleLocked } = getRoleEditState(data.editing);
+
         const updateData: UpdateUserDto = {
           fullName: data.formData.fullName,
           email: data.formData.email,
-          role: data.formData.role,
+          ...(isRoleLocked ? {} : { role: data.formData.role }),
         };
         return apiService.updateUser(data.editing.id, updateData);
       }
@@ -79,7 +139,7 @@ export function Users() {
     setFormData({
       fullName: "",
       email: "",
-      role: UserRole.USER,
+      role: assignableRoles[0] ?? UserRole.USER,
     });
     setError(null);
     setDialogOpen(true);
@@ -175,6 +235,14 @@ export function Users() {
     },
   ];
 
+  if (!isCurrentUserResolved) {
+    return <div className="p-6 text-bcgov-gray-dark">Loading user...</div>;
+  }
+
+  if (isUsersPageForbidden) {
+    return <Navigate to="/referrals" replace />;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 px-4 sm:px-6 bg-white border-b border-bcgov-border">
@@ -258,14 +326,22 @@ export function Users() {
                 setFormData({ ...formData, role: e.target.value as UserRole })
               }
               className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
+              disabled={isRoleLocked}
               required
             >
-              {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
+              {roleOptions.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {USER_ROLE_LABELS[value]}
                 </option>
               ))}
             </select>
+            {isRoleLocked && (
+              <p className="mt-1 text-xs text-bcgov-gray-dark">
+                {isEditingSelf
+                  ? "You cannot change your own role."
+                  : "You cannot change the role for this user."}
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button

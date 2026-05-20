@@ -3,6 +3,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { Header, Footer } from "@bcgov/design-system-react-components";
 import { logout } from "../auth";
 import { useCurrentUser } from "../hooks";
+import { UserRole } from "../types";
 import { AccessDenied } from "./AccessDenied";
 
 /** Navigation links displayed in sidebar */
@@ -11,8 +12,9 @@ const NAV_ITEMS = [
   { to: "/regions", label: "Regions" },
   { to: "/ministries", label: "Ministries" },
   { to: "/agency-types", label: "Agency Types" },
-  { to: "/users", label: "Users" },
 ] as const;
+
+const USER_MANAGEMENT_NAV_ITEM = { to: "/users", label: "Users" } as const;
 
 const SYSTEM_ADMIN_NAV_ITEMS = [
   { to: "/audit-history", label: "Audit History" },
@@ -33,6 +35,11 @@ export function Layout() {
   if (isForbidden) {
     return <AccessDenied />;
   }
+
+  const navItems =
+    currentUser && currentUser.role !== UserRole.USER
+      ? [...NAV_ITEMS, USER_MANAGEMENT_NAV_ITEM]
+      : NAV_ITEMS;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -79,7 +86,7 @@ export function Layout() {
           `}
         >
           <ul className="list-none m-0 p-0 flex-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}

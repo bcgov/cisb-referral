@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   ParseUUIDPipe,
+  ParseEnumPipe,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -20,9 +21,12 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserDto, UserRole } from './dto/user.dto';
-import { UserRole as PrismaUserRole } from '../generated/prisma/client';
-import type { User } from '../generated/prisma/client';
+import { UserDto } from './dto/user.dto';
+import {
+  UserRole as PrismaUserRole,
+  type User,
+  type UserRole,
+} from '../generated/prisma/client';
 import { AdminAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 
@@ -63,7 +67,10 @@ export class UsersController {
     @Body() createUserDto: CreateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.create(createUserDto, currentUser.id);
+    return this.usersService.create(createUserDto, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 
   @Get()
@@ -72,7 +79,7 @@ export class UsersController {
   @ApiQuery({
     name: 'role',
     required: false,
-    enum: UserRole,
+    enum: PrismaUserRole,
     description: 'Filter by role',
   })
   @ApiQuery({
@@ -83,8 +90,10 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'List of users', type: [UserDto] })
   async findAll(
-    @Query('role') role?: UserRole,
-    @Query('isActive') isActive?: string,
+    @Query('role', new ParseEnumPipe(PrismaUserRole, { optional: true }))
+    role: UserRole | undefined,
+    @Query('isActive') isActive: string | undefined,
+    @CurrentUser() currentUser: User,
   ): Promise<User[]> {
     let active: boolean | undefined;
     if (isActive === 'true') {
@@ -92,7 +101,7 @@ export class UsersController {
     } else if (isActive === 'false') {
       active = false;
     }
-    return this.usersService.findAll(role, active);
+    return this.usersService.findAll(role, active, currentUser.role);
   }
 
   @Get(':id')
@@ -124,7 +133,10 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto, currentUser.id);
+    return this.usersService.update(id, updateUserDto, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 
   @Delete(':id')
@@ -141,6 +153,9 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.remove(id, currentUser.id);
+    return this.usersService.remove(id, {
+      id: currentUser.id,
+      role: currentUser.role,
+    });
   }
 }
