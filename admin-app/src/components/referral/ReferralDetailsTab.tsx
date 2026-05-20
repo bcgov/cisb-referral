@@ -28,10 +28,9 @@ import type {
 } from "../../types";
 import { ReferralStatus, ReferralOutcome } from "../../types";
 
-const STATUS_OPTIONS = Object.entries(statusLabels).map(([value, label]) => ({
-  value,
-  label,
-}));
+const ALL_STATUS_OPTIONS = Object.entries(statusLabels).map(
+  ([value, label]) => ({ value, label }),
+);
 
 const OUTCOME_OPTIONS = [
   { value: "", label: "— Select Outcome —" },
@@ -124,6 +123,16 @@ export function ReferralDetailsTab({
       value,
       label,
     }),
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      ALL_STATUS_OPTIONS.map((opt) => ({
+        ...opt,
+        disabled:
+          opt.value === ReferralStatus.CLOSED && !formData.referralOutcome,
+      })),
+    [formData.referralOutcome],
   );
 
   const regionOptions = [
@@ -351,7 +360,7 @@ export function ReferralDetailsTab({
             label="Referral Status"
             value={formData.referralStatus}
             onChange={(v) => updateField("referralStatus", v as ReferralStatus)}
-            options={STATUS_OPTIONS}
+            options={statusOptions}
           />
           <SelectInput
             label="Flagged Urgent"
