@@ -103,7 +103,7 @@ export function ReferrerIndividualTab({
         </div>
       )}
 
-      <Section title="Referrer Info">
+      <Section title="Referee Info">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <TextInput
             label="Referred By: Contact Name"

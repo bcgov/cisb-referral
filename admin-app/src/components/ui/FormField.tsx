@@ -119,7 +119,11 @@ interface SelectInputProps {
   readonly label: string;
   readonly value: string | null | undefined;
   readonly onChange: (value: string | null) => void;
-  readonly options: readonly { value: string; label: string }[];
+  readonly options: readonly {
+    value: string;
+    label: string;
+    disabled?: boolean;
+  }[];
 }
 
 export function SelectInput({
@@ -136,7 +140,7 @@ export function SelectInput({
         className="w-full px-3 py-2 border border-bcgov-border rounded focus:outline-none focus:ring-2 focus:ring-bcgov-blue"
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} disabled={opt.disabled}>
             {opt.label}
           </option>
         ))}
