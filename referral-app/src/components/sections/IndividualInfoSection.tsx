@@ -106,7 +106,7 @@ export function IndividualInfoSection({
         <TextInput
           name="secondaryContact"
           control={control}
-          label="Secondary Contact (Optional)"
+          label="Is there a secondary contact? (Optional)"
           maxLength={200}
         />
 
