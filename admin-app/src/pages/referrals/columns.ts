@@ -104,19 +104,19 @@ export const REFERRAL_COLUMNS: ReferralColumn[] = [
   },
   {
     key: "referrerContactName",
-    label: "Referrer Contact Name",
+    label: "Referee Contact Name",
     width: "w-[180px]",
     render: (r) => text(r.referrerContactName),
   },
   {
     key: "referrerEmail",
-    label: "Referrer Email",
+    label: "Referee Email",
     width: "w-[200px]",
     render: (r) => text(r.referrerEmail),
   },
   {
     key: "referrerPhone",
-    label: "Referrer Phone",
+    label: "Referee Phone",
     width: "w-[140px]",
     render: (r) => text(r.referrerPhone),
   },

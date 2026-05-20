@@ -14,7 +14,7 @@ type TabType = "details" | "referrer-individual" | "related";
 
 const BASE_TABS = [
   { id: "details", label: "Referral Details" },
-  { id: "referrer-individual", label: "Referrer & Individual Info" },
+  { id: "referrer-individual", label: "Referee & Individual Info" },
 ] as const;
 
 const AUDIT_TAB = { id: "related", label: "Audit History" } as const;
