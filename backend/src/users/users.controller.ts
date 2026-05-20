@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   ParseUUIDPipe,
+  ParseEnumPipe,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -89,7 +90,8 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'List of users', type: [UserDto] })
   async findAll(
-    @Query('role') role: UserRole | undefined,
+    @Query('role', new ParseEnumPipe(PrismaUserRole, { optional: true }))
+    role: UserRole | undefined,
     @Query('isActive') isActive: string | undefined,
     @CurrentUser() currentUser: User,
   ): Promise<User[]> {

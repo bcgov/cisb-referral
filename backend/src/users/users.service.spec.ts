@@ -414,7 +414,7 @@ describe('UsersService', () => {
       expect(mockPrismaService.user.update).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when user changes their own role', async () => {
+    it('should throw ForbiddenException when changing own role', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(mockUser);
 
       await expect(
