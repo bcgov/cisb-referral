@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Table, EditableCell } from "../components/ui";
+import { useCurrentUser } from "../hooks";
 import { apiService } from "../services";
 import type { AgencyType } from "../types";
+import { UserRole } from "../types";
 
 /**
  * Agency types management page with inline cell editing,
@@ -11,7 +13,11 @@ import type { AgencyType } from "../types";
  * @returns AgencyTypes admin page component
  */
 export function AgencyTypes() {
+  const { currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
+  const canManage =
+    currentUser?.role === UserRole.ADMIN ||
+    currentUser?.role === UserRole.SYSTEM_ADMINISTRATOR;
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
 
@@ -59,15 +65,18 @@ export function AgencyTypes() {
     {
       key: "name",
       header: "Name",
-      render: (agencyType: AgencyType) => (
-        <EditableCell
-          value={agencyType.name}
-          onSave={async (name) => {
-            if (!name) return;
-            await updateMutation.mutateAsync({ id: agencyType.id, name });
-          }}
-        />
-      ),
+      render: (agencyType: AgencyType) =>
+        canManage ? (
+          <EditableCell
+            value={agencyType.name}
+            onSave={async (name) => {
+              if (!name) return;
+              await updateMutation.mutateAsync({ id: agencyType.id, name });
+            }}
+          />
+        ) : (
+          <span className="px-2 py-1 inline-block">{agencyType.name}</span>
+        ),
     },
   ];
 
@@ -77,17 +86,19 @@ export function AgencyTypes() {
         <h1 className="text-xl font-bold text-bcgov-gray-dark m-0">
           Agency Types
         </h1>
-        <button
-          onClick={() => setIsAdding(true)}
-          disabled={isAdding}
-          className="px-4 py-2 bg-bcgov-blue text-white rounded
-            hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
-        >
-          Add Agency Type
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setIsAdding(true)}
+            disabled={isAdding}
+            className="px-4 py-2 bg-bcgov-blue text-white rounded
+              hover:bg-bcgov-blue-dark disabled:opacity-50 self-start sm:self-auto"
+          >
+            Add Agency Type
+          </button>
+        )}
       </div>
       <div className="p-4 sm:p-6">
-        {isAdding && (
+        {canManage && isAdding && (
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-white border border-bcgov-border rounded">
             <input
               type="text"
@@ -127,7 +138,7 @@ export function AgencyTypes() {
         <Table
           data={agencyTypes}
           columns={columns}
-          onDelete={handleDelete}
+          onDelete={canManage ? handleDelete : undefined}
           loading={isLoading}
           emptyMessage="No agency types found"
         />
