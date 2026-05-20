@@ -708,7 +708,26 @@ describe('ReferralsService', () => {
     });
 
     describe('status transition validation', () => {
-      it('should reject invalid transition from OPEN to CLOSED', async () => {
+      it('should allow transition from OPEN to CLOSED with referralOutcome', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
+        const updated = createMockReferral({
+          referralStatus: ReferralStatus.CLOSED,
+          referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CLOSED,
+          referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.CLOSED);
+      });
+
+      it('should require referralOutcome when transitioning from OPEN to CLOSED', async () => {
         const existing = createMockReferral({
           referralStatus: ReferralStatus.OPEN,
         });
@@ -717,48 +736,42 @@ describe('ReferralsService', () => {
         await expect(
           service.update('referral-uuid-1', {
             referralStatus: ReferralStatus.CLOSED,
-            referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
           }),
-        ).rejects.toThrow(BadRequestException);
+        ).rejects.toThrow('A referral outcome must be selected');
       });
 
-      it('should reject invalid transition from OPEN to CONTACT_MADE', async () => {
+      it('should allow transition from OPEN to CONTACT_MADE', async () => {
         const existing = createMockReferral({
           referralStatus: ReferralStatus.OPEN,
         });
+        const updated = createMockReferral({
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
         mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
 
-        await expect(
-          service.update('referral-uuid-1', {
-            referralStatus: ReferralStatus.CONTACT_MADE,
-          }),
-        ).rejects.toThrow(BadRequestException);
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CONTACT_MADE,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.CONTACT_MADE);
       });
 
-      it('should reject transition from CLOSED to any status', async () => {
+      it('should allow transition from CLOSED to another status', async () => {
         const existing = createMockReferral({
           referralStatus: ReferralStatus.CLOSED,
         });
-        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
-
-        await expect(
-          service.update('referral-uuid-1', {
-            referralStatus: ReferralStatus.OPEN,
-          }),
-        ).rejects.toThrow(BadRequestException);
-      });
-
-      it('should require assignedToId when transitioning to ASSIGNED', async () => {
-        const existing = createMockReferral({
+        const updated = createMockReferral({
           referralStatus: ReferralStatus.OPEN,
         });
         mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
 
-        await expect(
-          service.update('referral-uuid-1', {
-            referralStatus: ReferralStatus.ASSIGNED,
-          }),
-        ).rejects.toThrow('A team member must be assigned');
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.OPEN,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.OPEN);
       });
 
       it('should require referralOutcome when transitioning to CLOSED', async () => {
@@ -962,7 +975,26 @@ describe('ReferralsService', () => {
         expect(result.referralStatus).toBe(ReferralStatus.CLOSED);
       });
 
-      it('should reject invalid transition from ASSIGNED to CLOSED', async () => {
+      it('should allow transition from ASSIGNED to CLOSED with referralOutcome', async () => {
+        const existing = createMockReferral({
+          referralStatus: ReferralStatus.ASSIGNED,
+        });
+        const updated = createMockReferral({
+          referralStatus: ReferralStatus.CLOSED,
+          referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
+        });
+        mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
+
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.CLOSED,
+          referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.CLOSED);
+      });
+
+      it('should require referralOutcome when transitioning from ASSIGNED to CLOSED', async () => {
         const existing = createMockReferral({
           referralStatus: ReferralStatus.ASSIGNED,
         });
@@ -971,22 +1003,25 @@ describe('ReferralsService', () => {
         await expect(
           service.update('referral-uuid-1', {
             referralStatus: ReferralStatus.CLOSED,
-            referralOutcome: ReferralOutcome.SERVICES_PROVIDED,
           }),
-        ).rejects.toThrow(BadRequestException);
+        ).rejects.toThrow('A referral outcome must be selected');
       });
 
-      it('should reject invalid transition from CONTACT_MADE to OPEN', async () => {
+      it('should allow transition from CONTACT_MADE to OPEN', async () => {
         const existing = createMockReferral({
           referralStatus: ReferralStatus.CONTACT_MADE,
         });
+        const updated = createMockReferral({
+          referralStatus: ReferralStatus.OPEN,
+        });
         mockPrismaService.referral.findUnique.mockResolvedValue(existing);
+        mockPrismaService.referral.update.mockResolvedValue(updated);
 
-        await expect(
-          service.update('referral-uuid-1', {
-            referralStatus: ReferralStatus.OPEN,
-          }),
-        ).rejects.toThrow(BadRequestException);
+        const result = await service.update('referral-uuid-1', {
+          referralStatus: ReferralStatus.OPEN,
+        });
+
+        expect(result.referralStatus).toBe(ReferralStatus.OPEN);
       });
 
       it('should auto-transition to CONTACT_MADE when firstContactMadeOn is set while ASSIGNED', async () => {

@@ -66,22 +66,6 @@ export class ReferralsService {
   private static readonly MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
   private static readonly EXPORT_MAX_ROWS = 10000;
 
-  private static readonly VALID_STATUS_TRANSITIONS: Record<
-    ReferralStatus,
-    ReferralStatus[]
-  > = {
-    [ReferralStatus.OPEN]: [ReferralStatus.ASSIGNED],
-    [ReferralStatus.ASSIGNED]: [
-      ReferralStatus.CONTACT_MADE,
-      ReferralStatus.OPEN,
-    ],
-    [ReferralStatus.CONTACT_MADE]: [
-      ReferralStatus.CLOSED,
-      ReferralStatus.ASSIGNED,
-    ],
-    [ReferralStatus.CLOSED]: [],
-  };
-
   private readonly logger = new Logger('REFERRALS');
 
   constructor(
@@ -96,21 +80,6 @@ export class ReferralsService {
     dto: UpdateReferralDto,
     existing: Referral,
   ): void {
-    const allowed =
-      ReferralsService.VALID_STATUS_TRANSITIONS[currentStatus] ?? [];
-    if (!allowed.includes(newStatus)) {
-      throw new BadRequestException(
-        `Status cannot be changed from ${currentStatus} to ${newStatus}`,
-      );
-    }
-
-    const effectiveAssignedToId = dto.assignedToId ?? existing.assignedToId;
-    if (newStatus === ReferralStatus.ASSIGNED && !effectiveAssignedToId) {
-      throw new BadRequestException(
-        'A team member must be assigned before setting the status to Assigned',
-      );
-    }
-
     const effectiveOutcome = dto.referralOutcome ?? existing.referralOutcome;
     if (newStatus === ReferralStatus.CLOSED && !effectiveOutcome) {
       throw new BadRequestException(
@@ -566,11 +535,7 @@ export class ReferralsService {
 
     const cleanData = this.removeUndefinedKeys(updateData);
 
-    const changes = diffObjects(
-      existing as unknown as Record<string, unknown>,
-      cleanData,
-      TRACKED_FIELDS,
-    );
+    const changes = diffObjects(existing, cleanData, TRACKED_FIELDS);
 
     const hasStatusChange = changes.some((c) => c.field === 'referralStatus');
 
