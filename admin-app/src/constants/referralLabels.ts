@@ -43,7 +43,7 @@ export const outcomeLabels: Record<string, string> = {
     "BCEA Application Completed - File Opened",
   SUPPLEMENTS_ISSUED: "Supplements Issued",
   CASE_MANAGED: "Case Managed",
-  SERVICES_PROVIDED: "Services Provided",
+  SERVICES_PROVIDED: "Nonfinancial Supports Provided",
   NOT_LOCATED: "Not Located",
   LOCATED_REFUSED_SERVICE: "Located - Refused Service",
   NON_APPROPRIATE_REFERRAL_RETURNED: "Non-Appropriate Referral - Returned",

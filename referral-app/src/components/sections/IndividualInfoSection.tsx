@@ -144,7 +144,7 @@ export function IndividualInfoSection({
         <SelectField
           name="pendingOrRecentlyReleased"
           control={control}
-          label="Pending release or recently released? (Optional)"
+          label="Is the person you are referring transitioning from any of the following? (Optional)"
           options={ReleaseFromTypeOptions}
         />
 
