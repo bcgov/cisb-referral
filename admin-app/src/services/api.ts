@@ -6,6 +6,7 @@ import type {
 import axios from "axios";
 import type {
   Referral,
+  ExportReferralsResponse,
   Region,
   Ministry,
   AgencyType,
@@ -74,8 +75,13 @@ class APIService {
     return response.data;
   }
 
-  async fetchReferralsForExport(): Promise<Referral[]> {
-    const response = await this.client.get<Referral[]>("/referrals/export");
+  async fetchReferralsForExport(
+    params: FetchReferralsParams = {},
+  ): Promise<ExportReferralsResponse> {
+    const response = await this.client.get<ExportReferralsResponse>(
+      "/referrals/export",
+      { params },
+    );
     return response.data;
   }
 

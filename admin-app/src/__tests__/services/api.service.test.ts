@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { UserRole } from "../../types";
 
 // Mock the auth module before importing api service
 const mockKeycloak = {
@@ -91,6 +92,38 @@ describe("APIService methods", () => {
       // Assert
       expect(mockGet).toHaveBeenCalledWith("/referrals", {
         params: { page: 1, limit: 25, search: "Jane" },
+      });
+      expect(result).toEqual(mockData);
+    });
+
+    it("should fetch referrals for export with metadata", async () => {
+      // Arrange
+      const mockData = {
+        data: [{ id: "1" }],
+        meta: {
+          total: 2,
+          exported: 1,
+          truncated: true,
+          maxRows: 10000,
+        },
+      };
+      mockGet.mockResolvedValue({ data: mockData });
+      const { apiService } = await import("../../services/api");
+
+      // Act
+      const result = await apiService.fetchReferralsForExport({
+        search: "Jane",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+
+      // Assert
+      expect(mockGet).toHaveBeenCalledWith("/referrals/export", {
+        params: {
+          search: "Jane",
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        },
       });
       expect(result).toEqual(mockData);
     });
@@ -335,7 +368,7 @@ describe("APIService methods", () => {
       const { apiService } = await import("../../services/api");
 
       // Act
-      const result = await apiService.fetchUsers("ADMIN" as never);
+      const result = await apiService.fetchUsers(UserRole.ADMIN);
 
       // Assert
       expect(mockGet).toHaveBeenCalledWith("/users", {

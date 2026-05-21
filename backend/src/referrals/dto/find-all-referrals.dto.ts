@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsEnum,
   IsInt,
   IsOptional,
@@ -12,6 +13,77 @@ import {
   MinLength,
 } from 'class-validator';
 import { ReferralStatus } from './update-referral.dto';
+
+export const REFERRAL_COLUMN_KEYS = [
+  'flag',
+  'createdAt',
+  'updatedAt',
+  'referralStatus',
+  'referralOutcome',
+  'referredBy',
+  'ministry',
+  'ministryNameOther',
+  'agencyType',
+  'agencyTypeOther',
+  'partnerAgencyName',
+  'programArea',
+  'referrerContactName',
+  'referrerEmail',
+  'referrerPhone',
+  'individualFirstName',
+  'individualMiddleName',
+  'individualLastName',
+  'individualPreferredName',
+  'individualDateOfBirth',
+  'individualPhone',
+  'personId',
+  'secondaryContact',
+  'bestWayToReach',
+  'region',
+  'specificCityTown',
+  'experiencingHomelessness',
+  'losingHouse',
+  'pendingOrRecentlyReleased',
+  'releaseDate',
+  'currentlyConnectedSupports',
+  'currentlyConnectedSupportsOther',
+  'neededSupports',
+  'neededSupportsOther',
+  'referralReason',
+  'communityPartnerName',
+  'assignedTo',
+  'assignedOn',
+  'firstContactMadeOn',
+  'lottTriage',
+  'lottContact',
+  'followUpDate',
+  'dueDate',
+  'completedDate',
+] as const;
+
+export type ReferralColumnKey = (typeof REFERRAL_COLUMN_KEYS)[number];
+
+export const UNSORTABLE_REFERRAL_COLUMN_KEYS = [
+  'currentlyConnectedSupports',
+  'neededSupports',
+] as const;
+
+export const SORTABLE_REFERRAL_COLUMN_KEYS = REFERRAL_COLUMN_KEYS.filter(
+  (key) =>
+    !UNSORTABLE_REFERRAL_COLUMN_KEYS.includes(
+      key as (typeof UNSORTABLE_REFERRAL_COLUMN_KEYS)[number],
+    ),
+);
+
+export enum ReferralSortOrder {
+  ASC = 'asc',
+  DESC = 'desc',
+}
+
+export enum ReferralFilterOperator {
+  EQUALS = 'equals',
+  CONTAINS = 'contains',
+}
 
 export class FindAllReferralsDto {
   @ApiPropertyOptional({ minimum: 1, default: 1 })
@@ -45,11 +117,52 @@ export class FindAllReferralsDto {
   assignedToId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by referrer contact name (starts with)',
+    description: 'Filter by keyword (contains) across referral columns',
   })
   @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
   search?: string;
+
+  @ApiPropertyOptional({
+    enum: SORTABLE_REFERRAL_COLUMN_KEYS,
+    description: 'Sort by referral column key',
+  })
+  @IsOptional()
+  @IsIn(SORTABLE_REFERRAL_COLUMN_KEYS)
+  sortBy?: ReferralColumnKey;
+
+  @ApiPropertyOptional({
+    enum: ReferralSortOrder,
+    description: 'Sort order',
+  })
+  @IsOptional()
+  @IsEnum(ReferralSortOrder)
+  sortOrder?: ReferralSortOrder;
+
+  @ApiPropertyOptional({
+    enum: REFERRAL_COLUMN_KEYS,
+    description: 'Column key to filter by',
+  })
+  @IsOptional()
+  @IsIn(REFERRAL_COLUMN_KEYS)
+  filterBy?: ReferralColumnKey;
+
+  @ApiPropertyOptional({
+    enum: ReferralFilterOperator,
+    description: 'Filter operator for selected column',
+  })
+  @IsOptional()
+  @IsEnum(ReferralFilterOperator)
+  filterOperator?: ReferralFilterOperator;
+
+  @ApiPropertyOptional({
+    description: 'Filter value (free text)',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  filterValue?: string;
 }

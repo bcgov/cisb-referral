@@ -15,9 +15,15 @@ import {
   ReleaseFromType,
 } from './dto/create-referral.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
+import { FindAllReferralsDto } from './dto/find-all-referrals.dto';
 import { Referral } from '../generated/prisma/client';
+import {
+  REFERRAL_INCLUDE,
+  buildWhere,
+  buildOrderBy,
+} from './referrals-query.builder';
 
-const TRACKED_FIELDS = [
+const TRACKED_FIELDS: string[] = [
   'referralStatus',
   'referralOutcome',
   'assignedToId',
@@ -59,6 +65,16 @@ const TRACKED_FIELDS = [
   'pendingOrRecentlyReleased',
   'releaseDate',
 ];
+
+export interface ReferralExportResult {
+  data: Referral[];
+  meta: {
+    total: number;
+    exported: number;
+    truncated: boolean;
+    maxRows: number;
+  };
+}
 
 @Injectable()
 export class ReferralsService {
@@ -264,53 +280,23 @@ export class ReferralsService {
       });
   }
 
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    status?: ReferralStatus;
-    regionId?: string;
-    assignedToId?: string;
-    search?: string;
-  }): Promise<{
+  async findAll(params: FindAllReferralsDto): Promise<{
     data: Referral[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
-    const {
-      page = 1,
-      limit = 10,
-      status,
-      regionId,
-      assignedToId,
-      search,
-    } = params;
+    const { page = 1, limit = 10 } = params;
     const skip = (page - 1) * limit;
 
-    const where = {
-      ...(status && { referralStatus: status }),
-      ...(regionId && { regionId }),
-      ...(assignedToId && { assignedToId }),
-      ...(search && {
-        referrerContactName: {
-          startsWith: search,
-          mode: 'insensitive' as const,
-        },
-      }),
-    };
+    const where = buildWhere(params);
+    const orderBy = buildOrderBy(params.sortBy, params.sortOrder);
 
     const [data, total] = await Promise.all([
       this.prisma.referral.findMany({
         where,
         skip,
         take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        include: {
-          region: true,
-          ministry: true,
-          agencyType: true,
-          assignedTo: true,
-        },
+        orderBy,
+        include: REFERRAL_INCLUDE,
       }),
       this.prisma.referral.count({ where }),
     ]);
@@ -326,17 +312,22 @@ export class ReferralsService {
     };
   }
 
-  async findAllForExport(userId?: string): Promise<Referral[]> {
-    const rows = await this.prisma.referral.findMany({
-      take: ReferralsService.EXPORT_MAX_ROWS,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        region: true,
-        ministry: true,
-        agencyType: true,
-        assignedTo: true,
-      },
-    });
+  async findAllForExport(
+    userId?: string,
+    params: FindAllReferralsDto = {},
+  ): Promise<ReferralExportResult> {
+    const where = buildWhere(params);
+    const orderBy = buildOrderBy(params.sortBy, params.sortOrder);
+
+    const [rows, total] = await Promise.all([
+      this.prisma.referral.findMany({
+        where,
+        take: ReferralsService.EXPORT_MAX_ROWS,
+        orderBy,
+        include: REFERRAL_INCLUDE,
+      }),
+      this.prisma.referral.count({ where }),
+    ]);
 
     await this.auditService.logGlobal({
       tableName: 'referral',
@@ -352,7 +343,15 @@ export class ReferralsService {
       userId,
     });
 
-    return rows;
+    return {
+      data: rows,
+      meta: {
+        total,
+        exported: rows.length,
+        truncated: rows.length < total,
+        maxRows: ReferralsService.EXPORT_MAX_ROWS,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Referral> {

@@ -17,8 +17,15 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
+import type { ReferralExportResult } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
-import { FindAllReferralsDto } from './dto/find-all-referrals.dto';
+import {
+  FindAllReferralsDto,
+  REFERRAL_COLUMN_KEYS,
+  SORTABLE_REFERRAL_COLUMN_KEYS,
+  ReferralFilterOperator,
+  ReferralSortOrder,
+} from './dto/find-all-referrals.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import type { Referral, User } from '../generated/prisma/client';
 import {
@@ -87,7 +94,37 @@ export class ReferralsController {
     name: 'search',
     required: false,
     type: String,
-    description: 'Filter by referrer contact name (starts with)',
+    description: 'Filter by keyword (contains) across referral columns',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: SORTABLE_REFERRAL_COLUMN_KEYS,
+    description: 'Sort by referral column key',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ReferralSortOrder,
+    description: 'Sort order',
+  })
+  @ApiQuery({
+    name: 'filterBy',
+    required: false,
+    enum: REFERRAL_COLUMN_KEYS,
+    description: 'Column key to filter by',
+  })
+  @ApiQuery({
+    name: 'filterOperator',
+    required: false,
+    enum: ReferralFilterOperator,
+    description: 'Filter operator for selected column',
+  })
+  @ApiQuery({
+    name: 'filterValue',
+    required: false,
+    type: String,
+    description: 'Filter value (free text)',
   })
   @ApiResponse({ status: 200, description: 'List of referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -106,8 +143,11 @@ export class ReferralsController {
     description: 'All referrals, unpaginated, with relations included',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async exportAll(@CurrentUser() user: User): Promise<Referral[]> {
-    return this.referralsService.findAllForExport(user.id);
+  async exportAll(
+    @CurrentUser() user: User,
+    @Query() query: FindAllReferralsDto,
+  ): Promise<ReferralExportResult> {
+    return this.referralsService.findAllForExport(user.id, query);
   }
 
   @Get(':id')
