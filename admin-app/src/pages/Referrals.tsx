@@ -272,7 +272,11 @@ export function Referrals() {
                   key={referral.id}
                   className="cursor-pointer hover:bg-blue-50"
                   onClick={(e) => {
-                    if ((e.target as HTMLElement).tagName !== "INPUT") {
+                    const target = e.target;
+                    if (
+                      !(target instanceof HTMLElement) ||
+                      target.tagName !== "INPUT"
+                    ) {
                       navigate(`/referrals/${referral.id}`);
                     }
                   }}

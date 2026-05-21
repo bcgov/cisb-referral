@@ -313,7 +313,7 @@ export class ReferralsService {
   }
 
   async findAllForExport(
-    userId?: string,
+    userId: string,
     params: FindAllReferralsDto = {},
   ): Promise<ReferralExportResult> {
     const where = buildWhere(params);

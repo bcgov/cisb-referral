@@ -8,6 +8,7 @@ import {
   Query,
   ParseUUIDPipe,
   UseGuards,
+  applyDecorators,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -36,6 +37,92 @@ import {
 import { CurrentUser, CurrentContact } from '../auth/decorators';
 import type { AuthenticatedContact } from '../auth/interfaces';
 
+const FILTER_OPERATOR_DESCRIPTION =
+  'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)';
+
+function ApiReferralPaginationQueries(): MethodDecorator {
+  return applyDecorators(
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      description: 'Page number (default: 1)',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      description: 'Items per page (default: 10)',
+    }),
+  );
+}
+
+function ApiReferralQueryCriteria(): MethodDecorator {
+  return applyDecorators(
+    ApiQuery({
+      name: 'status',
+      required: false,
+      enum: ReferralStatus,
+      description: 'Filter by status',
+    }),
+    ApiQuery({
+      name: 'regionId',
+      required: false,
+      type: String,
+      description: 'Filter by region',
+    }),
+    ApiQuery({
+      name: 'assignedToId',
+      required: false,
+      type: String,
+      description: 'Filter by assigned user',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description: 'Filter by keyword across referral columns',
+    }),
+    ApiQuery({
+      name: 'sortBy',
+      required: false,
+      enum: SORTABLE_REFERRAL_COLUMN_KEYS,
+      description: 'Sort by referral column key',
+    }),
+    ApiQuery({
+      name: 'sortOrder',
+      required: false,
+      enum: ReferralSortOrder,
+      description: 'Sort order',
+    }),
+    ApiQuery({
+      name: 'filterBy',
+      required: false,
+      enum: REFERRAL_COLUMN_KEYS,
+      description: 'Column key to filter by',
+    }),
+    ApiQuery({
+      name: 'filterOperator',
+      required: false,
+      enum: ReferralFilterOperator,
+      description: FILTER_OPERATOR_DESCRIPTION,
+    }),
+    ApiQuery({
+      name: 'filterValue',
+      required: false,
+      type: String,
+      description: 'Filter value (free text)',
+    }),
+  );
+}
+
+function ApiReferralListQueries(): MethodDecorator {
+  return applyDecorators(
+    ApiReferralPaginationQueries(),
+    ApiReferralQueryCriteria(),
+  );
+}
+
 @ApiTags('referrals')
 @Controller({ path: 'referrals', version: '1' })
 export class ReferralsController {
@@ -60,73 +147,7 @@ export class ReferralsController {
   @UseGuards(AdminAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all referrals with pagination and filtering' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page (default: 10)',
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: ReferralStatus,
-    description: 'Filter by status',
-  })
-  @ApiQuery({
-    name: 'regionId',
-    required: false,
-    type: String,
-    description: 'Filter by region',
-  })
-  @ApiQuery({
-    name: 'assignedToId',
-    required: false,
-    type: String,
-    description: 'Filter by assigned user',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Filter by keyword (contains) across referral columns',
-  })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    enum: SORTABLE_REFERRAL_COLUMN_KEYS,
-    description: 'Sort by referral column key',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    enum: ReferralSortOrder,
-    description: 'Sort order',
-  })
-  @ApiQuery({
-    name: 'filterBy',
-    required: false,
-    enum: REFERRAL_COLUMN_KEYS,
-    description: 'Column key to filter by',
-  })
-  @ApiQuery({
-    name: 'filterOperator',
-    required: false,
-    enum: ReferralFilterOperator,
-    description:
-      'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)',
-  })
-  @ApiQuery({
-    name: 'filterValue',
-    required: false,
-    type: String,
-    description: 'Filter value (free text)',
-  })
+  @ApiReferralListQueries()
   @ApiResponse({ status: 200, description: 'List of referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Query() query: FindAllReferralsDto) {
@@ -139,43 +160,7 @@ export class ReferralsController {
   @ApiOperation({
     summary: 'Get all referrals (capped) for client-side CSV export',
   })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Filter by keyword across referral columns',
-  })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    enum: SORTABLE_REFERRAL_COLUMN_KEYS,
-    description: 'Sort by referral column key',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    enum: ReferralSortOrder,
-    description: 'Sort order',
-  })
-  @ApiQuery({
-    name: 'filterBy',
-    required: false,
-    enum: REFERRAL_COLUMN_KEYS,
-    description: 'Column key to filter by',
-  })
-  @ApiQuery({
-    name: 'filterOperator',
-    required: false,
-    enum: ReferralFilterOperator,
-    description:
-      'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)',
-  })
-  @ApiQuery({
-    name: 'filterValue',
-    required: false,
-    type: String,
-    description: 'Filter value (free text)',
-  })
+  @ApiReferralQueryCriteria()
   @ApiResponse({
     status: 200,
     description:

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsIn,
   IsEnum,
@@ -85,6 +85,10 @@ export enum ReferralFilterOperator {
   CONTAINS = 'contains',
 }
 
+function trimQueryString({ value }: { value: unknown }): unknown {
+  return typeof value === 'string' ? value.trim() : value;
+}
+
 export class FindAllReferralsDto {
   @ApiPropertyOptional({ minimum: 1, default: 1 })
   @IsOptional()
@@ -120,6 +124,7 @@ export class FindAllReferralsDto {
     description: 'Filter by keyword (contains) across referral columns',
   })
   @IsOptional()
+  @Transform(trimQueryString)
   @IsString()
   @MinLength(1)
   @MaxLength(100)
@@ -162,6 +167,7 @@ export class FindAllReferralsDto {
     description: 'Filter value (free text)',
   })
   @IsOptional()
+  @Transform(trimQueryString)
   @IsString()
   @MinLength(1)
   @MaxLength(100)

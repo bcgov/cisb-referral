@@ -33,7 +33,7 @@ export function ColumnFilterPopover({
           className="text-xl leading-none text-bcgov-gray hover:text-bcgov-gray-dark"
           aria-label="Close filter"
         >
-          &#x2715;
+          <span aria-hidden="true">&#x2715;</span>
         </button>
       </div>
 

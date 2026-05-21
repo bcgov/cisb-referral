@@ -136,9 +136,14 @@ export function ColumnHeaderMenu({
     }
 
     const onPointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
       if (
-        rootRef.current?.contains(event.target as Node) ||
-        dropdownRef.current?.contains(event.target as Node)
+        rootRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
       ) {
         return;
       }

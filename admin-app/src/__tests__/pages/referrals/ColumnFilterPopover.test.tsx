@@ -1,0 +1,85 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { ColumnFilterPopover } from "../../../pages/referrals/ColumnFilterPopover";
+
+function renderPopover(overrides = {}) {
+  const props = {
+    operator: "equals" as const,
+    value: "",
+    showClear: true,
+    onOperatorChange: vi.fn(),
+    onValueChange: vi.fn(),
+    onApply: vi.fn(),
+    onClear: vi.fn(),
+    onClose: vi.fn(),
+    ...overrides,
+  };
+
+  render(<ColumnFilterPopover {...props} />);
+  return props;
+}
+
+describe("ColumnFilterPopover", () => {
+  it("renders accessible filter controls", () => {
+    renderPopover();
+
+    expect(
+      screen.getByRole("combobox", { name: "Filter operator" }),
+    ).toHaveValue("equals");
+    expect(screen.getByLabelText("Filter value")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close filter" }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls change handlers for operator and value updates", () => {
+    const props = renderPopover();
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "contains" },
+    });
+    fireEvent.change(screen.getByLabelText("Filter value"), {
+      target: { value: "smith" },
+    });
+
+    expect(props.onOperatorChange).toHaveBeenCalledWith("contains");
+    expect(props.onValueChange).toHaveBeenCalledWith("smith");
+  });
+
+  it("disables apply for blank values", () => {
+    const blankProps = renderPopover({ value: "   " });
+
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+    fireEvent.keyDown(screen.getByLabelText("Filter value"), { key: "Enter" });
+    expect(blankProps.onApply).not.toHaveBeenCalled();
+  });
+
+  it("applies with Enter when the filter value is valid", () => {
+    const props = renderPopover({ value: "smith" });
+
+    fireEvent.keyDown(screen.getByLabelText("Filter value"), { key: "Enter" });
+
+    expect(props.onApply).toHaveBeenCalledOnce();
+  });
+
+  it("applies, clears, and closes through button actions", () => {
+    const props = renderPopover({ value: "smith" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close filter" }));
+    fireEvent.keyDown(screen.getByLabelText("Filter value"), { key: "Enter" });
+
+    expect(props.onApply).toHaveBeenCalledTimes(2);
+    expect(props.onClear).toHaveBeenCalledOnce();
+    expect(props.onClose).toHaveBeenCalledOnce();
+  });
+
+  it("hides the clear action when no active filter exists", () => {
+    renderPopover({ showClear: false });
+
+    expect(
+      screen.queryByRole("button", { name: "Clear" }),
+    ).not.toBeInTheDocument();
+  });
+});
