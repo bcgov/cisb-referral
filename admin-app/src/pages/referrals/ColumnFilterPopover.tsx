@@ -1,9 +1,13 @@
 import type { FilterOperator } from "../../types";
 
+export type ColumnFilterType = "text" | "date" | "number" | "boolean";
+
 interface ColumnFilterPopoverProps {
   operator: FilterOperator;
   value: string;
   showClear: boolean;
+  equalsOnly?: boolean;
+  columnType?: ColumnFilterType;
   onOperatorChange: (operator: FilterOperator) => void;
   onValueChange: (value: string) => void;
   onApply: () => void;
@@ -11,10 +15,20 @@ interface ColumnFilterPopoverProps {
   onClose: () => void;
 }
 
+function resolveInputType(
+  columnType: ColumnFilterType,
+): "text" | "date" | "number" {
+  if (columnType === "date") return "date";
+  if (columnType === "number") return "number";
+  return "text";
+}
+
 export function ColumnFilterPopover({
   operator,
   value,
   showClear,
+  equalsOnly = false,
+  columnType = "text",
   onOperatorChange,
   onValueChange,
   onApply,
@@ -38,28 +52,45 @@ export function ColumnFilterPopover({
       </div>
 
       <div className="space-y-3">
-        <select
-          className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
-          aria-label="Filter operator"
-          value={operator}
-          onChange={(e) => onOperatorChange(e.target.value as FilterOperator)}
-        >
-          <option value="equals">Equals</option>
-          <option value="contains">Contains</option>
-        </select>
+        {columnType !== "boolean" && (
+          <select
+            className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
+            aria-label="Filter operator"
+            value={operator}
+            onChange={(e) => onOperatorChange(e.target.value as FilterOperator)}
+          >
+            <option value="equals">Equals</option>
+            {columnType === "text" && !equalsOnly && (
+              <option value="contains">Contains</option>
+            )}
+          </select>
+        )}
 
-        <input
-          type="text"
-          className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && value.trim()) {
-              onApply();
-            }
-          }}
-          aria-label="Filter value"
-        />
+        {columnType === "boolean" ? (
+          <select
+            className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
+            aria-label="Filter value"
+            value={value}
+            onChange={(e) => onValueChange(e.target.value)}
+          >
+            <option value="">— Select —</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        ) : (
+          <input
+            type={resolveInputType(columnType)}
+            className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
+            value={value}
+            onChange={(e) => onValueChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && value.trim()) {
+                onApply();
+              }
+            }}
+            aria-label="Filter value"
+          />
+        )}
 
         <div className="flex items-center gap-2">
           <button

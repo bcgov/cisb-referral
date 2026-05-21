@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { FilterOperator, SortOrder } from "../../types";
 import { ColumnFilterPopover } from "./ColumnFilterPopover";
+import type { ColumnFilterType } from "./ColumnFilterPopover";
 
 const DROPDOWN_OFFSET = 4;
 const VIEWPORT_PADDING = 8;
@@ -20,6 +21,22 @@ const DATE_SORT_KEYS = new Set([
 
 const NUMERIC_SORT_KEYS = new Set(["lottTriage", "lottContact"]);
 const BOOLEAN_SORT_KEYS = new Set(["flag"]);
+
+// Columns whose backend filter only accepts 'equals' — mirrors
+// EQUALS_ONLY_FILTER_COLUMN_KEYS in referrals-query.builder.ts.
+const EQUALS_ONLY_FILTER_KEYS = new Set([
+  "flag",
+  "lottTriage",
+  "lottContact",
+  ...DATE_SORT_KEYS,
+]);
+
+function getColumnFilterType(columnKey: string): ColumnFilterType {
+  if (DATE_SORT_KEYS.has(columnKey)) return "date";
+  if (NUMERIC_SORT_KEYS.has(columnKey)) return "number";
+  if (BOOLEAN_SORT_KEYS.has(columnKey)) return "boolean";
+  return "text";
+}
 
 function getSortLabels(columnKey: string): { asc: string; desc: string } {
   if (DATE_SORT_KEYS.has(columnKey)) {
@@ -127,6 +144,8 @@ export function ColumnHeaderMenu({
 
   const isSorted = sortBy === columnKey;
   const sortLabels = getSortLabels(columnKey);
+  const columnType = getColumnFilterType(columnKey);
+  const equalsOnly = EQUALS_ONLY_FILTER_KEYS.has(columnKey);
   const hasActiveFilter =
     activeFilterBy === columnKey && Boolean(activeFilterValue?.trim());
 
@@ -181,10 +200,15 @@ export function ColumnHeaderMenu({
           operator={draftOperator}
           value={draftValue}
           showClear={hasActiveFilter}
+          equalsOnly={equalsOnly}
+          columnType={columnType}
           onOperatorChange={setDraftOperator}
           onValueChange={setDraftValue}
           onApply={() => {
-            onApplyFilter(draftOperator, draftValue.trim());
+            onApplyFilter(
+              equalsOnly ? "equals" : draftOperator,
+              draftValue.trim(),
+            );
             onClose();
           }}
           onClear={() => {
@@ -268,11 +292,10 @@ export function ColumnHeaderMenu({
           } else {
             const isActiveFilterForColumn = activeFilterBy === columnKey;
             setShowFilterPopover(false);
-            setDraftOperator(
-              isActiveFilterForColumn
-                ? (activeFilterOperator ?? "equals")
-                : "equals",
-            );
+            const restoredOperator = isActiveFilterForColumn
+              ? (activeFilterOperator ?? "equals")
+              : "equals";
+            setDraftOperator(equalsOnly ? "equals" : restoredOperator);
             setDraftValue(
               isActiveFilterForColumn ? (activeFilterValue ?? "") : "",
             );

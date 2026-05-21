@@ -120,20 +120,10 @@ export function Referrals() {
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <p>Loading referrals...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-600">
-          Error loading referrals. Please try again.
-        </p>
       </div>
     );
   }
@@ -196,6 +186,15 @@ export function Referrals() {
           className="px-4 sm:px-6 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700"
         >
           {exportError}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div
+          role="alert"
+          className="px-4 sm:px-6 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700"
+        >
+          Error loading referrals. Please adjust your filters and try again.
         </div>
       ) : null}
 

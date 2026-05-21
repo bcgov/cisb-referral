@@ -82,4 +82,66 @@ describe("ColumnFilterPopover", () => {
       screen.queryByRole("button", { name: "Clear" }),
     ).not.toBeInTheDocument();
   });
+
+  it("hides the contains option when equalsOnly is true", () => {
+    renderPopover({ equalsOnly: true });
+
+    const select = screen.getByRole("combobox", { name: "Filter operator" });
+    expect(select).toHaveValue("equals");
+    expect(
+      screen.queryByRole("option", { name: "Contains" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Equals" })).toBeInTheDocument();
+  });
+
+  it("shows the contains option when equalsOnly is false", () => {
+    renderPopover({ equalsOnly: false });
+
+    expect(
+      screen.getByRole("option", { name: "Contains" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders a date input for date columns", () => {
+    renderPopover({ columnType: "date" });
+
+    const input = screen.getByLabelText("Filter value");
+    expect(input).toHaveAttribute("type", "date");
+    expect(
+      screen.queryByRole("option", { name: "Contains" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a number input for number columns", () => {
+    renderPopover({ columnType: "number" });
+
+    const input = screen.getByLabelText("Filter value");
+    expect(input).toHaveAttribute("type", "number");
+  });
+
+  it("renders a Yes/No select and hides operator for boolean columns", () => {
+    renderPopover({ columnType: "boolean" });
+
+    expect(
+      screen.queryByRole("combobox", { name: "Filter operator" }),
+    ).not.toBeInTheDocument();
+    const valueSelect = screen.getByRole("combobox", { name: "Filter value" });
+    expect(screen.getByRole("option", { name: "Yes" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "No" })).toBeInTheDocument();
+    expect(valueSelect).toHaveValue("");
+  });
+
+  it("enables apply when a boolean value is selected", () => {
+    const props = renderPopover({ columnType: "boolean", value: "yes" });
+
+    expect(screen.getByRole("button", { name: "Apply" })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+    expect(props.onApply).toHaveBeenCalledOnce();
+  });
+
+  it("disables apply when no boolean value is selected", () => {
+    renderPopover({ columnType: "boolean", value: "" });
+
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+  });
 });
