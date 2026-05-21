@@ -260,9 +260,16 @@ export function ColumnHeaderMenu({
           if (isOpen) {
             onClose();
           } else {
+            const isActiveFilterForColumn = activeFilterBy === columnKey;
             setShowFilterPopover(false);
-            setDraftOperator(activeFilterOperator ?? "equals");
-            setDraftValue(activeFilterValue ?? "");
+            setDraftOperator(
+              isActiveFilterForColumn
+                ? (activeFilterOperator ?? "equals")
+                : "equals",
+            );
+            setDraftValue(
+              isActiveFilterForColumn ? (activeFilterValue ?? "") : "",
+            );
             onOpen();
           }
         }}

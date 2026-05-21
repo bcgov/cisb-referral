@@ -40,6 +40,7 @@ export function ColumnFilterPopover({
       <div className="space-y-3">
         <select
           className="w-full rounded border border-bcgov-border bg-white px-3 py-2 text-sm text-bcgov-gray-dark"
+          aria-label="Filter operator"
           value={operator}
           onChange={(e) => onOperatorChange(e.target.value as FilterOperator)}
         >

@@ -138,9 +138,46 @@ export class ReferralsController {
   @ApiOperation({
     summary: 'Get all referrals (capped) for client-side CSV export',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Filter by keyword across referral columns',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: SORTABLE_REFERRAL_COLUMN_KEYS,
+    description: 'Sort by referral column key',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ReferralSortOrder,
+    description: 'Sort order',
+  })
+  @ApiQuery({
+    name: 'filterBy',
+    required: false,
+    enum: REFERRAL_COLUMN_KEYS,
+    description: 'Column key to filter by',
+  })
+  @ApiQuery({
+    name: 'filterOperator',
+    required: false,
+    enum: ReferralFilterOperator,
+    description: 'Filter operator for selected column',
+  })
+  @ApiQuery({
+    name: 'filterValue',
+    required: false,
+    type: String,
+    description: 'Filter value (free text)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'All referrals, unpaginated, with relations included',
+    description:
+      'Capped list of referrals with export metadata (total, exported, truncated, maxRows)',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async exportAll(
