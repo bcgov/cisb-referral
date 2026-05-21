@@ -148,6 +148,7 @@ export function ColumnHeaderMenu({
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
+        setTimeout(() => triggerRef.current?.focus(), 0);
       }
     };
 

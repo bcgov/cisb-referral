@@ -118,7 +118,8 @@ export class ReferralsController {
     name: 'filterOperator',
     required: false,
     enum: ReferralFilterOperator,
-    description: 'Filter operator for selected column',
+    description:
+      'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)',
   })
   @ApiQuery({
     name: 'filterValue',
@@ -166,7 +167,8 @@ export class ReferralsController {
     name: 'filterOperator',
     required: false,
     enum: ReferralFilterOperator,
-    description: 'Filter operator for selected column',
+    description:
+      'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)',
   })
   @ApiQuery({
     name: 'filterValue',

@@ -151,7 +151,8 @@ export class FindAllReferralsDto {
 
   @ApiPropertyOptional({
     enum: ReferralFilterOperator,
-    description: 'Filter operator for selected column',
+    description:
+      'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)',
   })
   @IsOptional()
   @IsEnum(ReferralFilterOperator)

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ColumnHeaderMenu } from "../../../pages/referrals/ColumnHeaderMenu";
 
@@ -50,5 +50,20 @@ describe("ColumnHeaderMenu", () => {
 
     expect(screen.getByLabelText("Filter value")).toBeInTheDocument();
     expect(props.onSort).not.toHaveBeenCalled();
+  });
+
+  it("returns focus to the trigger when Escape closes the menu", async () => {
+    const props = renderMenu();
+    const trigger = screen.getByLabelText("Open options for Last Name");
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+    outsideButton.focus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(props.onClose).toHaveBeenCalledOnce();
+    await waitFor(() => expect(trigger).toHaveFocus());
+
+    outsideButton.remove();
   });
 });

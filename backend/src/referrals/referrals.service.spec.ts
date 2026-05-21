@@ -652,6 +652,43 @@ describe('ReferralsService', () => {
       );
     });
 
+    it('should default typed filters to equals when operator is omitted', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'flag',
+        filterValue: 'yes',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [{ flag: true }],
+          },
+        }),
+      );
+    });
+
+    it.each([
+      { filterBy: 'flag', filterValue: 'yes' },
+      { filterBy: 'createdAt', filterValue: '2026-01-15' },
+      { filterBy: 'lottTriage', filterValue: '5' },
+    ])(
+      'should reject contains operator for typed filter column $filterBy',
+      async ({ filterBy, filterValue }) => {
+        await expect(
+          service.findAll({
+            filterBy,
+            filterOperator: 'contains',
+            filterValue,
+          }),
+        ).rejects.toThrow(BadRequestException);
+
+        expect(mockPrismaService.referral.findMany).not.toHaveBeenCalled();
+      },
+    );
+
     it('should reject invalid typed filter values', async () => {
       await expect(
         service.findAll({

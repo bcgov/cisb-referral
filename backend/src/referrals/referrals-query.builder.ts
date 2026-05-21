@@ -138,6 +138,13 @@ const SUPPORT_LABELS: Record<string, string> = {
   OTHERS: 'Others',
 };
 
+const EQUALS_ONLY_FILTER_COLUMN_KEYS = new Set<ReferralColumnKey>([
+  'flag',
+  ...DATE_COLUMN_KEYS,
+  'lottTriage',
+  'lottContact',
+]);
+
 // ---------------------------------------------------------------------------
 // Prisma filter helpers
 // ---------------------------------------------------------------------------
@@ -236,6 +243,24 @@ function requireColumnFilter(
   }
 
   throw new BadRequestException(`Invalid filter value for ${filterBy}`);
+}
+
+function resolveFilterOperator(
+  filterBy: ReferralColumnKey,
+  filterOperator?: ReferralFilterOperator,
+): ReferralFilterOperator {
+  if (!EQUALS_ONLY_FILTER_COLUMN_KEYS.has(filterBy)) {
+    return filterOperator ?? ReferralFilterOperator.CONTAINS;
+  }
+
+  if (
+    filterOperator === undefined ||
+    filterOperator === ReferralFilterOperator.EQUALS
+  ) {
+    return ReferralFilterOperator.EQUALS;
+  }
+
+  throw new BadRequestException(`Invalid filter operator for ${filterBy}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -342,7 +367,7 @@ function buildColumnFilter(
   }
 
   const value = filterValue.trim();
-  const operator = filterOperator ?? ReferralFilterOperator.CONTAINS;
+  const operator = resolveFilterOperator(filterBy, filterOperator);
 
   switch (filterBy) {
     case 'flag': {
