@@ -198,12 +198,32 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface ExportReferralsResponse {
+  data: Referral[];
+  meta: {
+    total: number;
+    exported: number;
+    truncated: boolean;
+    maxRows: number;
+  };
+}
+
+export type SortOrder = "asc" | "desc";
+
+export type FilterOperator = "equals" | "contains";
+
 export interface FetchReferralsParams {
   page?: number;
   limit?: number;
   status?: string;
   regionId?: string;
+  assignedToId?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: SortOrder;
+  filterBy?: string;
+  filterOperator?: FilterOperator;
+  filterValue?: string;
 }
 
 export const UserRole = {

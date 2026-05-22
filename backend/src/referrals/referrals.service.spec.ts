@@ -105,6 +105,7 @@ describe('ReferralsService', () => {
 
   const mockAuditService = {
     logReferralChange: jest.fn().mockResolvedValue(undefined),
+    logGlobal: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockMailService = {
@@ -507,7 +508,7 @@ describe('ReferralsService', () => {
       );
     });
 
-    it('should filter by referrerContactName startsWith when search is provided', async () => {
+    it('should use contains search across columns when search is provided', async () => {
       mockPrismaService.referral.findMany.mockResolvedValue([]);
       mockPrismaService.referral.count.mockResolvedValue(0);
 
@@ -516,15 +517,35 @@ describe('ReferralsService', () => {
       expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            referrerContactName: { startsWith: 'Jane', mode: 'insensitive' },
+            AND: [
+              {
+                OR: expect.arrayContaining([
+                  {
+                    referrerContactName: {
+                      contains: 'Jane',
+                      mode: 'insensitive',
+                    },
+                  },
+                  {
+                    individualFirstName: {
+                      contains: 'Jane',
+                      mode: 'insensitive',
+                    },
+                  },
+                  {
+                    region: {
+                      name: {
+                        contains: 'Jane',
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                ]),
+              },
+            ],
           },
         }),
       );
-      expect(mockPrismaService.referral.count).toHaveBeenCalledWith({
-        where: {
-          referrerContactName: { startsWith: 'Jane', mode: 'insensitive' },
-        },
-      });
     });
 
     it('should combine search with other filters', async () => {
@@ -540,10 +561,276 @@ describe('ReferralsService', () => {
         expect.objectContaining({
           where: {
             referralStatus: ReferralStatus.OPEN,
-            referrerContactName: { startsWith: 'Smith', mode: 'insensitive' },
+            AND: [
+              {
+                OR: expect.arrayContaining([
+                  {
+                    referrerContactName: {
+                      contains: 'Smith',
+                      mode: 'insensitive',
+                    },
+                  },
+                ]),
+              },
+            ],
           },
         }),
       );
+    });
+
+    it('should apply dynamic sorting when sort params are provided', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        sortBy: 'referrerContactName',
+        sortOrder: 'asc',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { referrerContactName: 'asc' },
+        }),
+      );
+    });
+
+    it('should apply relation sorting when sorting by region', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({ sortBy: 'region', sortOrder: 'asc' });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { region: { name: 'asc' } },
+        }),
+      );
+    });
+
+    it('should apply column contains filter when provided', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'individualLastName',
+        filterOperator: 'contains',
+        filterValue: 'smi',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              {
+                individualLastName: {
+                  contains: 'smi',
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should parse and apply boolean filter for flag column', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'flag',
+        filterOperator: 'equals',
+        filterValue: 'yes',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [{ flag: true }],
+          },
+        }),
+      );
+    });
+
+    it('should default typed filters to equals when operator is omitted', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'flag',
+        filterValue: 'yes',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [{ flag: true }],
+          },
+        }),
+      );
+    });
+
+    it.each([
+      { filterBy: 'flag', filterValue: 'yes' },
+      { filterBy: 'createdAt', filterValue: '2026-01-15' },
+      { filterBy: 'lottTriage', filterValue: '5' },
+    ])(
+      'should reject contains operator for typed filter column $filterBy',
+      async ({ filterBy, filterValue }) => {
+        await expect(
+          service.findAll({
+            filterBy,
+            filterOperator: 'contains',
+            filterValue,
+          }),
+        ).rejects.toThrow(BadRequestException);
+
+        expect(mockPrismaService.referral.findMany).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should reject invalid typed filter values', async () => {
+      await expect(
+        service.findAll({
+          filterBy: 'flag',
+          filterOperator: 'equals',
+          filterValue: 'maybe',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.referral.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should match enum filters by display label', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'referralStatus',
+        filterOperator: 'equals',
+        filterValue: 'Contact-Made',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [{ referralStatus: ReferralStatus.CONTACT_MADE }],
+          },
+        }),
+      );
+    });
+
+    it('should match support filters by display label', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({
+        filterBy: 'neededSupports',
+        filterOperator: 'equals',
+        filterValue: 'Income Assistance (Provincial)',
+      });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              {
+                neededSupports: {
+                  has: 'INCOME_ASSISTANCE_PROVINCIAL',
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should match global search by enum display label', async () => {
+      mockPrismaService.referral.findMany.mockResolvedValue([]);
+      mockPrismaService.referral.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'Nonfinancial Supports Provided' });
+
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              {
+                OR: expect.arrayContaining([
+                  { referralOutcome: ReferralOutcome.SERVICES_PROVIDED },
+                ]),
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should reject unsupported array sorting', async () => {
+      await expect(
+        service.findAll({
+          sortBy: 'currentlyConnectedSupports',
+          sortOrder: 'asc',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.referral.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findAllForExport', () => {
+    it('should apply active query criteria and log export audit', async () => {
+      const rows = [createMockReferral()];
+      mockPrismaService.referral.findMany.mockResolvedValue(rows);
+      mockPrismaService.referral.count.mockResolvedValue(1);
+
+      const result = await service.findAllForExport('user-uuid-1', {
+        search: 'smith',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        filterBy: 'referralStatus',
+        filterOperator: 'contains',
+        filterValue: 'open',
+      });
+
+      expect(result).toEqual({
+        data: rows,
+        meta: {
+          total: 1,
+          exported: 1,
+          truncated: false,
+          maxRows: 10000,
+        },
+      });
+      expect(mockPrismaService.referral.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.any(Array),
+          }),
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+      expect(mockAuditService.logGlobal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'EXPORT',
+          userId: 'user-uuid-1',
+        }),
+      );
+    });
+
+    it('should flag truncated exports in metadata', async () => {
+      const rows = [createMockReferral()];
+      mockPrismaService.referral.findMany.mockResolvedValue(rows);
+      mockPrismaService.referral.count.mockResolvedValue(2);
+
+      const result = await service.findAllForExport('user-uuid-1', {});
+
+      expect(result.meta).toEqual({
+        total: 2,
+        exported: 1,
+        truncated: true,
+        maxRows: 10000,
+      });
     });
   });
 

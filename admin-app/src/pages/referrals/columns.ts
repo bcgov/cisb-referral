@@ -13,6 +13,7 @@ export interface ReferralColumn {
   key: string;
   label: string;
   width: string;
+  sortable?: boolean;
   render: (referral: Referral) => string;
 }
 
@@ -214,6 +215,7 @@ export const REFERRAL_COLUMNS: ReferralColumn[] = [
     key: "currentlyConnectedSupports",
     label: "Currently Connected Supports",
     width: "w-[260px]",
+    sortable: false,
     render: (r) => supportsOf(r.currentlyConnectedSupports),
   },
   {
@@ -226,6 +228,7 @@ export const REFERRAL_COLUMNS: ReferralColumn[] = [
     key: "neededSupports",
     label: "Needed Supports",
     width: "w-[260px]",
+    sortable: false,
     render: (r) => supportsOf(r.neededSupports),
   },
   {

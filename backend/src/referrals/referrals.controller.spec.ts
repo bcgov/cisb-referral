@@ -6,6 +6,7 @@ import { ReferralStatus } from './dto/update-referral.dto';
 const mockReferralsService = {
   create: jest.fn(),
   findAll: jest.fn(),
+  findAllForExport: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
 };
@@ -105,6 +106,37 @@ describe('ReferralsController', () => {
 
       expect(result).toEqual(mockReferral);
       expect(mockReferralsService.findOne).toHaveBeenCalledWith('referral-1');
+    });
+  });
+
+  describe('exportAll', () => {
+    it('should delegate to service with user id and query params', async () => {
+      const exportResult = {
+        data: [mockReferral],
+        meta: {
+          total: 1,
+          exported: 1,
+          truncated: false,
+          maxRows: 10000,
+        },
+      };
+      const query = {
+        search: 'smith',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        filterBy: 'referralStatus',
+        filterOperator: 'contains',
+        filterValue: 'open',
+      };
+      mockReferralsService.findAllForExport.mockResolvedValue(exportResult);
+
+      const result = await controller.exportAll(mockUser as any, query as any);
+
+      expect(result).toEqual(exportResult);
+      expect(mockReferralsService.findAllForExport).toHaveBeenCalledWith(
+        'user-1',
+        query,
+      );
     });
   });
 

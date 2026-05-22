@@ -8,8 +8,14 @@ import {
 } from "@tanstack/react-query";
 import { apiService } from "../services";
 import { toCsv, downloadCsv } from "../utils";
-import type { Referral } from "../types";
+import type {
+  FetchReferralsParams,
+  Referral,
+  FilterOperator,
+  SortOrder,
+} from "../types";
 import { ColumnPicker } from "./referrals/ColumnPicker";
+import { ColumnHeaderMenu } from "./referrals/ColumnHeaderMenu";
 import { resolveColumns } from "./referrals/columns";
 
 const PAGE_SIZE = 25;
@@ -28,20 +34,36 @@ export function Referrals() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(undefined);
+  const [filterBy, setFilterBy] = useState<string | undefined>(undefined);
+  const [filterOperator, setFilterOperator] =
+    useState<FilterOperator>("equals");
+  const [filterValue, setFilterValue] = useState("");
+  const [openMenuColumnKey, setOpenMenuColumnKey] = useState<string | null>(
+    null,
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
+
+  const activeFilterValue =
+    filterBy && filterValue.trim() ? filterValue.trim() : undefined;
+
+  const referralQueryParams: FetchReferralsParams = {
+    page,
+    limit: PAGE_SIZE,
+    search: activeSearch || undefined,
+    sortBy,
+    sortOrder,
+    filterBy,
+    filterOperator: activeFilterValue ? filterOperator : undefined,
+    filterValue: activeFilterValue,
+  };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: [
-      "referrals",
-      { page, limit: PAGE_SIZE, search: activeSearch || undefined },
-    ],
-    queryFn: () =>
-      apiService.fetchReferrals({
-        page,
-        limit: PAGE_SIZE,
-        search: activeSearch || undefined,
-      }),
+    queryKey: ["referrals", referralQueryParams],
+    queryFn: () => apiService.fetchReferrals(referralQueryParams),
     placeholderData: keepPreviousData,
   });
 
@@ -62,7 +84,9 @@ export function Referrals() {
 
   const exportMutation = useMutation({
     mutationFn: async () => {
-      const all = await apiService.fetchReferralsForExport();
+      const result =
+        await apiService.fetchReferralsForExport(referralQueryParams);
+      const all = result.data;
       const headers = columns.map((c) => c.label);
       const rows = all.map((r: Referral) =>
         columns.map((c) => {
@@ -71,13 +95,22 @@ export function Referrals() {
         }),
       );
       downloadCsv(buildExportFilename(), toCsv(headers, rows));
+      return result.meta;
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to export referrals.";
       setExportError(message);
+      setExportWarning(null);
     },
-    onSuccess: () => setExportError(null),
+    onSuccess: (meta) => {
+      setExportError(null);
+      setExportWarning(
+        meta.truncated
+          ? `Exported first ${meta.exported.toLocaleString()} of ${meta.total.toLocaleString()} referrals. Narrow filters to export the full result set.`
+          : null,
+      );
+    },
   });
 
   const referrals = data?.data ?? [];
@@ -87,20 +120,10 @@ export function Referrals() {
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <p>Loading referrals...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-600">
-          Error loading referrals. Please try again.
-        </p>
       </div>
     );
   }
@@ -166,6 +189,24 @@ export function Referrals() {
         </div>
       ) : null}
 
+      {error ? (
+        <div
+          role="alert"
+          className="px-4 sm:px-6 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700"
+        >
+          Error loading referrals. Please adjust your filters and try again.
+        </div>
+      ) : null}
+
+      {exportWarning ? (
+        <div
+          aria-live="polite"
+          className="block px-4 sm:px-6 py-2 bg-yellow-50 border-b border-yellow-200 text-sm text-yellow-800"
+        >
+          {exportWarning}
+        </div>
+      ) : null}
+
       <div className="flex-1 overflow-auto bg-white">
         <table className="border-collapse text-sm table-fixed min-w-full">
           <thead>
@@ -176,9 +217,40 @@ export function Referrals() {
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`${col.width} p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap`}
+                  className={`${col.width} p-3 text-left border-b border-gray-200 bg-gray-100 font-semibold text-bcgov-gray-dark sticky top-0 z-10 whitespace-nowrap`}
                 >
-                  {col.label}
+                  <ColumnHeaderMenu
+                    columnKey={col.key}
+                    label={col.label}
+                    isOpen={openMenuColumnKey === col.key}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    activeFilterBy={filterBy}
+                    activeFilterOperator={filterOperator}
+                    activeFilterValue={filterValue}
+                    sortable={col.sortable !== false}
+                    onOpen={() => setOpenMenuColumnKey(col.key)}
+                    onClose={() => setOpenMenuColumnKey(null)}
+                    onSort={(order) => {
+                      setSortBy(col.key);
+                      setSortOrder(order);
+                      setPage(1);
+                    }}
+                    onApplyFilter={(operator, value) => {
+                      setFilterBy(col.key);
+                      setFilterOperator(operator);
+                      setFilterValue(value);
+                      setPage(1);
+                    }}
+                    onClearFilter={() => {
+                      if (filterBy === col.key) {
+                        setFilterBy(undefined);
+                        setFilterOperator("equals");
+                        setFilterValue("");
+                        setPage(1);
+                      }
+                    }}
+                  />
                 </th>
               ))}
             </tr>
@@ -199,7 +271,11 @@ export function Referrals() {
                   key={referral.id}
                   className="cursor-pointer hover:bg-blue-50"
                   onClick={(e) => {
-                    if ((e.target as HTMLElement).tagName !== "INPUT") {
+                    const target = e.target;
+                    if (
+                      !(target instanceof HTMLElement) ||
+                      target.tagName !== "INPUT"
+                    ) {
                       navigate(`/referrals/${referral.id}`);
                     }
                   }}

@@ -8,6 +8,7 @@ import {
   Query,
   ParseUUIDPipe,
   UseGuards,
+  applyDecorators,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,8 +18,15 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
+import type { ReferralExportResult } from './referrals.service';
 import { CreateReferralDto } from './dto/create-referral.dto';
-import { FindAllReferralsDto } from './dto/find-all-referrals.dto';
+import {
+  FindAllReferralsDto,
+  REFERRAL_COLUMN_KEYS,
+  SORTABLE_REFERRAL_COLUMN_KEYS,
+  ReferralFilterOperator,
+  ReferralSortOrder,
+} from './dto/find-all-referrals.dto';
 import { UpdateReferralDto, ReferralStatus } from './dto/update-referral.dto';
 import type { Referral, User } from '../generated/prisma/client';
 import {
@@ -28,6 +36,92 @@ import {
 } from '../auth/guards';
 import { CurrentUser, CurrentContact } from '../auth/decorators';
 import type { AuthenticatedContact } from '../auth/interfaces';
+
+const FILTER_OPERATOR_DESCRIPTION =
+  'Filter operator (contains/equals for text-like columns; equals only for flag, date, and numeric columns)';
+
+function ApiReferralPaginationQueries(): MethodDecorator {
+  return applyDecorators(
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      description: 'Page number (default: 1)',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      description: 'Items per page (default: 10)',
+    }),
+  );
+}
+
+function ApiReferralQueryCriteria(): MethodDecorator {
+  return applyDecorators(
+    ApiQuery({
+      name: 'status',
+      required: false,
+      enum: ReferralStatus,
+      description: 'Filter by status',
+    }),
+    ApiQuery({
+      name: 'regionId',
+      required: false,
+      type: String,
+      description: 'Filter by region',
+    }),
+    ApiQuery({
+      name: 'assignedToId',
+      required: false,
+      type: String,
+      description: 'Filter by assigned user',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description: 'Filter by keyword across referral columns',
+    }),
+    ApiQuery({
+      name: 'sortBy',
+      required: false,
+      enum: SORTABLE_REFERRAL_COLUMN_KEYS,
+      description: 'Sort by referral column key',
+    }),
+    ApiQuery({
+      name: 'sortOrder',
+      required: false,
+      enum: ReferralSortOrder,
+      description: 'Sort order',
+    }),
+    ApiQuery({
+      name: 'filterBy',
+      required: false,
+      enum: REFERRAL_COLUMN_KEYS,
+      description: 'Column key to filter by',
+    }),
+    ApiQuery({
+      name: 'filterOperator',
+      required: false,
+      enum: ReferralFilterOperator,
+      description: FILTER_OPERATOR_DESCRIPTION,
+    }),
+    ApiQuery({
+      name: 'filterValue',
+      required: false,
+      type: String,
+      description: 'Filter value (free text)',
+    }),
+  );
+}
+
+function ApiReferralListQueries(): MethodDecorator {
+  return applyDecorators(
+    ApiReferralPaginationQueries(),
+    ApiReferralQueryCriteria(),
+  );
+}
 
 @ApiTags('referrals')
 @Controller({ path: 'referrals', version: '1' })
@@ -53,42 +147,7 @@ export class ReferralsController {
   @UseGuards(AdminAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all referrals with pagination and filtering' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page (default: 10)',
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: ReferralStatus,
-    description: 'Filter by status',
-  })
-  @ApiQuery({
-    name: 'regionId',
-    required: false,
-    type: String,
-    description: 'Filter by region',
-  })
-  @ApiQuery({
-    name: 'assignedToId',
-    required: false,
-    type: String,
-    description: 'Filter by assigned user',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Filter by referrer contact name (starts with)',
-  })
+  @ApiReferralListQueries()
   @ApiResponse({ status: 200, description: 'List of referrals' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Query() query: FindAllReferralsDto) {
@@ -101,13 +160,18 @@ export class ReferralsController {
   @ApiOperation({
     summary: 'Get all referrals (capped) for client-side CSV export',
   })
+  @ApiReferralQueryCriteria()
   @ApiResponse({
     status: 200,
-    description: 'All referrals, unpaginated, with relations included',
+    description:
+      'Capped list of referrals with export metadata (total, exported, truncated, maxRows)',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async exportAll(@CurrentUser() user: User): Promise<Referral[]> {
-    return this.referralsService.findAllForExport(user.id);
+  async exportAll(
+    @CurrentUser() user: User,
+    @Query() query: FindAllReferralsDto,
+  ): Promise<ReferralExportResult> {
+    return this.referralsService.findAllForExport(user.id, query);
   }
 
   @Get(':id')
