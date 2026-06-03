@@ -1580,7 +1580,7 @@ describe('ReferralsService', () => {
         expect(mockAutomaticReplyWorkflow.handle).toHaveBeenCalledWith(created);
       });
 
-      it('fires urgent notification to all four region emails when urgent', async () => {
+      it('invokes urgent notification workflow when referral is flagged as urgent', async () => {
         const dto = createReferralDto({
           experiencingHomelessness: YesNoUnknown.YES,
         });
@@ -1599,7 +1599,7 @@ describe('ReferralsService', () => {
         );
       });
 
-      it('does not fire urgent notification when flag is false', async () => {
+      it('invokes urgent notification workflow even when flag is false (workflow should no-op)', async () => {
         const dto = createReferralDto();
         mockPrismaService.referral.create.mockResolvedValue(
           createMockReferral({ flag: false, region: regionWithEmails }),
@@ -1611,7 +1611,7 @@ describe('ReferralsService', () => {
         expect(mockUrgentNotificationWorkflow.handle).toHaveBeenCalledTimes(1);
       });
 
-      it('skips urgent notification when region has no recipient emails', async () => {
+      it('invokes urgent notification workflow when region has no recipient emails (workflow should no-op)', async () => {
         const dto = createReferralDto({
           experiencingHomelessness: YesNoUnknown.YES,
         });
@@ -1684,7 +1684,7 @@ describe('ReferralsService', () => {
         );
       });
 
-      it('does not fire assignment notification when assignee is unchanged', async () => {
+      it('invokes assignment notification workflow when assignee is unchanged (workflow should no-op)', async () => {
         const already = {
           ...existingReferral,
           assignedToId: 'user-1',
@@ -1731,7 +1731,7 @@ describe('ReferralsService', () => {
         );
       });
 
-      it('does not fire region change notification when region is unchanged', async () => {
+      it('invokes region change notification workflow when region is unchanged (workflow should no-op)', async () => {
         mockPrismaService.referral.findUnique.mockResolvedValue(
           existingReferral,
         );

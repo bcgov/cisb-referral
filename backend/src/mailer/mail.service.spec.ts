@@ -33,9 +33,7 @@ describe('MailService', () => {
     createTransport = nodemailer.createTransport as jest.MockedFunction<
       typeof nodemailer.createTransport
     >;
-    createTransport.mockReturnValue({ sendMail } as unknown as ReturnType<
-      typeof nodemailer.createTransport
-    >);
+    createTransport.mockReturnValue({ sendMail });
 
     mockMailConfig = {
       isMailEnabled: jest.fn().mockReturnValue(true),
