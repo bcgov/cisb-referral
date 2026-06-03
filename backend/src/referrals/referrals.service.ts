@@ -223,19 +223,21 @@ export class ReferralsService {
       action: 'CREATE',
     });
 
-    this.automaticReplyWorkflow.handle(referral).catch((err: unknown) => {
+    void this.automaticReplyWorkflow.handle(referral).catch((err: unknown) => {
       this.logger.error(
         `Automatic reply failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
     });
 
-    this.urgentNotificationWorkflow.handle(referral).catch((err: unknown) => {
-      this.logger.error(
-        `Urgent notification failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
-        err instanceof Error ? err.stack : undefined,
-      );
-    });
+    void this.urgentNotificationWorkflow
+      .handle(referral)
+      .catch((err: unknown) => {
+        this.logger.error(
+          `Urgent notification failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err.stack : undefined,
+        );
+      });
 
     return referral;
   }
@@ -518,7 +520,7 @@ export class ReferralsService {
       });
     }
 
-    this.assignmentNotificationWorkflow
+    void this.assignmentNotificationWorkflow
       .handle(existing.assignedToId, updated)
       .catch((err: unknown) => {
         this.logger.error(
@@ -527,7 +529,7 @@ export class ReferralsService {
         );
       });
 
-    this.regionChangeWorkflow
+    void this.regionChangeWorkflow
       .handle(existing.regionId, updated)
       .catch((err: unknown) => {
         this.logger.error(
