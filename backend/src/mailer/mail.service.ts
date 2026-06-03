@@ -22,6 +22,12 @@ interface ResolvedTransport {
   from: string;
 }
 
+interface RenderedMessage {
+  subject: string;
+  text: string;
+  html: string;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger('MAIL');
@@ -33,11 +39,7 @@ export class MailService {
     if (this.skipIfDisabled(`automatic reply for referral ${referral.id}`))
       return;
     const { subject, text, html } = renderAutomaticReply(referral);
-    const { transporter, from } = this.getTransport();
-
-    const info = await transporter.sendMail({
-      from,
-      to: referral.referrerEmail,
+    const info = await this.sendRenderedEmail(referral.referrerEmail, {
       subject,
       text,
       html,
@@ -61,15 +63,7 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const { transporter, from } = this.getTransport();
-
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    });
+    const info = await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
       `Assignment notification sent for referral ${data.referralId} to 1 recipient (messageId=${info.messageId})`,
@@ -89,15 +83,7 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const { transporter, from } = this.getTransport();
-
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    });
+    const info = await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
       `Urgent notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
@@ -119,15 +105,7 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const { transporter, from } = this.getTransport();
-
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    });
+    const info = await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
       `Region change notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
@@ -138,6 +116,21 @@ export class MailService {
     if (this.mailConfig.isMailEnabled()) return false;
     this.logger.warn(`MAIL_ENABLED=false; skipping ${context}`);
     return true;
+  }
+
+  private async sendRenderedEmail(
+    to: string | string[],
+    message: RenderedMessage,
+  ): Promise<{ messageId: string }> {
+    const { transporter, from } = this.getTransport();
+
+    return transporter.sendMail({
+      from,
+      to,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    });
   }
 
   private getTransport(): ResolvedTransport {

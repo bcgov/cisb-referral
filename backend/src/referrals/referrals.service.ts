@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { MailService } from '../mail/mail.service';
+import { AutomaticReplyWorkflow } from '../email/workflows/automatic-reply.workflow';
+import { AssignmentNotificationWorkflow } from '../email/workflows/assignment-notification.workflow';
+import { RegionChangeWorkflow } from '../email/workflows/region-change.workflow';
+import { UrgentNotificationWorkflow } from '../email/workflows/urgent-notification.workflow';
 import { diffObjects } from '../audit/audit.utils';
 import {
   CreateReferralDto,
@@ -87,7 +90,10 @@ export class ReferralsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
-    private readonly mailService: MailService,
+    private readonly automaticReplyWorkflow: AutomaticReplyWorkflow,
+    private readonly assignmentNotificationWorkflow: AssignmentNotificationWorkflow,
+    private readonly urgentNotificationWorkflow: UrgentNotificationWorkflow,
+    private readonly regionChangeWorkflow: RegionChangeWorkflow,
   ) {}
 
   private validateStatusTransition(
@@ -217,67 +223,21 @@ export class ReferralsService {
       action: 'CREATE',
     });
 
-    void this.mailService.sendAutomaticReply(referral).catch((err: unknown) => {
+    this.automaticReplyWorkflow.handle(referral).catch((err: unknown) => {
       this.logger.error(
         `Automatic reply failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err.stack : undefined,
       );
     });
 
-    this.maybeNotifyUrgent(referral);
+    this.urgentNotificationWorkflow.handle(referral).catch((err: unknown) => {
+      this.logger.error(
+        `Urgent notification failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+    });
 
     return referral;
-  }
-
-  private maybeNotifyUrgent(referral: Referral): void {
-    if (!referral.flag) return;
-
-    const region = (
-      referral as Referral & {
-        region: {
-          managerEmail: string | null;
-          supervisorEmail: string | null;
-          assistantSupervisorEmail: string | null;
-          sharedMailboxEmail: string | null;
-        } | null;
-      }
-    ).region;
-
-    if (!region) {
-      this.logger.warn(
-        `Urgent referral ${referral.id} has no region associated; skipping urgent notification`,
-      );
-      return;
-    }
-
-    const recipients = [
-      region.managerEmail?.trim(),
-      region.supervisorEmail?.trim(),
-      region.assistantSupervisorEmail?.trim(),
-      region.sharedMailboxEmail?.trim(),
-    ].filter((email): email is string => Boolean(email));
-
-    if (recipients.length === 0) {
-      this.logger.warn(
-        `Urgent referral ${referral.id} but region has no manager, supervisor, assistant supervisor, or shared mailbox configured`,
-      );
-      return;
-    }
-
-    void this.mailService
-      .sendUrgentNotification(recipients, {
-        referralId: referral.id,
-        cityTown: referral.specificCityTown,
-        createdAt: referral.createdAt,
-        status: referral.referralStatus,
-        flagged: referral.flag,
-      })
-      .catch((err: unknown) => {
-        this.logger.error(
-          `Urgent notification failed for referral ${referral.id}: ${err instanceof Error ? err.message : String(err)}`,
-          err instanceof Error ? err.stack : undefined,
-        );
-      });
   }
 
   async findAll(params: FindAllReferralsDto): Promise<{
@@ -558,81 +518,24 @@ export class ReferralsService {
       });
     }
 
-    this.maybeNotifyNewAssignee(existing.assignedToId, updated);
-    this.maybeNotifyRegionChange(existing.regionId, updated);
-
-    return updated;
-  }
-
-  private maybeNotifyNewAssignee(
-    previousAssigneeId: string | null,
-    updated: Referral,
-  ): void {
-    const assignee = (
-      updated as Referral & { assignedTo: { email: string } | null }
-    ).assignedTo;
-    const newAssigneeId = updated.assignedToId;
-
-    if (!newAssigneeId || newAssigneeId === previousAssigneeId || !assignee) {
-      return;
-    }
-
-    void this.mailService
-      .sendAssignmentNotification(assignee.email, {
-        referralId: updated.id,
-        cityTown: updated.specificCityTown,
-        createdAt: updated.createdAt,
-        status: updated.referralStatus,
-        flagged: updated.flag,
-      })
+    this.assignmentNotificationWorkflow
+      .handle(existing.assignedToId, updated)
       .catch((err: unknown) => {
         this.logger.error(
           `Assignment notification failed for referral ${updated.id}: ${err instanceof Error ? err.message : String(err)}`,
           err instanceof Error ? err.stack : undefined,
         );
       });
-  }
 
-  private maybeNotifyRegionChange(
-    previousRegionId: string,
-    updated: Referral,
-  ): void {
-    if (updated.regionId === previousRegionId) return;
-
-    const region = (
-      updated as Referral & {
-        region: {
-          supervisorEmail: string | null;
-          sharedMailboxEmail: string | null;
-        };
-      }
-    ).region;
-
-    const recipients = [
-      region.supervisorEmail?.trim(),
-      region.sharedMailboxEmail?.trim(),
-    ].filter((email): email is string => Boolean(email));
-
-    if (recipients.length === 0) {
-      this.logger.warn(
-        `Region change for referral ${updated.id} but new region has no supervisor or shared mailbox configured`,
-      );
-      return;
-    }
-
-    void this.mailService
-      .sendRegionChangeNotification(recipients, {
-        referralId: updated.id,
-        cityTown: updated.specificCityTown,
-        createdAt: updated.createdAt,
-        status: updated.referralStatus,
-        flagged: updated.flag,
-      })
+    this.regionChangeWorkflow
+      .handle(existing.regionId, updated)
       .catch((err: unknown) => {
         this.logger.error(
           `Region change notification failed for referral ${updated.id}: ${err instanceof Error ? err.message : String(err)}`,
           err instanceof Error ? err.stack : undefined,
         );
       });
+
+    return updated;
   }
 }
