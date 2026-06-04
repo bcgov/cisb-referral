@@ -60,7 +60,7 @@ export function renderSummaryNotification(
       ...renderReferralSummaryTextLines(row),
       '',
     ]),
-    'Please attend to accordingly',
+    'Please attend to accordingly.',
   ].join('\n');
 
   const html = `
@@ -73,7 +73,7 @@ export function renderSummaryNotification(
         `,
       )
       .join('')}
-    <p>Please attend to accordingly</p>
+    <p>Please attend to accordingly.</p>
   `.trim();
 
   return { subject, text, html };
