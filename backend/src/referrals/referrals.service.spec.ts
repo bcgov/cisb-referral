@@ -3,7 +3,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ReferralsService } from './referrals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { MailService } from '../mail/mail.service';
+import { AutomaticReplyWorkflow } from '../email/workflows/automatic-reply.workflow';
+import { AssignmentNotificationWorkflow } from '../email/workflows/assignment-notification.workflow';
+import { RegionChangeWorkflow } from '../email/workflows/region-change.workflow';
+import { UrgentNotificationWorkflow } from '../email/workflows/urgent-notification.workflow';
 import {
   ReferredByType,
   YesNoUnknown,
@@ -108,11 +111,20 @@ describe('ReferralsService', () => {
     logGlobal: jest.fn().mockResolvedValue(undefined),
   };
 
-  const mockMailService = {
-    sendAutomaticReply: jest.fn().mockResolvedValue(undefined),
-    sendAssignmentNotification: jest.fn().mockResolvedValue(undefined),
-    sendRegionChangeNotification: jest.fn().mockResolvedValue(undefined),
-    sendUrgentNotification: jest.fn().mockResolvedValue(undefined),
+  const mockAutomaticReplyWorkflow = {
+    handle: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockAssignmentNotificationWorkflow = {
+    handle: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockRegionChangeWorkflow = {
+    handle: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockUrgentNotificationWorkflow = {
+    handle: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -123,7 +135,19 @@ describe('ReferralsService', () => {
         ReferralsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: AuditService, useValue: mockAuditService },
-        { provide: MailService, useValue: mockMailService },
+        {
+          provide: AutomaticReplyWorkflow,
+          useValue: mockAutomaticReplyWorkflow,
+        },
+        {
+          provide: AssignmentNotificationWorkflow,
+          useValue: mockAssignmentNotificationWorkflow,
+        },
+        { provide: RegionChangeWorkflow, useValue: mockRegionChangeWorkflow },
+        {
+          provide: UrgentNotificationWorkflow,
+          useValue: mockUrgentNotificationWorkflow,
+        },
       ],
     }).compile();
 
@@ -1552,13 +1576,11 @@ describe('ReferralsService', () => {
         await service.create(dto, 'contact-uuid-1');
         await flushAsync();
 
-        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledTimes(1);
-        expect(mockMailService.sendAutomaticReply).toHaveBeenCalledWith(
-          created,
-        );
+        expect(mockAutomaticReplyWorkflow.handle).toHaveBeenCalledTimes(1);
+        expect(mockAutomaticReplyWorkflow.handle).toHaveBeenCalledWith(created);
       });
 
-      it('fires urgent notification to all four region emails when urgent', async () => {
+      it('invokes urgent notification workflow when referral is flagged as urgent', async () => {
         const dto = createReferralDto({
           experiencingHomelessness: YesNoUnknown.YES,
         });
@@ -1571,18 +1593,13 @@ describe('ReferralsService', () => {
         await service.create(dto, 'contact-uuid-1');
         await flushAsync();
 
-        expect(mockMailService.sendUrgentNotification).toHaveBeenCalledTimes(1);
-        const [recipients] =
-          mockMailService.sendUrgentNotification.mock.calls[0];
-        expect(recipients).toEqual([
-          'mgr@test',
-          'sup@test',
-          'asst@test',
-          'shared@test',
-        ]);
+        expect(mockUrgentNotificationWorkflow.handle).toHaveBeenCalledTimes(1);
+        expect(mockUrgentNotificationWorkflow.handle).toHaveBeenCalledWith(
+          created,
+        );
       });
 
-      it('does not fire urgent notification when flag is false', async () => {
+      it('invokes urgent notification workflow even when flag is false (workflow should no-op)', async () => {
         const dto = createReferralDto();
         mockPrismaService.referral.create.mockResolvedValue(
           createMockReferral({ flag: false, region: regionWithEmails }),
@@ -1591,10 +1608,10 @@ describe('ReferralsService', () => {
         await service.create(dto, 'contact-uuid-1');
         await flushAsync();
 
-        expect(mockMailService.sendUrgentNotification).not.toHaveBeenCalled();
+        expect(mockUrgentNotificationWorkflow.handle).toHaveBeenCalledTimes(1);
       });
 
-      it('skips urgent notification when region has no recipient emails', async () => {
+      it('invokes urgent notification workflow when region has no recipient emails (workflow should no-op)', async () => {
         const dto = createReferralDto({
           experiencingHomelessness: YesNoUnknown.YES,
         });
@@ -1615,11 +1632,11 @@ describe('ReferralsService', () => {
         await service.create(dto, 'contact-uuid-1');
         await flushAsync();
 
-        expect(mockMailService.sendUrgentNotification).not.toHaveBeenCalled();
+        expect(mockUrgentNotificationWorkflow.handle).toHaveBeenCalledTimes(1);
       });
 
       it('swallows mail failures and still returns the referral', async () => {
-        mockMailService.sendAutomaticReply.mockRejectedValueOnce(
+        mockAutomaticReplyWorkflow.handle.mockRejectedValueOnce(
           new Error('SMTP down'),
         );
         const dto = createReferralDto();
@@ -1655,14 +1672,19 @@ describe('ReferralsService', () => {
         await service.update('referral-uuid-1', dto);
         await flushAsync();
 
-        expect(
-          mockMailService.sendAssignmentNotification,
-        ).toHaveBeenCalledTimes(1);
-        const [to] = mockMailService.sendAssignmentNotification.mock.calls[0];
-        expect(to).toBe('assignee@test');
+        expect(mockAssignmentNotificationWorkflow.handle).toHaveBeenCalledTimes(
+          1,
+        );
+        expect(mockAssignmentNotificationWorkflow.handle).toHaveBeenCalledWith(
+          null,
+          expect.objectContaining({
+            assignedToId: 'user-1',
+            assignedTo: { email: 'assignee@test' },
+          }),
+        );
       });
 
-      it('does not fire assignment notification when assignee is unchanged', async () => {
+      it('invokes assignment notification workflow when assignee is unchanged (workflow should no-op)', async () => {
         const already = {
           ...existingReferral,
           assignedToId: 'user-1',
@@ -1679,9 +1701,9 @@ describe('ReferralsService', () => {
         });
         await flushAsync();
 
-        expect(
-          mockMailService.sendAssignmentNotification,
-        ).not.toHaveBeenCalled();
+        expect(mockAssignmentNotificationWorkflow.handle).toHaveBeenCalledTimes(
+          1,
+        );
       });
 
       it('fires region change notification when region changes', async () => {
@@ -1702,15 +1724,14 @@ describe('ReferralsService', () => {
         await service.update('referral-uuid-1', { regionId: 'region-uuid-2' });
         await flushAsync();
 
-        expect(
-          mockMailService.sendRegionChangeNotification,
-        ).toHaveBeenCalledTimes(1);
-        const [recipients] =
-          mockMailService.sendRegionChangeNotification.mock.calls[0];
-        expect(recipients).toEqual(['newsup@test', 'newshared@test']);
+        expect(mockRegionChangeWorkflow.handle).toHaveBeenCalledTimes(1);
+        expect(mockRegionChangeWorkflow.handle).toHaveBeenCalledWith(
+          'region-uuid-1',
+          expect.objectContaining({ regionId: 'region-uuid-2' }),
+        );
       });
 
-      it('does not fire region change notification when region is unchanged', async () => {
+      it('invokes region change notification workflow when region is unchanged (workflow should no-op)', async () => {
         mockPrismaService.referral.findUnique.mockResolvedValue(
           existingReferral,
         );
@@ -1721,9 +1742,7 @@ describe('ReferralsService', () => {
         });
         await flushAsync();
 
-        expect(
-          mockMailService.sendRegionChangeNotification,
-        ).not.toHaveBeenCalled();
+        expect(mockRegionChangeWorkflow.handle).toHaveBeenCalledTimes(1);
       });
     });
   });

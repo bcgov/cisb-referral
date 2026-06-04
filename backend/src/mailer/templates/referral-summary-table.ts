@@ -1,4 +1,4 @@
-import { escapeHtml } from './escape-html';
+import { escapeHtml } from '../utils/escape-html';
 
 export interface ReferralSummaryRow {
   referralId: string;
