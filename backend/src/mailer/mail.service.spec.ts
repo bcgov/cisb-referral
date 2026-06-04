@@ -217,12 +217,37 @@ describe('MailService', () => {
       expect(sendMail).toHaveBeenCalledTimes(1);
       const args = sendMail.mock.calls[0][0];
       expect(args.to).toEqual(['shared@test', 'mgr@test']);
-      expect(args.subject).toContain('Referral summary: North');
+      expect(args.subject).toBe('PM Referral Summary - 2026-06-01T14:30');
       expect(args.html).toContain('https://admin.test/referrals/ref-123');
       expect(args.html).toContain('https://admin.test/referrals/ref-456');
       expect(args.text).toContain(
-        'Window (UTC): 2026-06-01T14:30:00Z to 2026-06-01T21:30:00Z',
+        'Your team has received the following referrals:',
       );
+      expect(args.html).toContain(
+        'Your team has received the following referrals:',
+      );
+      expect(args.text).toContain('Please attend to accordingly');
+      expect(args.html).toContain('Please attend to accordingly');
+    });
+
+    it('uses AM subject line for the morning run window end', async () => {
+      await service.sendSummaryNotification(['shared@test'], {
+        regionName: 'North',
+        windowStart: new Date('2026-06-01T21:30:00Z'),
+        windowEnd: new Date('2026-06-02T14:30:00Z'),
+        rows: [
+          {
+            referralId: 'ref-123',
+            cityTown: 'Vancouver',
+            createdAt: baseReferral.createdAt,
+            status: 'OPEN',
+            flagged: false,
+          },
+        ],
+      });
+
+      const args = sendMail.mock.calls[0][0];
+      expect(args.subject).toBe('AM Referral Summary - 2026-06-02T07:30');
     });
   });
 

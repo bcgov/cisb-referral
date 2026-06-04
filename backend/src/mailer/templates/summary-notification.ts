@@ -5,7 +5,6 @@ import {
   renderReferralSummaryHtmlTable,
   renderReferralSummaryTextLines,
 } from './referral-summary-table';
-import { escapeHtml } from '../utils/escape-html';
 
 export interface SummaryNotificationRow
   extends Omit<ReferralSummaryRow, 'referralUrl'> {}
@@ -18,8 +17,17 @@ export interface SummaryNotificationParams {
   rows: SummaryNotificationRow[];
 }
 
-function formatUtcTimestamp(value: Date): string {
-  return value.toISOString().replace('.000Z', 'Z');
+const PERMANENT_VANCOUVER_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function toVancouverTimestamp(value: Date): string {
+  return new Date(value.getTime() - PERMANENT_VANCOUVER_OFFSET_MS)
+    .toISOString()
+    .slice(0, 16);
+}
+
+function toSummaryLabel(windowEnd: Date): 'AM' | 'PM' {
+  const localHour = Number(toVancouverTimestamp(windowEnd).slice(11, 13));
+  return localHour < 12 ? 'AM' : 'PM';
 }
 
 function buildSummaryRow(
@@ -35,39 +43,37 @@ function buildSummaryRow(
 export function renderSummaryNotification(
   params: SummaryNotificationParams,
 ): RenderedEmail {
-  const windowLabel = `${formatUtcTimestamp(params.windowStart)} to ${formatUtcTimestamp(params.windowEnd)}`;
+  const runLabel = toSummaryLabel(params.windowEnd);
+  const runTimestamp = toVancouverTimestamp(params.windowEnd);
   const formattedRows = params.rows.map((row) =>
     buildSummaryRow(row, params.referralUrlBase),
   );
 
-  const subject = `Referral summary: ${params.regionName} (${formattedRows.length})`;
+  const subject = `${runLabel} Referral Summary - ${runTimestamp}`;
 
   const text = [
     'Hello,',
     '',
-    `Referral summary for region: ${params.regionName}`,
-    `Window (UTC): ${windowLabel}`,
-    `Total referrals: ${formattedRows.length}`,
+    'Your team has received the following referrals:',
     '',
-    ...formattedRows.flatMap((row, index) => [
-      `Referral ${index + 1}`,
+    ...formattedRows.flatMap((row) => [
       ...renderReferralSummaryTextLines(row),
       '',
     ]),
+    'Please attend to accordingly',
   ].join('\n');
 
   const html = `
     <p>Hello,</p>
-    <p>Referral summary for region: <strong>${escapeHtml(params.regionName)}</strong></p>
-    <p>Window (UTC): ${escapeHtml(windowLabel)}<br/>Total referrals: ${formattedRows.length}</p>
+    <p>Your team has received the following referrals:</p>
     ${formattedRows
       .map(
-        (row, index) => `
-          <h3>Referral ${index + 1}</h3>
+        (row) => `
           ${renderReferralSummaryHtmlTable(row)}
         `,
       )
       .join('')}
+    <p>Please attend to accordingly</p>
   `.trim();
 
   return { subject, text, html };
