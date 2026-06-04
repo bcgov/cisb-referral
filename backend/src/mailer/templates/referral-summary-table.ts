@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const CELL = 'border: 1px solid #ccc; padding: 6px 10px;';
-const HEAD_CELL = `${CELL} text-align: left; background: #f4f4f4;`;
+const HEAD_CELL = `${CELL} text-align: left; background: #5595D9; color: #ffffff;`;
 
 export interface FormattedReferralSummary {
   referralId: string;
