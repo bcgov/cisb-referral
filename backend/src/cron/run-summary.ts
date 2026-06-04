@@ -39,12 +39,11 @@ async function run(): Promise<void> {
   }
 }
 
-run().catch((error: unknown) => {
+run().catch(() => {
   logger.error(
     JSON.stringify({
       event: 'summary_cron_failed',
-      errorMessage:
-        error instanceof Error ? error.message : 'Unknown summary cron error',
+      errorCode: 'CRON_ERROR',
     }),
   );
   process.exitCode = 1;

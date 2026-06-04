@@ -50,6 +50,7 @@ export class SummaryWorkflow {
           gte: window.windowStart,
           lt: window.windowEnd,
         },
+        flag: false,
       },
       select: {
         id: true,
@@ -131,7 +132,7 @@ export class SummaryWorkflow {
           windowStart: window.windowStart.toISOString(),
           windowEnd: window.windowEnd.toISOString(),
         });
-      } catch (error) {
+      } catch {
         result.failedRegions += 1;
         this.log('error', 'summary_region_failed', {
           regionId: group.region.id,
@@ -140,8 +141,7 @@ export class SummaryWorkflow {
           referralCount: group.rows.length,
           windowStart: window.windowStart.toISOString(),
           windowEnd: window.windowEnd.toISOString(),
-          errorMessage:
-            error instanceof Error ? error.message : 'Unknown summary error',
+          errorCode: 'SEND_FAILED',
         });
       }
     }

@@ -55,6 +55,7 @@ describe('SummaryWorkflow', () => {
             gte: window.windowStart,
             lt: window.windowEnd,
           },
+          flag: false,
         },
       }),
     );
@@ -185,6 +186,32 @@ describe('SummaryWorkflow', () => {
       skippedRegions: 1,
       failedRegions: 0,
     });
+  });
+
+  it('excludes flagged (urgent) referrals from the summary', async () => {
+    const prisma = {
+      referral: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            createReferral({ id: 'ref-normal', flag: false }),
+          ]),
+      },
+    } as unknown as PrismaService;
+    const mailService = {
+      sendSummaryNotification: jest.fn().mockResolvedValue(undefined),
+    } as unknown as MailService;
+    const workflow = new SummaryWorkflow(prisma, mailService);
+
+    await workflow.handle(window);
+
+    expect(prisma.referral.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          flag: false,
+        }),
+      }),
+    );
   });
 
   it('continues processing when one region send fails', async () => {
