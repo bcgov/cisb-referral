@@ -12,6 +12,10 @@ import {
   renderRegionChangeNotification,
 } from './templates/region-change-notification';
 import {
+  SummaryNotificationParams,
+  renderSummaryNotification,
+} from './templates/summary-notification';
+import {
   UrgentNotificationParams,
   renderUrgentNotification,
 } from './templates/urgent-notification';
@@ -55,7 +59,9 @@ export class MailService {
     data: Omit<AssignmentNotificationParams, 'referralUrl'>,
   ): Promise<void> {
     if (
-      this.skipIfDisabled(`assignment notification for referral ${data.referralId}`)
+      this.skipIfDisabled(
+        `assignment notification for referral ${data.referralId}`,
+      )
     )
       return;
     const referralUrl = `${this.mailConfig.getAdminAppUrl()}/referrals/${data.referralId}`;
@@ -109,6 +115,27 @@ export class MailService {
 
     this.logger.log(
       `Region change notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
+    );
+  }
+
+  async sendSummaryNotification(
+    to: string[],
+    data: Omit<SummaryNotificationParams, 'referralUrlBase'>,
+  ): Promise<void> {
+    if (
+      this.skipIfDisabled(
+        `summary notification for region ${data.regionName} (${data.rows.length} referrals)`,
+      )
+    )
+      return;
+    const { subject, text, html } = renderSummaryNotification({
+      ...data,
+      referralUrlBase: `${this.mailConfig.getAdminAppUrl()}/referrals`,
+    });
+    const info = await this.sendRenderedEmail(to, { subject, text, html });
+
+    this.logger.log(
+      `Summary notification sent for region ${data.regionName} to ${to.length} recipients covering ${data.rows.length} referrals (messageId=${info.messageId})`,
     );
   }
 

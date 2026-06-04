@@ -101,6 +101,24 @@ describe('MailService', () => {
       });
       expect(sendMail).not.toHaveBeenCalled();
     });
+
+    it('does not send summary notification when disabled', async () => {
+      await service.sendSummaryNotification(['shared@test'], {
+        regionName: 'North',
+        windowStart: new Date('2026-06-01T14:30:00Z'),
+        windowEnd: new Date('2026-06-01T21:30:00Z'),
+        rows: [
+          {
+            referralId: 'ref-123',
+            cityTown: 'Vancouver',
+            createdAt: baseReferral.createdAt,
+            status: 'OPEN',
+            flagged: false,
+          },
+        ],
+      });
+      expect(sendMail).not.toHaveBeenCalled();
+    });
   });
 
   describe('sendAutomaticReply', () => {
@@ -169,6 +187,67 @@ describe('MailService', () => {
       const args = sendMail.mock.calls[0][0];
       expect(args.to).toHaveLength(4);
       expect(args.subject).toMatch(/^URGENT Referral/);
+    });
+  });
+
+  describe('sendSummaryNotification', () => {
+    it('renders a regional summary using the admin referral URL base', async () => {
+      await service.sendSummaryNotification(['shared@test', 'mgr@test'], {
+        regionName: 'North',
+        windowStart: new Date('2026-06-01T14:30:00Z'),
+        windowEnd: new Date('2026-06-01T21:30:00Z'),
+        rows: [
+          {
+            referralId: 'ref-123',
+            cityTown: 'Vancouver',
+            createdAt: baseReferral.createdAt,
+            status: 'OPEN',
+            flagged: false,
+          },
+          {
+            referralId: 'ref-456',
+            cityTown: 'Victoria',
+            createdAt: new Date('2026-04-21T16:00:00Z'),
+            status: 'ASSIGNED',
+            flagged: true,
+          },
+        ],
+      });
+
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      const args = sendMail.mock.calls[0][0];
+      expect(args.to).toEqual(['shared@test', 'mgr@test']);
+      expect(args.subject).toBe('PM Referral Summary - 2026-06-01T14:30');
+      expect(args.html).toContain('https://admin.test/referrals/ref-123');
+      expect(args.html).toContain('https://admin.test/referrals/ref-456');
+      expect(args.text).toContain(
+        'Your team has received the following referrals:',
+      );
+      expect(args.html).toContain(
+        'Your team has received the following referrals:',
+      );
+      expect(args.text).toContain('Please attend to accordingly');
+      expect(args.html).toContain('Please attend to accordingly');
+    });
+
+    it('uses AM subject line for the morning run window end', async () => {
+      await service.sendSummaryNotification(['shared@test'], {
+        regionName: 'North',
+        windowStart: new Date('2026-06-01T21:30:00Z'),
+        windowEnd: new Date('2026-06-02T14:30:00Z'),
+        rows: [
+          {
+            referralId: 'ref-123',
+            cityTown: 'Vancouver',
+            createdAt: baseReferral.createdAt,
+            status: 'OPEN',
+            flagged: false,
+          },
+        ],
+      });
+
+      const args = sendMail.mock.calls[0][0];
+      expect(args.subject).toBe('AM Referral Summary - 2026-06-02T07:30');
     });
   });
 
