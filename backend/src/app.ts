@@ -4,7 +4,11 @@ import { AppModule } from './app.module';
 import { customLogger } from './common/logger.config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
-import { VersioningType, ValidationPipe } from '@nestjs/common';
+import {
+  type INestApplicationContext,
+  VersioningType,
+  ValidationPipe,
+} from '@nestjs/common';
 
 export function shouldExposeSwagger(nodeEnv = process.env.NODE_ENV): boolean {
   return nodeEnv !== 'production';
@@ -72,4 +76,10 @@ export async function bootstrap() {
   }
 
   return app;
+}
+
+export async function bootstrapApplicationContext(): Promise<INestApplicationContext> {
+  return NestFactory.createApplicationContext(AppModule, {
+    logger: customLogger,
+  });
 }

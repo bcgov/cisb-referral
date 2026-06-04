@@ -1,0 +1,138 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cisb-referral-backend-summary
+  labels:
+    app.kubernetes.io/name: cisb-referral-backend-summary
+spec:
+  schedule: "30 14,21 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: cisb-referral-backend-summary
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          imagePullSecrets:
+            - name: github-docker-registry
+          containers:
+            - name: cisb-referral-backend-summary
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ['node', 'dist/cron/run-summary.js']
+              env:
+                - name: NODE_ENV
+                  value: {{ .Values.nodeEnv | quote }}
+                - name: LOG_LEVEL
+                  value: {{ .Values.logLevel | quote }}
+                - name: POSTGRES_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: pgbouncer-host
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: user
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: password
+                - name: POSTGRES_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: pgbouncer-port
+                - name: POSTGRES_DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: dbname
+                - name: PGBOUNCER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.crunchySecret }}
+                      key: pgbouncer-uri
+                      optional: true
+                - name: ADMIN_KC_ISSUER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: ADMIN_KC_ISSUER_URL
+                - name: ADMIN_KC_AUDIENCE
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: ADMIN_KC_AUDIENCE
+                - name: REFERRAL_KC_ISSUER_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: REFERRAL_KC_ISSUER_URL
+                - name: REFERRAL_KC_AUDIENCE
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: REFERRAL_KC_AUDIENCE
+                - name: MAIL_ENABLED
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: MAIL_ENABLED
+                      optional: true
+                - name: SMTP_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_HOST
+                - name: SMTP_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_PORT
+                - name: SMTP_SECURE
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_SECURE
+                - name: SMTP_FROM
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_FROM
+                - name: SMTP_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_USER
+                      optional: true
+                - name: SMTP_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: SMTP_PASSWORD
+                      optional: true
+                - name: ADMIN_APP_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: cisb-referral-backend-secrets
+                      key: ADMIN_APP_URL
+              {{- with .Values.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          restartPolicy: Never
