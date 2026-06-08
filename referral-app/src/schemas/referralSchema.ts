@@ -100,7 +100,7 @@ const ReferredByEnum = z.enum(
     ReferredByType.SDPR_INTERNAL,
     ReferredByType.PARTNER_AGENCY,
   ],
-  { message: "Please select how the individual was referred" },
+  { message: "Please select your organization type" },
 );
 
 const YesNoUnknownEnum = z.enum(
