@@ -1,53 +1,49 @@
-import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { ExecutionContext } from '@nestjs/common';
-import { CurrentContact } from './current-contact.decorator';
 import { CurrentUser } from './current-user.decorator';
+import { CurrentContact } from './current-contact.decorator';
 
-const getParamDecoratorFactory = (
-  decorator: (...args: any[]) => ParameterDecorator,
-) => {
-  class TestClass {
-    public testMethod(
-      @decorator() // eslint-disable-line @typescript-eslint/no-unused-vars
-      _value: unknown,
-    ): void {
-      // Method body intentionally unused; only metadata is required for the test.
-    }
-  }
+// Mocking createParamDecorator to return the inner factory directly avoids
+// relying on Reflect metadata internals or @nestjs/common/constants private paths.
+jest.mock('@nestjs/common', () => ({
+  ...jest.requireActual('@nestjs/common'),
+  createParamDecorator: (factory: (data: unknown, ctx: unknown) => unknown) =>
+    factory,
+}));
 
-  const metadata = Reflect.getMetadata(
-    ROUTE_ARGS_METADATA,
-    TestClass,
-    'testMethod',
-  );
-  const key = Object.keys(metadata)[0];
+type DecoratorFactory = (data: unknown, ctx: ExecutionContext) => unknown;
 
-  return metadata[key].factory as (
-    data: unknown,
-    ctx: ExecutionContext,
-  ) => unknown;
-};
+const createMockContext = (user: unknown): ExecutionContext =>
+  ({
+    switchToHttp: () => ({
+      getRequest: () => ({ user }),
+    }),
+  }) as ExecutionContext;
 
 describe('Auth decorators', () => {
   describe('CurrentUser', () => {
     it('should extract user from request', () => {
-      const currentUserFactory = getParamDecoratorFactory(CurrentUser);
       const requestUser = { id: 'user-1', email: 'user@test.com' };
-      const context = {
-        switchToHttp: () => ({
-          getRequest: () => ({ user: requestUser }),
-        }),
-      } as ExecutionContext;
 
-      const result = currentUserFactory(undefined, context);
+      const result = (CurrentUser as unknown as DecoratorFactory)(
+        undefined,
+        createMockContext(requestUser),
+      );
 
-      expect(result).toEqual(requestUser);
+      expect(result).toBe(requestUser);
+    });
+
+    it('should return undefined when request user is missing', () => {
+      const result = (CurrentUser as unknown as DecoratorFactory)(
+        undefined,
+        createMockContext(undefined),
+      );
+
+      expect(result).toBeUndefined();
     });
   });
 
   describe('CurrentContact', () => {
     it('should extract contact auth payload from request', () => {
-      const currentContactFactory = getParamDecoratorFactory(CurrentContact);
       const requestContact = {
         contact: {
           id: 'contact-1',
@@ -56,15 +52,13 @@ describe('Auth decorators', () => {
         },
         isProfileComplete: true,
       };
-      const context = {
-        switchToHttp: () => ({
-          getRequest: () => ({ user: requestContact }),
-        }),
-      } as ExecutionContext;
 
-      const result = currentContactFactory(undefined, context);
+      const result = (CurrentContact as unknown as DecoratorFactory)(
+        undefined,
+        createMockContext(requestContact),
+      );
 
-      expect(result).toEqual(requestContact);
+      expect(result).toBe(requestContact);
     });
   });
 });
