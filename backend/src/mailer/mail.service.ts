@@ -43,14 +43,14 @@ export class MailService {
     if (this.skipIfDisabled(`automatic reply for referral ${referral.id}`))
       return;
     const { subject, text, html } = renderAutomaticReply(referral);
-    const info = await this.sendRenderedEmail(referral.referrerEmail, {
+    await this.sendRenderedEmail(referral.referrerEmail, {
       subject,
       text,
       html,
     });
 
     this.logger.log(
-      `Automatic reply sent for referral ${referral.id} (messageId=${info.messageId})`,
+      `Automatic reply sent for referral ${referral.id}`,
     );
   }
 
@@ -69,10 +69,10 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const info = await this.sendRenderedEmail(to, { subject, text, html });
+    await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
-      `Assignment notification sent for referral ${data.referralId} to 1 recipient (messageId=${info.messageId})`,
+      `Assignment notification sent for referral ${data.referralId} to 1 recipient`,
     );
   }
 
@@ -89,10 +89,10 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const info = await this.sendRenderedEmail(to, { subject, text, html });
+    await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
-      `Urgent notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
+      `Urgent notification sent for referral ${data.referralId} to ${to.length} recipients`,
     );
   }
 
@@ -111,10 +111,10 @@ export class MailService {
       ...data,
       referralUrl,
     });
-    const info = await this.sendRenderedEmail(to, { subject, text, html });
+    await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
-      `Region change notification sent for referral ${data.referralId} to ${to.length} recipients (messageId=${info.messageId})`,
+      `Region change notification sent for referral ${data.referralId} to ${to.length} recipients`,
     );
   }
 
@@ -132,10 +132,10 @@ export class MailService {
       ...data,
       referralUrlBase: `${this.mailConfig.getAdminAppUrl()}/referrals`,
     });
-    const info = await this.sendRenderedEmail(to, { subject, text, html });
+    await this.sendRenderedEmail(to, { subject, text, html });
 
     this.logger.log(
-      `Summary notification sent for region ${data.regionName} to ${to.length} recipients covering ${data.rows.length} referrals (messageId=${info.messageId})`,
+      `Summary notification sent for region ${data.regionName} to ${to.length} recipients covering ${data.rows.length} referrals`,
     );
   }
 
@@ -148,10 +148,10 @@ export class MailService {
   private async sendRenderedEmail(
     to: string | string[],
     message: RenderedMessage,
-  ): Promise<{ messageId: string }> {
+  ): Promise<void> {
     const { transporter, from } = this.getTransport();
 
-    return transporter.sendMail({
+    await transporter.sendMail({
       from,
       to,
       subject: message.subject,
