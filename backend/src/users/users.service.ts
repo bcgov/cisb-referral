@@ -86,6 +86,18 @@ export class UsersService {
     });
   }
 
+  async findAssignableUsers(): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      orderBy: {
+        fullName: 'asc',
+      },
+    });
+  }
+
   async findOne(id: string): Promise<User> {
     const user = await this.prisma.user.findFirst({
       where: {

@@ -189,6 +189,11 @@ class APIService {
     return response.data;
   }
 
+  async fetchAssignableUsers(): Promise<User[]> {
+    const response = await this.client.get<User[]>("/users/assignees");
+    return response.data;
+  }
+
   async createUser(data: CreateUserDto): Promise<User> {
     const response = await this.client.post<User>("/users", data);
     return response.data;

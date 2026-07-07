@@ -104,6 +104,16 @@ export class UsersController {
     return this.usersService.findAll(role, active, currentUser.role);
   }
 
+  @Get('assignees')
+  @ApiOperation({
+    summary: 'Get users available for referral assignment (active users only)',
+  })
+  @ApiResponse({ status: 200, description: 'List of assignable users' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async findAssignableUsers(): Promise<User[]> {
+    return this.usersService.findAssignableUsers();
+  }
+
   @Get(':id')
   @Roles(PrismaUserRole.ADMIN, PrismaUserRole.SYSTEM_ADMINISTRATOR)
   @ApiOperation({ summary: 'Get user by ID' })

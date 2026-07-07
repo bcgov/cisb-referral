@@ -393,6 +393,20 @@ describe("APIService methods", () => {
       expect(result).toEqual(mockUsers);
     });
 
+    it("should fetch assignable users", async () => {
+      // Arrange
+      const mockUsers = [{ id: "1", name: "User A", isActive: true }];
+      mockGet.mockResolvedValue({ data: mockUsers });
+      const { apiService } = await import("../../services/api");
+
+      // Act
+      const result = await apiService.fetchAssignableUsers();
+
+      // Assert
+      expect(mockGet).toHaveBeenCalledWith("/users/assignees");
+      expect(result).toEqual(mockUsers);
+    });
+
     it("should create a user", async () => {
       // Arrange
       const createData = { email: "user@gov.bc.ca", name: "New User" };
