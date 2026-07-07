@@ -41,8 +41,8 @@ export function ReferralDetail() {
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => apiService.fetchUsers(),
+    queryKey: ["assignable-users"],
+    queryFn: () => apiService.fetchAssignableUsers(),
   });
 
   if (isLoading) {

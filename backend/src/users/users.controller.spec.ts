@@ -6,6 +6,7 @@ import { UserRole } from '../generated/prisma/client';
 const mockUsersService = {
   create: jest.fn(),
   findAll: jest.fn(),
+  findAssignableUsers: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
@@ -110,6 +111,15 @@ describe('UsersController', () => {
         undefined,
         UserRole.ADMIN,
       );
+    });
+
+    it('should return active assignable users for current role', async () => {
+      mockUsersService.findAssignableUsers.mockResolvedValue([mockUser]);
+
+      const result = await controller.findAssignableUsers();
+
+      expect(result).toEqual([mockUser]);
+      expect(mockUsersService.findAssignableUsers).toHaveBeenCalledWith();
     });
   });
 
