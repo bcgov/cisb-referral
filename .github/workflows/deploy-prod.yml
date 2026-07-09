@@ -82,6 +82,8 @@ jobs:
             --set config.KC_URL=${{ secrets.KC_URL }} \
             --set config.KC_REALM=${{ secrets.ADMIN_KC_REALM }} \
             --set config.KC_CLIENT_ID=${{ secrets.ADMIN_KC_CLIENT_ID }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true \
             --set-string route.tls.certificate="${{ secrets.TLS_CERTIFICATE }}" \
             --set-string route.tls.key="${{ secrets.TLS_KEY }}" \
             --set-string route.tls.caCertificate="${{ secrets.TLS_CA_CERTIFICATE }}"
@@ -94,6 +96,8 @@ jobs:
             --set config.KC_URL=${{ secrets.KC_URL }} \
             --set config.KC_REALM=${{ secrets.REFERRAL_KC_REALM }} \
             --set config.KC_CLIENT_ID=${{ secrets.REFERRAL_KC_CLIENT_ID }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true \
             --set-string route.tls.certificate="${{ secrets.TLS_CERTIFICATE }}" \
             --set-string route.tls.key="${{ secrets.TLS_KEY }}" \
             --set-string route.tls.caCertificate="${{ secrets.TLS_CA_CERTIFICATE }}"
@@ -101,7 +105,9 @@ jobs:
           helm upgrade --install cisb-referral-backend ./helm/backend \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend \
-            --set image.tag=${{ needs.retag.outputs.image_tag }}
+            --set image.tag=${{ needs.retag.outputs.image_tag }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true
 
       - name: Trigger OpenShift Rollout
         run: |

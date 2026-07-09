@@ -25,11 +25,16 @@ route:
 # Container resource requests and limits
 resources:
   requests:
-    cpu: 50m
+    cpu: 25m
     memory: 128Mi
   limits:
-    cpu: 250m
+    cpu: 200m
     memory: 512Mi
+
+# Pod Disruption Budget (enable in test/prod when running 2+ replicas)
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
 
 nodeSelector: {}
 

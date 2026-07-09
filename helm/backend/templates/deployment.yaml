@@ -5,9 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cisb-referral-backend
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: cisb-referral-backend
