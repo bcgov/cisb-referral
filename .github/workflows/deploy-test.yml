@@ -56,7 +56,9 @@ jobs:
             --set route.host=${{ secrets.ADMIN_APP_HOSTNAME }} \
             --set config.KC_URL=${{ secrets.KC_URL }} \
             --set config.KC_REALM=${{ secrets.ADMIN_KC_REALM }} \
-            --set config.KC_CLIENT_ID=${{ secrets.ADMIN_KC_CLIENT_ID }}
+            --set config.KC_CLIENT_ID=${{ secrets.ADMIN_KC_CLIENT_ID }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true
 
           helm upgrade --install cisb-referral-referral-app ./helm/referral-app \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
@@ -65,12 +67,16 @@ jobs:
             --set route.host=${{ secrets.REFERRAL_APP_HOSTNAME }} \
             --set config.KC_URL=${{ secrets.KC_URL }} \
             --set config.KC_REALM=${{ secrets.REFERRAL_KC_REALM }} \
-            --set config.KC_CLIENT_ID=${{ secrets.REFERRAL_KC_CLIENT_ID }}
+            --set config.KC_CLIENT_ID=${{ secrets.REFERRAL_KC_CLIENT_ID }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true
 
           helm upgrade --install cisb-referral-backend ./helm/backend \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend \
-            --set image.tag=${{ steps.resolve.outputs.tag }}
+            --set image.tag=${{ steps.resolve.outputs.tag }} \
+            --set replicaCount=2 \
+            --set podDisruptionBudget.enabled=true
 
       - name: Trigger OpenShift Rollout
         run: |

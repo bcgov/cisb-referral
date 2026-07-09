@@ -18,14 +18,7 @@ service:
 # Format: <fullnameOverride>-pguser-<username>
 crunchySecret: crunchy-postgres-pguser-referral-app-user
 
-# Horizontal Pod Autoscaler configuration
-autoscaling:
-  enabled: false
-  minReplicas: 2
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
-
-# Pod Disruption Budget
+# Pod Disruption Budget (enable in test/prod when running 2+ replicas)
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
