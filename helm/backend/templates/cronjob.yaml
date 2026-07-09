@@ -132,7 +132,7 @@ spec:
                     secretKeyRef:
                       name: cisb-referral-backend-secrets
                       key: ADMIN_APP_URL
-              {{- with .Values.resources }}
+              {{- with .Values.cronjob.resources }}
               resources:
                 {{- toYaml . | nindent 16 }}
               {{- end }}

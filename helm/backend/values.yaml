@@ -39,8 +39,18 @@ affinity: {}
 # Container resource requests and limits
 resources:
   requests:
-    cpu: 100m
+    cpu: 50m
     memory: 256Mi
   limits:
-    cpu: 500m
-    memory: 1Gi
+    cpu: 300m
+    memory: 512Mi
+
+# Summary cron job resource requests and limits
+cronjob:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
