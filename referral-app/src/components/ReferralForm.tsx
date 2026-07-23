@@ -6,6 +6,7 @@ import type { AxiosError } from "axios";
 import { Button } from "@bcgov/design-system-react-components";
 import {
   ReferredByType,
+  ReleaseFromType,
   referralSchema,
   type ReferralFormData,
   type ReferralFormInput,
@@ -40,6 +41,7 @@ export function ReferralForm() {
       referrerEmail: profile?.email ?? "",
       currentlyConnectedSupports: [],
       neededSupports: [],
+      pendingOrRecentlyReleased: ReleaseFromType.NO,
     },
   });
 

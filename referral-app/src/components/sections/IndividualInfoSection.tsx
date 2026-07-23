@@ -3,6 +3,7 @@ import type { ReferralFormInput } from "../../schemas/referralSchema";
 import {
   YesNoUnknown,
   YesNoUnknownOptions,
+  ReleaseFromType,
   ReleaseFromTypeOptions,
 } from "../../schemas/referralSchema";
 import {
@@ -31,7 +32,9 @@ export function IndividualInfoSection({
   const showAtRiskField =
     experiencingHomelessness === YesNoUnknown.NO ||
     experiencingHomelessness === YesNoUnknown.UNKNOWN;
-  const showReleaseDateField = !!pendingOrRecentlyReleased;
+  const showReleaseDateField =
+    !!pendingOrRecentlyReleased &&
+    pendingOrRecentlyReleased !== ReleaseFromType.NO;
 
   return (
     <section>
