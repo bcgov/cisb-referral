@@ -136,7 +136,7 @@ export function ReferrerIndividualTab({
             required
           />
           <TextInput
-            label="GAIN File"
+            label="GA Number"
             value={formData.personId}
             onChange={(v) => updateField("personId", v)}
           />

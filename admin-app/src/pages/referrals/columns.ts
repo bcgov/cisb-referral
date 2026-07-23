@@ -159,7 +159,7 @@ export const REFERRAL_COLUMNS: ReferralColumn[] = [
   },
   {
     key: "personId",
-    label: "Person ID",
+    label: "GA Number",
     width: "w-[120px]",
     render: (r) => text(r.personId),
   },
