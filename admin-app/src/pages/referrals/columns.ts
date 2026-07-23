@@ -201,7 +201,7 @@ export const REFERRAL_COLUMNS: ReferralColumn[] = [
   },
   {
     key: "pendingOrRecentlyReleased",
-    label: "Pending or Recently Released",
+    label: "Transitioning From",
     width: "w-[200px]",
     render: (r) => labelOf(releaseFromLabels, r.pendingOrRecentlyReleased),
   },

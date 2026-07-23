@@ -176,7 +176,7 @@ export function ReferrerIndividualTab({
             onChange={(v) => updateField("secondaryContact", v)}
           />
           <SelectInput
-            label="Pending or Recently Released"
+            label="Transitioning From"
             value={formData.pendingOrRecentlyReleased}
             onChange={(v) => updateField("pendingOrRecentlyReleased", v)}
             options={RELEASE_FROM_OPTIONS}
