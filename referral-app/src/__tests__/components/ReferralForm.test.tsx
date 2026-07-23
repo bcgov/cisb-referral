@@ -288,10 +288,19 @@ vi.mock("../../components/sections", async () => {
     );
   }
 
-  function SupportServicesSection() {
+  function SupportServicesSection({
+    form,
+  }: {
+    readonly form: { control: unknown };
+  }) {
     return (
       <section>
         <h2>Support Services</h2>
+        <TextInput
+          name="referralReason"
+          label="Referral Reason"
+          control={form.control}
+        />
       </section>
     );
   }
@@ -355,6 +364,9 @@ function fillMinimumRequiredIndividualFields() {
       target: { value: "YES" },
     },
   );
+  fireEvent.change(screen.getByLabelText("Referral Reason"), {
+    target: { value: "Needs housing support" },
+  });
 }
 
 describe("ReferralForm", () => {

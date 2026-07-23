@@ -304,10 +304,11 @@ const baseSchema = z.object({
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
-  referralReason: z
-    .string()
-    .max(5000, "Please use 5,000 characters or fewer")
-    .optional(),
+  referralReason: requiredTextField(
+    "Please enter a reason for the referral",
+  ).refine((value: string) => value.length <= 5000, {
+    message: "Please use 5,000 characters or fewer",
+  }),
 });
 
 // Helper type for base schema data

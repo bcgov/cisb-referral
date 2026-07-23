@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
+  IsNotEmpty,
   IsArray,
   IsDateString,
   IsUUID,
@@ -229,9 +230,9 @@ export class CreateReferralDto {
   @MaxLength(500)
   neededSupportsOther?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({ required: true })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(5000)
-  referralReason?: string;
+  referralReason!: string;
 }

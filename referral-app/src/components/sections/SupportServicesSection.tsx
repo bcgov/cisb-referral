@@ -76,8 +76,9 @@ export function SupportServicesSection({
             <TextAreaField
               name="referralReason"
               control={control}
-              label="Brief summary of the reason for referral (Optional)"
+              label="Brief summary of the reason for referral"
               maxLength={5000}
+              isRequired
             />
           </FormField>
         </div>
