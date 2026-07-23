@@ -7,7 +7,7 @@ RUN npm ci --prefer-offline --no-audit
 COPY . .
 RUN npm run build
 
-FROM caddy:2.11.3-alpine
+FROM caddy:2.11.4-alpine
 
 RUN apk add --no-cache ca-certificates
 
