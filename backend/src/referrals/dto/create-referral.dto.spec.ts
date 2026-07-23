@@ -16,6 +16,7 @@ const validBase = {
   specificCityTown: 'Test City',
   experiencingHomelessness: YesNoUnknown.NO,
   losingHouse: YesNoUnknown.NO,
+  referralReason: 'Test referral reason',
 };
 
 const toDto = (overrides: Record<string, unknown> = {}): CreateReferralDto =>

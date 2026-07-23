@@ -3,8 +3,8 @@ import type { ReferralFormInput } from "../../schemas/referralSchema";
 import {
   YesNoUnknown,
   YesNoUnknownOptions,
+  ReleaseFromType,
   ReleaseFromTypeOptions,
-  ReferredByType,
 } from "../../schemas/referralSchema";
 import {
   SelectField,
@@ -27,14 +27,14 @@ export function IndividualInfoSection({
 
   const experiencingHomelessness = watch("experiencingHomelessness");
   const pendingOrRecentlyReleased = watch("pendingOrRecentlyReleased");
-  const referredBy = watch("referredBy");
 
   // Only show losingHouse when experiencingHomelessness is explicitly "NO" or "UNKNOWN"
   const showAtRiskField =
     experiencingHomelessness === YesNoUnknown.NO ||
     experiencingHomelessness === YesNoUnknown.UNKNOWN;
-  const showReleaseDateField = !!pendingOrRecentlyReleased;
-  const showGainFile = referredBy === ReferredByType.SDPR_INTERNAL;
+  const showReleaseDateField =
+    !!pendingOrRecentlyReleased &&
+    pendingOrRecentlyReleased !== ReleaseFromType.NO;
 
   return (
     <section>
@@ -95,13 +95,11 @@ export function IndividualInfoSection({
           isRequired
         />
 
-        {showGainFile && (
-          <TextInput
-            name="personId"
-            control={control}
-            label="GAIN File (Optional)"
-          />
-        )}
+        <TextInput
+          name="personId"
+          control={control}
+          label="GA Number (Optional)"
+        />
 
         <TextInput
           name="secondaryContact"

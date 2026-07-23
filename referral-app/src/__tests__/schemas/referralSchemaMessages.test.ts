@@ -12,6 +12,7 @@ const validBaseData = {
   experiencingHomelessness: "YES",
   currentlyConnectedSupports: [],
   neededSupports: [],
+  referralReason: "Needs housing support",
 };
 
 describe("referralSchema human-friendly validation messages", () => {

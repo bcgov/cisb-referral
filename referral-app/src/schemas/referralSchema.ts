@@ -36,6 +36,7 @@ export const YesNoUnknownOptions = Object.entries(YesNoUnknownLabels).map(
 );
 
 export const ReleaseFromType = {
+  NO: "NO",
   HOSPITAL_MEDICAL_FACILITY: "HOSPITAL_MEDICAL_FACILITY",
   CORRECTIONS: "CORRECTIONS",
   YOUTH_TRANSITION_MCFD: "YOUTH_TRANSITION_MCFD",
@@ -45,6 +46,7 @@ export const ReleaseFromType = {
 } as const;
 
 export const ReleaseFromTypeLabels: Record<string, string> = {
+  NO: "No",
   HOSPITAL_MEDICAL_FACILITY: "Hospital/Medical Facility",
   CORRECTIONS: "Corrections",
   YOUTH_TRANSITION_MCFD: "Youth Transition from MCFD",
@@ -109,6 +111,7 @@ const YesNoUnknownEnum = z.enum(
 );
 
 const ReleaseFromEnum = z.enum([
+  ReleaseFromType.NO,
   ReleaseFromType.HOSPITAL_MEDICAL_FACILITY,
   ReleaseFromType.CORRECTIONS,
   ReleaseFromType.YOUTH_TRANSITION_MCFD,
@@ -304,10 +307,11 @@ const baseSchema = z.object({
   currentlyConnectedSupportsOther: z.string().optional(),
   neededSupports: z.array(SupportTypeEnum),
   neededSupportsOther: z.string().optional(),
-  referralReason: z
-    .string()
-    .max(5000, "Please use 5,000 characters or fewer")
-    .optional(),
+  referralReason: requiredTextField(
+    "Please enter a reason for the referral",
+  ).refine((value: string) => value.length <= 5000, {
+    message: "Please use 5,000 characters or fewer",
+  }),
 });
 
 // Helper type for base schema data
@@ -427,7 +431,11 @@ export function isUrgentReferral(data: ReferralFormData): boolean {
   }
 
   // Rule 3: Pending release with discharge date within 3-4 days
-  if (data.pendingOrRecentlyReleased && data.releaseDate) {
+  if (
+    data.pendingOrRecentlyReleased &&
+    data.pendingOrRecentlyReleased !== ReleaseFromType.NO &&
+    data.releaseDate
+  ) {
     const releaseDate = new Date(data.releaseDate);
     const today = new Date();
     const diffTime = releaseDate.getTime() - today.getTime();

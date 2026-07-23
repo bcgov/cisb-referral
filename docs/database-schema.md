@@ -124,7 +124,7 @@ Contact ─────────┘
 | `partnerAgencyName`               | String?          |                  |
 | `agencyTypeId`                    | UUID?            | FK → AgencyType  |
 | `agencyTypeOther`                 | String?          |                  |
-| `personId`                        | String?          |                  |
+| `personId`                        | String?          | GA Number        |
 | `referrerContactName`             | String           |                  |
 | `referrerEmail`                   | String           |                  |
 | `referrerPhone`                   | String           |                  |
@@ -132,7 +132,6 @@ Contact ─────────┘
 | `individualMiddleName`            | String?          |                  |
 | `individualLastName`              | String?          |                  |
 | `individualPreferredName`         | String?          |                  |
-| `gainFile`                        | String?          |                  |
 | `individualDateOfBirth`           | Date?            |                  |
 | `individualPhone`                 | String?          |                  |
 | `regionId`                        | UUID             | FK → Region      |
