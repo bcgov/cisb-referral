@@ -24,7 +24,7 @@ spec:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["npx", "prisma", "migrate", "deploy"]
+          command: ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
